@@ -6,3 +6,4 @@
 !/uploads/photos/.gitkeep
 .DS_Store
 *.log
+/.env
