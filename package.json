@@ -1,0 +1,13 @@
+{
+  "name": "c2c-portal",
+  "private": true,
+  "description": "Campus to Corporate - institutional tracking portal (Tailwind CSS build)",
+  "scripts": {
+    "build": "tailwindcss -i ./assets/css/input.css -o ./assets/css/app.css --minify",
+    "watch": "tailwindcss -i ./assets/css/input.css -o ./assets/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

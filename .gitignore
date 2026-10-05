@@ -1,0 +1,8 @@
+/node_modules/
+/app/config.local.php
+/uploads/logos/*
+/uploads/photos/*
+!/uploads/logos/.gitkeep
+!/uploads/photos/.gitkeep
+.DS_Store
+*.log
