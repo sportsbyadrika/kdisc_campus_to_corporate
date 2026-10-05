@@ -434,3 +434,29 @@ function role_tooltip(string $key, string $align = 'left'): string
     $title = $r['short'] === $r['full'] ? $r['full'] : $r['short'] . ' — ' . $r['full'];
     return tooltip($title, $r['purpose'], $align);
 }
+
+/** Settings keys that switch optional support roles on/off (managed by the super admin only). */
+const SUPPORT_ROLE_SETTINGS = [
+    'rpm' => 'show_rpm',
+    'rh'  => 'show_regional_head',
+];
+
+/** Whether a support role is shown in the portal. TCE is always shown; RPM / Regional Head are hidden by default. */
+function support_role_visible(string $key): bool
+{
+    return !isset(SUPPORT_ROLE_SETTINGS[$key]) || setting(SUPPORT_ROLE_SETTINGS[$key], '0') === '1';
+}
+
+/** Keys of SUPPORT_ROLES that are currently visible, in display order. */
+function visible_support_roles(): array
+{
+    return array_values(array_filter(array_keys(SUPPORT_ROLES), 'support_role_visible'));
+}
+
+/** Tailwind grid-column class for n items (literal strings so the CSS build picks them up). */
+function grid_cols_class(int $n, string $prefix = ''): string
+{
+    $map = ['' => [1 => 'grid-cols-1', 2 => 'grid-cols-2', 3 => 'grid-cols-3'],
+            'md:' => [1 => 'md:grid-cols-1', 2 => 'md:grid-cols-2', 3 => 'md:grid-cols-3']];
+    return $map[$prefix][max(1, min(3, $n))];
+}

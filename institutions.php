@@ -112,7 +112,7 @@ require APP_ROOT . '/app/layout/header.php';
   <p class="card-subtitle mb-5"><?= $editing ? 'Profile details are maintained by the institution / district in the workspace.' : 'Typically added on request from a district office. The institution completes the rest of the profile.' ?></p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
     <div class="md:col-span-2"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" value="<?= e($v('name')) ?>" required></div>
-    <div><label class="label">AISHE / Affiliation Code</label><input class="input" name="code" value="<?= e($v('code')) ?>"></div>
+    <div><label class="label">Affiliation Code</label><input class="input" name="code" value="<?= e($v('code')) ?>"></div>
     <div>
       <label class="label">District <span class="req">*</span></label>
       <select class="input" name="district_id" required>

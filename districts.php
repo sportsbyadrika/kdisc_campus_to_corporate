@@ -12,6 +12,8 @@ $groups = [
     'rpm' => ['rpm_name' => 'Name', 'rpm_email' => 'Email'],
     'rh'  => ['rh_name' => 'Name', 'rh_email' => 'Email'],
 ];
+// RPM / Regional Head can be hidden by the super admin (Settings → Visibility); hidden fields are left untouched on save
+$groups = array_intersect_key($groups, array_flip(visible_support_roles()));
 $fields = [];
 foreach ($groups as $role => $gf) {
     foreach ($gf as $k => $label) {
@@ -57,8 +59,9 @@ require APP_ROOT . '/app/layout/header.php';
   <p class="text-sm text-slate-500">The support team assigned to each district is shown on the dashboard of every institution in that district.</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-  <?php foreach (['tce' => 'bg-sky-100 text-sky-700', 'rpm' => 'bg-indigo-100 text-indigo-700', 'rh' => 'bg-purple-100 text-purple-700'] as $rk => $cls):
+<?php $roleColors = array_intersect_key(['tce' => 'bg-sky-100 text-sky-700', 'rpm' => 'bg-indigo-100 text-indigo-700', 'rh' => 'bg-purple-100 text-purple-700'], $groups); ?>
+<div class="grid grid-cols-1 <?= grid_cols_class(count($roleColors), 'md:') ?> gap-4 mb-6">
+  <?php foreach ($roleColors as $rk => $cls):
       $r = SUPPORT_ROLES[$rk]; ?>
     <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-start gap-3">
       <span class="px-2 py-1 rounded-lg text-[11px] font-bold shrink-0 <?= $cls ?>"><?= e($r['short'] === $r['full'] ? 'RH' : $r['short']) ?></span>
@@ -106,8 +109,9 @@ require APP_ROOT . '/app/layout/header.php';
           </div>
         </form>
       <?php else: ?>
-        <dl class="grid grid-cols-3 gap-3 text-xs">
-          <?php foreach ([['tce', $d['tce_name'], $d['tce_email'], 'left'], ['rpm', $d['rpm_name'], $d['rpm_email'], 'left'], ['rh', $d['rh_name'], $d['rh_email'], 'right']] as [$role, $n, $em, $align]): ?>
+        <?php $summary = array_values(array_filter([['tce', $d['tce_name'], $d['tce_email']], ['rpm', $d['rpm_name'], $d['rpm_email']], ['rh', $d['rh_name'], $d['rh_email']]], fn($x) => isset($groups[$x[0]]))); ?>
+        <dl class="grid <?= grid_cols_class(count($summary)) ?> gap-3 text-xs">
+          <?php foreach ($summary as $si => [$role, $n, $em]): $align = $si === count($summary) - 1 && $si > 0 ? 'right' : 'left'; ?>
             <div><dt class="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1"><?= e(SUPPORT_ROLES[$role]['short']) ?> <?= role_tooltip($role, $align) ?></dt><dd class="font-semibold text-slate-800"><?= e($n ?: '—') ?></dd><dd class="text-slate-500 truncate"><?= e($em ?: '') ?></dd></div>
           <?php endforeach; ?>
         </dl>

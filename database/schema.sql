@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS institutions (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name           VARCHAR(255) NOT NULL,
-  code           VARCHAR(40)  NULL COMMENT 'AISHE / affiliation code',
+  code           VARCHAR(40)  NULL COMMENT 'Affiliation code',
   email          VARCHAR(160) NULL,
   phone          VARCHAR(30)  NULL,
   website        VARCHAR(200) NULL,
@@ -356,4 +356,6 @@ INSERT IGNORE INTO settings (`key`, `value`) VALUES
  ('academic_year','2026-27'),
  ('cohort_policy','The "Immediate Job-Seeker" strength is adopted as the primary operational target group for C2C interventions. Mandatory English Score Assessment completion acts as the gateway filter for student eligibility.'),
  ('footer_left','Campus to Corporate • Institutional Data & Tracking Layer • Integrated with DWMS'),
- ('footer_right','Government of Kerala • Head Office Operations');
+ ('footer_right','Government of Kerala • Head Office Operations'),
+ ('show_rpm','0'),
+ ('show_regional_head','0');
