@@ -102,11 +102,11 @@ $roleLabel = $user ? ROLES[$user['role']] . ($user['role'] === 'district' ? ' ·
 </header>
 
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grow">
-<?php foreach (take_flashes() as $f):
-    $ok = $f['type'] === 'success'; ?>
-  <div class="mb-6 p-4 rounded-2xl border flex items-start gap-3 text-sm <?= $ok ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : ($f['type'] === 'error' ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-sky-50 border-sky-200 text-sky-900') ?>" data-flash>
-    <span class="mt-0.5"><?= icon($ok ? 'check-circle' : ($f['type'] === 'error' ? 'warning' : 'info'), 'w-5 h-5') ?></span>
-    <span class="grow"><?= e($f['message']) ?></span>
+<?php foreach (take_flashes() as $flashMsg):
+    $ok = $flashMsg['type'] === 'success'; ?>
+  <div class="mb-6 p-4 rounded-2xl border flex items-start gap-3 text-sm <?= $ok ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : ($flashMsg['type'] === 'error' ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-sky-50 border-sky-200 text-sky-900') ?>" data-flash>
+    <span class="mt-0.5"><?= icon($ok ? 'check-circle' : ($flashMsg['type'] === 'error' ? 'warning' : 'info'), 'w-5 h-5') ?></span>
+    <span class="grow"><?= e($flashMsg['message']) ?></span>
     <button type="button" class="opacity-60 hover:opacity-100" onclick="this.parentElement.remove()" aria-label="Dismiss"><?= icon('x') ?></button>
   </div>
 <?php endforeach; ?>
