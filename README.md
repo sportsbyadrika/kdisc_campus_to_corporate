@@ -78,13 +78,13 @@ If the portal is served from a sub-folder, set `base_path` (for example `/c2c`) 
 
 1. **Database:** in cPanel → *MySQL Databases*, create a database and a user (for example `shooting_c2c`), and give the user *All privileges* on the database.
 2. **Repository:** in cPanel → *Git Version Control*, clone the GitHub repository into `/home/shooting/repositories/kdisc_campus_to_corporate`.
-3. **Deploy:** click *Manage → Pull or Deploy → Update from Remote*, then *Deploy HEAD Commit*. The rsync step copies the code into the web root and removes files that were deleted from the repo. It never touches `.env`, `app/config.local.php` or uploaded logos and photos.
+3. **Deploy:** click *Manage → Pull or Deploy → Update from Remote*, then *Deploy HEAD Commit*. `.cpanel.yml` runs `deploy/cpanel-deploy.sh`, which copies the code into the web root and removes files that were deleted from the repo. It never touches `.env`, `app/config.local.php` or uploaded logos and photos.
 4. **`.env`:** on the first deploy only, use *File Manager* or *Terminal* to copy `.env.example` from the repository into the web root as `.env`, then fill in the database values:
    ```bash
    cp ~/repositories/kdisc_campus_to_corporate/.env.example ~/public_html/c2c.kdiscmis.org.in/.env
    nano ~/public_html/c2c.kdiscmis.org.in/.env
    ```
-   The deploy sets `.env` to mode 600, and `.htaccess` blocks web access to it.
+   The deploy sets `.env` to mode 640, and `.htaccess` blocks web access to it.
 5. **Install:** in cPanel *Terminal*, run this once (use your PHP version's binary if `php` isn't 8.1+, e.g. `/opt/cpanel/ea-php83/root/usr/bin/php`):
    ```bash
    cd ~/public_html/c2c.kdiscmis.org.in && php database/install.php --superadmin-password='…' --admin-password='…'
@@ -92,6 +92,13 @@ If the portal is served from a sub-folder, set `base_path` (for example `/c2c`) 
 6. **PHP settings:** in *MultiPHP Manager*, select PHP 8.1 or newer for the domain, with the `pdo_mysql`, `gd`, `fileinfo` and `mbstring` extensions enabled.
 
 For later releases, push to GitHub, then *Update from Remote* and *Deploy HEAD Commit*. cPanel will only deploy when the repository's working tree is clean.
+
+**If the files don't update after a deploy:**
+- Run *Update from Remote* before *Deploy HEAD Commit*. The deploy only copies the commit that is already checked out in `~/repositories/kdisc_campus_to_corporate`.
+- Check the *Basic Information* panel: the checked-out branch should be `main`, and *HEAD Commit* should match the latest commit on GitHub.
+- Read the deploy logs: `~/c2c-deploy.log`, written by `deploy/cpanel-deploy.sh`, and cPanel's own logs in `~/.cpanel/logs/` (files named `vc_*_git_deploy.log`).
+- Run the deploy by hand in *Terminal* to see any errors directly:
+  `cd ~/repositories/kdisc_campus_to_corporate && bash deploy/cpanel-deploy.sh`
 
 ## Project layout
 
