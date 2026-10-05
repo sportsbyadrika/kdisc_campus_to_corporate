@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus to Corporate - Institution Onboarding Portal</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            },
+            accent: {
+              500: '#f59e0b',
+              600: '#d97706'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .step-badge-active {
+      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2);
+    }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          C2C
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
+            Campus to Corporate
+            <span class="text-[10px] uppercase font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">Onboarding</span>
+          </span>
+          <p class="text-xs text-slate-500 hidden sm:block">Institutional Registration & Activity Tracking Layer</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-autofill" onclick="autoFillSampleData()" class="text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg border border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors flex items-center gap-1.5 shadow-2xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Auto-fill Demo Data</span>
+        </button>
+        <button onclick="resetPortal()" class="text-xs sm:text-sm font-medium px-2.5 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" title="Reset Form">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+    
+    <!-- Multi-Step Progress Tracker Bar -->
+    <div class="mb-8">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100">
+          <div>
+            <h1 class="text-lg font-bold text-slate-900" id="step-title-display">Step 1: Institution Account Creation</h1>
+            <p class="text-xs text-slate-500" id="step-desc-display">Establish system credentials and institution workspace</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100" id="completion-rate-text">0% Complete</span>
+            <span class="text-xs font-medium text-slate-400">Step <span id="current-step-num">1</span> of 6</span>
+          </div>
+        </div>
+
+        <!-- Stepper Indicators -->
+        <nav aria-label="Progress">
+          <ol class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            <li class="cursor-pointer" onclick="goToStep(1)">
+              <div id="step-tab-1" class="flex items-center p-2 rounded-xl border border-sky-600 bg-sky-50 text-sky-700 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-sky-600 text-white font-bold text-xs flex items-center justify-center mr-2">1</span>
+                <span class="text-xs font-semibold truncate">Account</span>
+              </div>
+            </li>
+            <li class="cursor-pointer" onclick="goToStep(2)">
+              <div id="step-tab-2" class="flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2">2</span>
+                <span class="text-xs font-medium truncate">Nodal Officer</span>
+              </div>
+            </li>
+            <li class="cursor-pointer" onclick="goToStep(3)">
+              <div id="step-tab-3" class="flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2">3</span>
+                <span class="text-xs font-medium truncate">Institution</span>
+              </div>
+            </li>
+            <li class="cursor-pointer" onclick="goToStep(4)">
+              <div id="step-tab-4" class="flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2">4</span>
+                <span class="text-xs font-medium truncate">Cohorts & Test</span>
+              </div>
+            </li>
+            <li class="cursor-pointer" onclick="goToStep(5)">
+              <div id="step-tab-5" class="flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2">5</span>
+                <span class="text-xs font-medium truncate">DWMS Services</span>
+              </div>
+            </li>
+            <li class="cursor-pointer" onclick="goToStep(6)">
+              <div id="step-tab-6" class="flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2">6</span>
+                <span class="text-xs font-medium truncate">Dashboard</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <div id="step-content-1" class="step-card bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+      <div class="max-w-3xl">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2.5 bg-sky-100 text-sky-700 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 1: Institution Account Creation</h2>
+            <p class="text-sm text-slate-500">Self-registration gateway replacing previous Google Form submission.</p>
+          </div>
+        </div>
+
+        <form id="form-step-1" onsubmit="event.preventDefault(); validateAndNext(1);">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Institution Full Legal Name <span class="text-rose-500">*</span></label>
+              <input type="text" id="inst-name" required placeholder="e.g. Government Engineering College, Barton Hill" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Official Institutional Email <span class="text-rose-500">*</span></label>
+              <input type="email" id="inst-email" required placeholder="placement@gecbh.ac.in" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+              <span class="text-[11px] text-slate-400 mt-1 block">Used for primary communications & credentials.</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Institution AISHE / Affiliation Code</label>
+              <input type="text" id="inst-aishe" placeholder="e.g. C-43521" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Master Portal Username <span class="text-rose-500">*</span></label>
+              <div class="relative">
+                <input type="text" id="inst-username" required placeholder="gecbh_c2c" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+                <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">@c2c</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Portal Password <span class="text-rose-500">*</span></label>
+              <input type="password" id="inst-pass" required placeholder="••••••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+            </div>
+          </div>
+
+          <div class="mt-8 pt-5 border-t border-slate-100 flex justify-end">
+            <button type="submit" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-xl text-sm shadow-xs transition-colors flex items-center gap-2">
+              Save & Proceed to Officer Profile
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="step-content-2" class="step-card hidden bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+      <div class="max-w-3xl">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 2: Placement Officer / Nodal Officer Profile</h2>
+            <p class="text-sm text-slate-500">Designated institutional coordinator for Campus to Corporate activities.</p>
+          </div>
+        </div>
+
+        <form id="form-step-2" onsubmit="event.preventDefault(); validateAndNext(2);">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Officer Full Name <span class="text-rose-500">*</span></label>
+              <input type="text" id="officer-name" required placeholder="Prof. Rajesh K" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Designation <span class="text-rose-500">*</span></label>
+              <input type="text" id="officer-role" required placeholder="Head of Training & Placement / Asst. Professor" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Official / Placement Email ID <span class="text-rose-500">*</span></label>
+              <input type="email" id="officer-email" required placeholder="rajesh.n@gecbh.ac.in" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Contact Mobile Number <span class="text-rose-500">*</span></label>
+              <input type="tel" id="officer-phone" required pattern="[0-9]{10}" placeholder="9847000000 (10 digits)" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Alternative Contact / Placement Cell Helpline</label>
+              <input type="tel" id="officer-alt-phone" placeholder="0471-2300000" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+          </div>
+
+          <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between">
+            <button type="button" onclick="goToStep(1)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium text-sm">
+              &larr; Back
+            </button>
+            <button type="submit" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-xl text-sm shadow-xs transition-colors flex items-center gap-2">
+              Save & Setup Institutional Baseline
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="step-content-3" class="step-card hidden bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+      <div class="max-w-4xl">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 3: Institutional Profile & Department Breakdown</h2>
+            <p class="text-sm text-slate-500">Provide territorial affiliation and course-wise final-year student breakdown.</p>
+          </div>
+        </div>
+
+        <form id="form-step-3" onsubmit="event.preventDefault(); validateAndNext(3);">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Campus Physical Address <span class="text-rose-500">*</span></label>
+              <input type="text" id="inst-address" required placeholder="Vanchiyoor P.O., Barton Hill" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">District <span class="text-rose-500">*</span></label>
+              <select id="inst-district" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm bg-white">
+                <option value="">Select District</option>
+                <option value="Thiruvananthapuram">Thiruvananthapuram</option>
+                <option value="Kollam">Kollam</option>
+                <option value="Pathanamthitta">Pathanamthitta</option>
+                <option value="Alappuzha">Alappuzha</option>
+                <option value="Kottayam">Kottayam</option>
+                <option value="Idukki">Idukki</option>
+                <option value="Ernakulam">Ernakulam</option>
+                <option value="Thrissur">Thrissur</option>
+                <option value="Palakkad">Palakkad</option>
+                <option value="Malappuram">Malappuram</option>
+                <option value="Kozhikode">Kozhikode</option>
+                <option value="Wayanad">Wayanad</option>
+                <option value="Kannur">Kannur</option>
+                <option value="Kasaragod">Kasaragod</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Affiliated University <span class="text-rose-500">*</span></label>
+              <select id="inst-university" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm bg-white">
+                <option value="">Select University</option>
+                <option value="APJ Abdul Kalam Technological University (KTU)">APJ Abdul Kalam Technological University (KTU)</option>
+                <option value="University of Kerala">University of Kerala</option>
+                <option value="Mahatma Gandhi University (MGU)">Mahatma Gandhi University (MGU)</option>
+                <option value="University of Calicut">University of Calicut</option>
+                <option value="Kannur University">Kannur University</option>
+                <option value="Cochin University of Science and Technology (CUSAT)">CUSAT</option>
+                <option value="Autonomous / Other">Autonomous / Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Institution Category</label>
+              <select id="inst-category" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm bg-white">
+                <option value="Government">Government</option>
+                <option value="Government-Aided">Government-Aided</option>
+                <option value="Self-Financing">Self-Financing</option>
+                <option value="Autonomous">Autonomous</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Academic Year</label>
+              <input type="text" id="academic-year" value="2026 - 2027" readonly class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm">
+            </div>
+          </div>
+
+          <!-- Department / Course Breakdown Table -->
+          <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-800">Course / Department-wise Student Strength</h3>
+                <p class="text-xs text-slate-500">Record final-year batch counts across participating branches.</p>
+              </div>
+              <button type="button" onclick="addDepartmentRow()" class="text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add Course/Dept
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-200">
+                    <th class="py-2 font-semibold">Course / Stream</th>
+                    <th class="py-2 font-semibold">Department</th>
+                    <th class="py-2 font-semibold w-32">Final-Year Count</th>
+                    <th class="py-2 font-semibold w-16 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dept-table-body">
+                  <!-- Dynamic rows generated here -->
+                </tbody>
+                <tfoot>
+                  <tr class="font-bold text-slate-800 border-t border-slate-300">
+                    <td colspan="2" class="pt-3 text-right pr-4">Total Institutional Final-Year Strength:</td>
+                    <td class="pt-3 text-sky-700 font-mono text-sm" id="calc-total-dept-students">0</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between">
+            <button type="button" onclick="goToStep(2)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium text-sm">
+              &larr; Back
+            </button>
+            <button type="submit" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-xl text-sm shadow-xs transition-colors flex items-center gap-2">
+              Save & Setup Cohorts & Assessment Gateway
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="step-content-4" class="step-card hidden bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+      <div class="max-w-4xl">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2.5 bg-amber-100 text-amber-700 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 4: Student Cohorts & Mandatory Employability Assessment</h2>
+            <p class="text-sm text-slate-500">Adopt the Immediate Job-Seeker cohort and establish the mandatory English Score baseline.</p>
+          </div>
+        </div>
+
+        <!-- Strategy Notice Box -->
+        <div class="p-4 bg-sky-50 border border-sky-200 rounded-xl mb-6 flex items-start gap-3">
+          <div class="text-sky-600 mt-0.5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="text-xs text-sky-900">
+            <span class="font-bold">Principal Operational Cohort Policy:</span> The "Immediate Job-Seeker" strength is adopted as the primary operational target group for C2C interventions. Mandatory English Score Assessment completion acts as the gateway filter for student eligibility.
+          </div>
+        </div>
+
+        <form id="form-step-4" onsubmit="event.preventDefault(); validateAndNext(4);">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
+              <span class="text-xs font-semibold uppercase text-slate-500 block mb-1">Total Final-Year Students</span>
+              <div class="flex items-baseline gap-2">
+                <input type="number" id="cohort-total-final" required min="1" class="w-full text-2xl font-bold text-slate-800 bg-white border border-slate-300 rounded-lg p-2 font-mono" oninput="updateCohortCalculations()">
+              </div>
+              <span class="text-[11px] text-slate-400 mt-1 block">Institutional pool across all departments.</span>
+            </div>
+
+            <div class="p-4 rounded-xl border border-indigo-200 bg-indigo-50/50">
+              <span class="text-xs font-semibold uppercase text-indigo-700 block mb-1">Registered on DWMS</span>
+              <div class="flex items-baseline gap-2">
+                <input type="number" id="cohort-dwms-reg" required min="0" class="w-full text-2xl font-bold text-indigo-700 bg-white border border-indigo-300 rounded-lg p-2 font-mono" oninput="updateCohortCalculations()">
+              </div>
+              <span class="text-[11px] text-indigo-500 mt-1 block" id="dwms-ratio-note">DWMS Coverage: 0%</span>
+            </div>
+
+            <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
+              <span class="text-xs font-semibold uppercase text-emerald-800 block mb-1">Immediate Job Seekers <span class="text-rose-500">*</span></span>
+              <div class="flex items-baseline gap-2">
+                <input type="number" id="cohort-job-seekers" required min="0" class="w-full text-2xl font-bold text-emerald-800 bg-white border border-emerald-300 rounded-lg p-2 font-mono" oninput="updateCohortCalculations()">
+              </div>
+              <span class="text-[11px] text-emerald-700 mt-1 font-semibold" id="jobseeker-ratio-note">Primary Target: 0% of batch</span>
+            </div>
+          </div>
+
+          <!-- Mandatory Assessment Module -->
+          <div class="border border-slate-200 rounded-2xl p-5 bg-white mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                  English Score Assessment Status (Mandatory First-Level Gateway)
+                </h3>
+                <p class="text-xs text-slate-500">Students must take this first-level diagnostic to access interview drives.</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-semibold text-slate-500">Completion Target:</span>
+                <span class="text-sm font-bold text-emerald-600 block" id="english-completed-badge">0 / 0 Done</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Students Completed English Score</label>
+                <input type="number" id="cohort-english-tested" required min="0" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 text-sm font-mono" oninput="updateCohortCalculations()">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Assessment Testing Status</label>
+                <select id="assessment-drive-status" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+                  <option value="Drive Scheduled">Drive Scheduled (In Progress)</option>
+                  <option value="Initial Batch Completed">Initial Batch Completed (&gt;50%)</option>
+                  <option value="Completed">Completed for All Job Seekers</option>
+                  <option value="Pending Allocation">Pending Lab Allocation</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Visual Progress Bar for English Score -->
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <div class="flex justify-between text-xs mb-1 font-medium">
+                <span class="text-slate-500">English Assessment Gateway Compliance</span>
+                <span class="text-sky-700 font-bold" id="english-pct-label">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div id="english-progress-bar" class="bg-gradient-to-r from-sky-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between">
+            <button type="button" onclick="goToStep(3)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium text-sm">
+              &larr; Back
+            </button>
+            <button type="submit" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-xl text-sm shadow-xs transition-colors flex items-center gap-2">
+              Save & Browse DWMS Services
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="step-content-5" class="step-card hidden bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
+      <div class="max-w-4xl">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2.5 bg-purple-100 text-purple-700 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 5: DWMS Available Services Marketplace</h2>
+            <p class="text-sm text-slate-500">Select employability services and modules to schedule for your institution batch.</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-600 mb-4">
+          All selected services will be integrated directly into your institutional action plan and monitored by your assigned Talent Connect Executive (TCE).
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="services-grid">
+          <!-- Service Card 1 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Career Curation & Profile Verification" checked class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Career Curation Services</span>
+              <p class="text-xs text-slate-500 mt-0.5">Resume curation, portfolio standardisation, and DWMS profile verification drives.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-700">High Impact</span>
+            </div>
+          </label>
+
+          <!-- Service Card 2 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Mock Interviews & Readiness Drives" checked class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Mock Interview Drives</span>
+              <p class="text-xs text-slate-500 mt-0.5">Simulated technical & HR panel interviews evaluated by corporate practitioners.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Interview Gateway</span>
+            </div>
+          </label>
+
+          <!-- Service Card 3 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Skilling & Certification Bootcamps" checked class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Targeted Skilling Modules</span>
+              <p class="text-xs text-slate-500 mt-0.5">Domain bootcamps, soft-skills upskilling, and DWMS micro-credentials.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">Skill Enhancement</span>
+            </div>
+          </label>
+
+          <!-- Service Card 4 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Career Ambassador Network" checked class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Career Ambassador Selection & Orientation</span>
+              <p class="text-xs text-slate-500 mt-0.5">Nominate peer student ambassadors to steer peer updates and drive test completion.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700">Peer Driven</span>
+            </div>
+          </label>
+
+          <!-- Service Card 5 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Industry Interaction & CXO Masterclasses" class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Industry Interactions & CXO Talks</span>
+              <p class="text-xs text-slate-500 mt-0.5">Direct virtual & on-prem interactions with industry hiring managers and alumni.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-700">Networking</span>
+            </div>
+          </label>
+
+          <!-- Service Card 6 -->
+          <label class="relative flex items-start p-4 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-slate-50 cursor-pointer transition-all">
+            <div class="flex items-center h-5">
+              <input type="checkbox" name="dwms_service" value="Exclusive Hiring Drives" class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500">
+            </div>
+            <div class="ml-3">
+              <span class="block text-sm font-semibold text-slate-900">Exclusive DWMS Placement Drives</span>
+              <p class="text-xs text-slate-500 mt-0.5">Corporate pool recruitment drives exclusively for qualified C2C immediate job seekers.</p>
+              <span class="inline-block mt-2 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-700">Final Placement</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" onclick="goToStep(4)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium text-sm">
+            &larr; Back
+          </button>
+          <button type="button" onclick="completeOnboarding()" class="px-7 py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-sm shadow-md transition-all flex items-center gap-2">
+            Finish Onboarding & View Dashboard
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="step-content-6" class="step-card hidden space-y-6">
+      
+      <!-- Top Alert / Onboarding Complete Notification -->
+      <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-emerald-900">Institution Onboarding Completed Successfully!</h3>
+            <p class="text-xs text-emerald-700">Account verified, Nodal Officer attached, baseline mapped to assigned TCE team.</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="no-print px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-lg shadow-2xs flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Print / Export PDF
+          </button>
+          <button onclick="goToStep(1)" class="no-print px-3 py-1.5 bg-sky-600 text-white hover:bg-sky-700 text-xs font-semibold rounded-lg shadow-2xs">
+            Edit Data
+          </button>
+        </div>
+      </div>
+
+      <!-- Institutional Identity Card & Gamified Rank Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="space-y-1.5 max-w-xl">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">Active Institution</span>
+              <span class="text-xs text-slate-300 font-mono" id="dash-inst-id">ID: C2C-KER-2026-441</span>
+            </div>
+            <h2 class="text-2xl font-black text-white" id="dash-inst-name">Government Engineering College Barton Hill</h2>
+            <p class="text-xs text-slate-300 flex items-center gap-2">
+              <span id="dash-inst-district">Thiruvananthapuram</span> &bull; 
+              <span id="dash-inst-univ">KTU</span> &bull; 
+              <span>Nodal Officer: <strong class="text-white" id="dash-officer-name">Prof. Rajesh K</strong></span>
+            </p>
+          </div>
+
+          <!-- Gamified Rank & Score Badge -->
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center gap-6 divide-x divide-white/20">
+            <div class="text-center px-2">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-sky-200 block">Statewide Position</span>
+              <span class="text-2xl sm:text-3xl font-extrabold text-amber-400" id="dash-rank">Rank #14</span>
+              <span class="text-[10px] text-slate-300 block">Out of 280 Registered</span>
+            </div>
+            <div class="text-center pl-6 pr-2">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-sky-200 block">Employability Score</span>
+              <span class="text-2xl sm:text-3xl font-extrabold text-white" id="dash-score">78<span class="text-xs font-normal text-slate-300">/100</span></span>
+              <span class="text-[10px] text-emerald-300 font-semibold block" id="dash-readiness-label">Ready: 68%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hierarchy Support Team Banner -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Assigned TCE -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg">
+            TC
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-700 block">Assigned TCE (Talent Connect Executive)</span>
+            <p class="text-sm font-bold text-slate-900" id="assigned-tce-name">Anandhu S. Kumar</p>
+            <p class="text-xs text-slate-500">tce.south@c2c.kerala.gov.in &bull; +91 94471 23456</p>
+          </div>
+        </div>
+
+        <!-- Regional Programme Manager -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg">
+            RP
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">Regional Programme Manager (RPM)</span>
+            <p class="text-sm font-bold text-slate-900" id="assigned-rpm-name">Dr. Sunitha M</p>
+            <p class="text-xs text-slate-500">rpm.trivandrum@c2c.kerala.gov.in</p>
+          </div>
+        </div>
+
+        <!-- Regional Head -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
+            RH
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">Regional Head</span>
+            <p class="text-sm font-bold text-slate-900" id="assigned-rh-name">George Matthew</p>
+            <p class="text-xs text-slate-500">regionalhead.south@c2c.gov.in</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cohort KPIs -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500 block mb-1">Final-Year Students</span>
+          <span class="text-2xl font-black text-slate-900" id="dash-total-students">450</span>
+          <span class="text-[11px] text-slate-400 block mt-1">Total Eligible Strength</span>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500 block mb-1">Registered on DWMS</span>
+          <span class="text-2xl font-black text-sky-600" id="dash-dwms-students">420</span>
+          <span class="text-[11px] text-sky-600 font-semibold block mt-1" id="dash-dwms-coverage">93.3% Onboarded</span>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500 block mb-1">Immediate Job Seekers</span>
+          <span class="text-2xl font-black text-emerald-600" id="dash-jobseeker-students">310</span>
+          <span class="text-[11px] text-emerald-600 font-bold block mt-1">Primary Target Cohort</span>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500 block mb-1">English Score Completed</span>
+          <span class="text-2xl font-black text-purple-600" id="dash-english-students">260</span>
+          <span class="text-[11px] text-purple-600 font-semibold block mt-1" id="dash-english-coverage">83.8% of target</span>
+        </div>
+      </div>
+
+      <!-- Detailed Tracking: Activity Roadmap & Selected DWMS Services -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left 2 Cols: Milestone Tracker -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Campus to Corporate Milestone Tracker</h3>
+              <p class="text-xs text-slate-500">Real-time status synced between Placement Cell, TCE & State Head Office</p>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-100 text-sky-800" id="milestones-completed-badge">3 of 8 Complete</span>
+          </div>
+
+          <div class="space-y-3" id="milestone-list">
+            <!-- Dynamic milestones will be populated here -->
+          </div>
+        </div>
+
+        <!-- Right Col: Selected DWMS Catalog & Next Actions -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <h3 class="text-base font-bold text-slate-900 mb-2">Requested DWMS Services</h3>
+            <p class="text-xs text-slate-500 mb-4">Services selected for rollout during institutional drive.</p>
+            <ul class="space-y-2 text-xs" id="dash-services-list">
+              <!-- Rendered via JS -->
+            </ul>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-xs">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 mb-2 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Immediate Next Tasks
+            </h4>
+            <ul class="text-xs text-amber-900 space-y-2 font-medium">
+              <li class="flex items-start gap-1.5">
+                <span class="text-amber-600">&bull;</span> Complete English Score Assessment for remaining <span class="font-bold underline" id="dash-remaining-english">50</span> job seekers.
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-amber-600">&bull;</span> Nominate 4 student Career Ambassadors by Friday.
+              </li>
+              <li class="flex items-start gap-1.5">
+                <span class="text-amber-600">&bull;</span> Review TCE mentor schedule for Mock Interviews.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>Campus to Corporate &bull; Institutional Data & Tracking Layer &bull; Integrated with DWMS</div>
+      <div class="font-medium text-slate-400">Government of Kerala &bull; Head Office Operations</div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
+    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toast-msg">Operation successful</span>
+  </div>
+
+  <script>
+    // State storage
+    const state = {
+      currentStep: 1,
+      totalSteps: 6,
+      departments: [
+        { course: 'B.Tech', dept: 'Computer Science & Engineering', count: 120 },
+        { course: 'B.Tech', dept: 'Electronics & Communication', count: 110 },
+        { course: 'B.Tech', dept: 'Mechanical Engineering', count: 120 },
+        { course: 'B.Tech', dept: 'Civil Engineering', count: 100 }
+      ],
+      assignedHierarchy: {
+        tce: 'Anandhu S. Kumar (Talent Connect Executive)',
+        rpm: 'Dr. Sunitha M (Regional Programme Manager)',
+        head: 'George Matthew (Regional Head)'
+      }
+    };
+
+    const stepTitles = {
+      1: { title: "Step 1: Institution Account Creation", desc: "Establish credentials and common registration link access" },
+      2: { title: "Step 2: Placement Officer / Nodal Profile", desc: "Designate placement officer contact and roles" },
+      3: { title: "Step 3: Institutional Baseline & Departments", desc: "Record territory, university affiliation, and departmental batch size" },
+      4: { title: "Step 4: Student Cohorts & Mandatory English Assessment", desc: "Adopt immediate job seekers as primary target and test gateway" },
+      5: { title: "Step 5: DWMS Services Selection Marketplace", desc: "Opt into skilling, curation, and interview modules" },
+      6: { title: "Step 6: Institution Dashboard & Activity Tracker", desc: "Unified view for Placement Coordinator, TCE, and Head Office" }
+    };
+
+    function goToStep(step) {
+      if (step < 1 || step > state.totalSteps) return;
+      state.currentStep = step;
+
+      // Update titles
+      document.getElementById('step-title-display').innerText = stepTitles[step].title;
+      document.getElementById('step-desc-display').innerText = stepTitles[step].desc;
+      document.getElementById('current-step-num').innerText = step;
+
+      // Completion badge
+      const pct = Math.round(((step - 1) / (state.totalSteps - 1)) * 100);
+      document.getElementById('completion-rate-text').innerText = `${pct}% Complete`;
+
+      // Toggle tab styles
+      for (let i = 1; i <= state.totalSteps; i++) {
+        const tab = document.getElementById(`step-tab-i`?.replace('i', i));
+        const content = document.getElementById(`step-content-i`?.replace('i', i));
+
+        if (content) {
+          if (i === step) {
+            content.classList.remove('hidden');
+          } else {
+            content.classList.add('hidden');
+          }
+        }
+
+        if (tab) {
+          const badge = tab.querySelector('span:first-child');
+          if (i === step) {
+            tab.className = "flex items-center p-2 rounded-xl border border-sky-600 bg-sky-50 text-sky-800 transition-all shadow-xs";
+            if (badge) badge.className = "w-6 h-6 rounded-lg bg-sky-600 text-white font-bold text-xs flex items-center justify-center mr-2";
+          } else if (i < step) {
+            tab.className = "flex items-center p-2 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 transition-all";
+            if (badge) badge.className = "w-6 h-6 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center mr-2";
+          } else {
+            tab.className = "flex items-center p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all";
+            if (badge) badge.className = "w-6 h-6 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center mr-2";
+          }
+        }
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (step === 6) {
+        syncDashboardData();
+      }
+    }
+
+    function validateAndNext(step) {
+      if (step === 1) {
+        const name = document.getElementById('inst-name').value.trim();
+        const email = document.getElementById('inst-email').value.trim();
+        if (!name || !email) {
+          showToast("Please provide the institution legal name and official email.");
+          return;
+        }
+      }
+
+      if (step === 2) {
+        const offName = document.getElementById('officer-name').value.trim();
+        const phone = document.getElementById('officer-phone').value.trim();
+        if (!offName || phone.length < 10) {
+          showToast("Please complete the officer's name and valid phone number.");
+          return;
+        }
+      }
+
+      if (step === 3) {
+        const dist = document.getElementById('inst-district').value;
+        const univ = document.getElementById('inst-university').value;
+        if (!dist || !univ) {
+          showToast("Please select your District and University affiliation.");
+          return;
+        }
+      }
+
+      goToStep(step + 1);
+    }
+
+    function renderDepartmentsTable() {
+      const tbody = document.getElementById('dept-table-body');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      state.departments.forEach((dept, index) => {
+        total += Number(dept.count) || 0;
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-100 hover:bg-white";
+        tr.innerHTML = `
+          <td class="py-2.5">
+            <input type="text" value="${dept.course}" class="w-full bg-transparent border-0 focus:ring-1 focus:ring-sky-500 rounded p-1 text-slate-800 font-medium" onchange="updateDeptField(${index}, 'course', this.value)">
+          </td>
+          <td class="py-2.5">
+            <input type="text" value="${dept.dept}" class="w-full bg-transparent border-0 focus:ring-1 focus:ring-sky-500 rounded p-1 text-slate-800" onchange="updateDeptField(${index}, 'dept', this.value)">
+          </td>
+          <td class="py-2.5">
+            <input type="number" min="0" value="${dept.count}" class="w-24 border border-slate-200 rounded px-2 py-1 text-slate-800 font-mono" onchange="updateDeptField(${index}, 'count', this.value)">
+          </td>
+          <td class="py-2.5 text-center">
+            <button type="button" onclick="removeDeptRow(${index})" class="text-rose-500 hover:text-rose-700 p-1" title="Delete">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('calc-total-dept-students').innerText = total;
+      
+      // Auto synchronize cohort total if unedited
+      const cohortTotalInput = document.getElementById('cohort-total-final');
+      if (cohortTotalInput && !cohortTotalInput.value) {
+        cohortTotalInput.value = total;
+        updateCohortCalculations();
+      }
+    }
+
+    function addDepartmentRow() {
+      state.departments.push({ course: 'B.Tech', dept: 'New Stream', count: 60 });
+      renderDepartmentsTable();
+    }
+
+    function removeDeptRow(index) {
+      if (state.departments.length <= 1) {
+        showToast("At least one department is required.");
+        return;
+      }
+      state.departments.splice(index, 1);
+      renderDepartmentsTable();
+    }
+
+    function updateDeptField(index, field, value) {
+      if (field === 'count') {
+        state.departments[index][field] = parseInt(value, 10) || 0;
+      } else {
+        state.departments[index][field] = value;
+      }
+      renderDepartmentsTable();
+    }
+
+    function updateCohortCalculations() {
+      const total = parseInt(document.getElementById('cohort-total-final').value, 10) || 0;
+      const dwms = parseInt(document.getElementById('cohort-dwms-reg').value, 10) || 0;
+      const jobSeekers = parseInt(document.getElementById('cohort-job-seekers').value, 10) || 0;
+      const englishTested = parseInt(document.getElementById('cohort-english-tested').value, 10) || 0;
+
+      // DWMS coverage
+      const dwmsPct = total > 0 ? Math.min(100, Math.round((dwms / total) * 100)) : 0;
+      document.getElementById('dwms-ratio-note').innerText = `DWMS Coverage: ${dwmsPct}% of total students`;
+
+      // Job-seeker target ratio
+      const jsPct = total > 0 ? Math.round((jobSeekers / total) * 100) : 0;
+      document.getElementById('jobseeker-ratio-note').innerText = `Primary Target: ${jsPct}% (${jobSeekers} of ${total})`;
+
+      // English score progress against immediate job seekers
+      const targetBasis = jobSeekers > 0 ? jobSeekers : (total || 1);
+      const engPct = Math.min(100, Math.round((englishTested / targetBasis) * 100));
+
+      document.getElementById('english-completed-badge').innerText = `${englishTested} / ${targetBasis} Done`;
+      document.getElementById('english-pct-label').innerText = `${engPct}%`;
+      document.getElementById('english-progress-bar').style.width = `${engPct}%`;
+    }
+
+    function completeOnboarding() {
+      goToStep(6);
+      showToast("Institution Profile Successfully Created!");
+    }
+
+    function syncDashboardData() {
+      const instName = document.getElementById('inst-name').value || "Government Engineering College Barton Hill";
+      const district = document.getElementById('inst-district').value || "Thiruvananthapuram";
+      const univ = document.getElementById('inst-university').value || "APJ Abdul Kalam Technological University (KTU)";
+      const officer = document.getElementById('officer-name').value || "Prof. Rajesh K";
+      
+      const total = parseInt(document.getElementById('cohort-total-final').value, 10) || 450;
+      const dwms = parseInt(document.getElementById('cohort-dwms-reg').value, 10) || 420;
+      const jobSeekers = parseInt(document.getElementById('cohort-job-seekers').value, 10) || 310;
+      const english = parseInt(document.getElementById('cohort-english-tested').value, 10) || 260;
+
+      // Update banner labels
+      document.getElementById('dash-inst-name').innerText = instName;
+      document.getElementById('dash-inst-district').innerText = district;
+      document.getElementById('dash-inst-univ').innerText = univ;
+      document.getElementById('dash-officer-name').innerText = officer;
+
+      // Update metric figures
+      document.getElementById('dash-total-students').innerText = total;
+      document.getElementById('dash-dwms-students').innerText = dwms;
+      document.getElementById('dash-jobseeker-students').innerText = jobSeekers;
+      document.getElementById('dash-english-students').innerText = english;
+
+      const dwmsCoverage = total > 0 ? Math.round((dwms / total) * 100) : 0;
+      document.getElementById('dash-dwms-coverage').innerText = `${dwmsCoverage}% Onboarded`;
+
+      const englishCoverage = jobSeekers > 0 ? Math.round((english / jobSeekers) * 100) : 0;
+      document.getElementById('dash-english-coverage').innerText = `${englishCoverage}% of target`;
+
+      const remaining = Math.max(0, jobSeekers - english);
+      document.getElementById('dash-remaining-english').innerText = remaining;
+
+      // Dynamic Employability Score Calculation Algorithm
+      // Weights: DWMS coverage (30%), English diagnostic (50%), Profile completion (20%)
+      const score = Math.min(98, Math.max(35, Math.round((dwmsCoverage * 0.3) + (englishCoverage * 0.5) + 20)));
+      document.getElementById('dash-score').innerHTML = `${score}<span class="text-xs font-normal text-slate-300">/100</span>`;
+      
+      // Dynamic Rank simulation
+      const simulatedRank = Math.max(1, Math.round((100 - score) * 1.8) + 3);
+      document.getElementById('dash-rank').innerText = `Rank #${simulatedRank}`;
+      document.getElementById('dash-readiness-label').innerText = `Ready: ${Math.round(score * 0.88)}%`;
+
+      // Render Selected DWMS Services List
+      const selectedServices = [];
+      document.querySelectorAll('input[name="dwms_service"]:checked').forEach(cb => {
+        selectedServices.push(cb.value);
+      });
+
+      const servContainer = document.getElementById('dash-services-list');
+      servContainer.innerHTML = '';
+      if (selectedServices.length === 0) {
+        servContainer.innerHTML = '<li class="text-slate-400 italic">No optional services selected.</li>';
+      } else {
+        selectedServices.forEach(s => {
+          const li = document.createElement('li');
+          li.className = "flex items-center gap-2 text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100";
+          li.innerHTML = `
+            <svg class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>${s}</span>
+          `;
+          servContainer.appendChild(li);
+        });
+      }
+
+      // Render Dynamic Activity Milestones
+      renderMilestones(englishCoverage);
+    }
+
+    function renderMilestones(englishCoverage) {
+      const milestones = [
+        { name: "Institution Account & Workspace Creation", owner: "Placement Cell", status: "Completed", date: "Today", tag: "Completed" },
+        { name: "Placement Officer Profile & Nodal Assign", owner: "Placement Cell", status: "Completed", date: "Today", tag: "Completed" },
+        { name: "Department & Student Baseline Ingestion", owner: "Placement Cell & TCE", status: "Completed", date: "Today", tag: "Completed" },
+        { name: "Mandatory English Score Assessment Gateway", owner: "Students / TCE", status: englishCoverage >= 80 ? "Completed" : "In Progress", date: "Due in 3 Days", tag: englishCoverage >= 80 ? "Completed" : "Active Drive" },
+        { name: "Career Ambassador Selection (4 Students)", owner: "Placement Officer", status: "Pending", date: "Next Monday", tag: "Pending Action" },
+        { name: "Career Ambassador State Orientation", owner: "Head Office Operations", status: "Scheduled", date: "Next Week", tag: "Scheduled" },
+        { name: "DWMS Profile Curation & Verification Drive", owner: "TCE & DWMS Team", status: "Planned", date: "Milestone 3", tag: "Planned" },
+        { name: "Mock Interviews & CXO Placement Drives", owner: "Corporate Connect", status: "Locked", date: "Phase 4", tag: "Locked" }
+      ];
+
+      const container = document.getElementById('milestone-list');
+      container.innerHTML = '';
+
+      let completedCount = 0;
+      milestones.forEach((m, idx) => {
+        if (m.status === "Completed") completedCount++;
+
+        let badgeStyle = "bg-slate-100 text-slate-600";
+        let icon = `<span class="w-2 h-2 rounded-full bg-slate-400"></span>`;
+
+        if (m.status === "Completed") {
+          badgeStyle = "bg-emerald-100 text-emerald-700";
+          icon = `<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+        } else if (m.status === "In Progress") {
+          badgeStyle = "bg-amber-100 text-amber-800 animate-pulse";
+          icon = `<svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+        }
+
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors text-xs";
+        div.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-200 flex-shrink-0">
+              ${icon}
+            </div>
+            <div>
+              <p class="font-bold text-slate-800">${m.name}</p>
+              <p class="text-[11px] text-slate-500">Responsible: ${m.owner} &bull; Target: ${m.date}</p>
+            </div>
+          </div>
+          <div>
+            <span class="px-2.5 py-1 rounded-full font-semibold text-[10px] ${badgeStyle}">${m.tag}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('milestones-completed-badge').innerText = `${completedCount} of ${milestones.length} Complete`;
+    }
+
+    function autoFillSampleData() {
+      document.getElementById('inst-name').value = "College of Engineering Thiruvananthapuram (CET)";
+      document.getElementById('inst-email').value = "placement@cet.ac.in";
+      document.getElementById('inst-aishe').value = "C-43890";
+      document.getElementById('inst-username').value = "cet_placement";
+      document.getElementById('inst-pass').value = "SecureKerala2026";
+
+      document.getElementById('officer-name').value = "Dr. Suresh Kumar P.";
+      document.getElementById('officer-role').value = "Chief Placement Officer & Professor";
+      document.getElementById('officer-email').value = "suresh.kumar@cet.ac.in";
+      document.getElementById('officer-phone').value = "9847123987";
+      document.getElementById('officer-alt-phone').value = "0471-2598370";
+
+      document.getElementById('inst-address').value = "Engineering College P.O., Sreekaryam";
+      document.getElementById('inst-district').value = "Thiruvananthapuram";
+      document.getElementById('inst-university').value = "APJ Abdul Kalam Technological University (KTU)";
+
+      state.departments = [
+        { course: 'B.Tech', dept: 'Computer Science & Engineering', count: 140 },
+        { course: 'B.Tech', dept: 'Electronics & Communication', count: 130 },
+        { course: 'B.Tech', dept: 'Electrical & Electronics', count: 120 },
+        { course: 'B.Tech', dept: 'Mechanical Engineering', count: 130 },
+        { course: 'MCA', dept: 'Master of Computer Applications', count: 60 }
+      ];
+      renderDepartmentsTable();
+
+      document.getElementById('cohort-total-final').value = 580;
+      document.getElementById('cohort-dwms-reg').value = 550;
+      document.getElementById('cohort-job-seekers').value = 420;
+      document.getElementById('cohort-english-tested').value = 390;
+
+      updateCohortCalculations();
+      showToast("CET Sample Data Loaded Across All Steps!");
+    }
+
+    function resetPortal() {
+      document.querySelectorAll('input').forEach(i => {
+        if (i.type !== 'button' && i.type !== 'submit' && i.type !== 'checkbox') {
+          i.value = '';
+        }
+      });
+      state.departments = [
+        { course: 'B.Tech', dept: 'Computer Science', count: 60 }
+      ];
+      renderDepartmentsTable();
+      goToStep(1);
+      showToast("Form reset to blank state.");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3200);
+    }
+
+    // Initialize initial view
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDepartmentsTable();
+      updateCohortCalculations();
+      goToStep(1);
+    });
+  </script>
+</body>
+</html>
