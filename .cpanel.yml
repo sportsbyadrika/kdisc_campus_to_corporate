@@ -1,19 +1,5 @@
 ---
-# cPanel Git Version Control deployment
-#   Repository : /home/shooting/repositories/kdisc_campus_to_corporate
-#   Web root   : /home/shooting/public_html/c2c.kdiscmis.org.in
-#
-# Deploy from cPanel > Git Version Control > Manage > Pull or Deploy > "Deploy HEAD Commit".
-# Files that live only on the server are protected and never overwritten or deleted:
-#   .env, app/config.local.php, uploaded logos/photos (uploads/logos/*, uploads/photos/*).
-# The compiled Tailwind CSS (assets/css/app.css) is committed, so no Node build is needed.
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/shooting/public_html/c2c.kdiscmis.org.in/
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/rsync -rlptv --delete --exclude='.git' --exclude='.gitignore' --exclude='.cpanel.yml' --exclude='.env' --exclude='.env.example' --exclude='node_modules' --exclude='package.json' --exclude='package-lock.json' --exclude='router.php' --exclude='app/config.local.php' --exclude='uploads/logos/*' --exclude='uploads/photos/*' --exclude='error_log' --exclude='.well-known' --exclude='cgi-bin' ./ $DEPLOYPATH
-    - /bin/mkdir -p $DEPLOYPATH/uploads/logos $DEPLOYPATH/uploads/photos
-    - /bin/find $DEPLOYPATH -type d -not -path "$DEPLOYPATH/uploads*" -exec /bin/chmod 755 {} +
-    - /bin/find $DEPLOYPATH -type f -exec /bin/chmod 644 {} +
-    - /bin/chmod 775 $DEPLOYPATH/uploads $DEPLOYPATH/uploads/logos $DEPLOYPATH/uploads/photos
-    - /bin/sh -c "[ -f $DEPLOYPATH/.env ] && /bin/chmod 600 $DEPLOYPATH/.env || echo 'WARNING - create .env in the site root from .env.example'"
+    - export DEPLOYPATH=/home/shooting/public_html/c2c.kdiscmis.org.in
+    - /bin/bash deploy/cpanel-deploy.sh $DEPLOYPATH
