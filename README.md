@@ -38,8 +38,8 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
 ## Installation
 
 ```bash
-# 1. Database credentials: environment variables or app/config.local.php
-cp app/config.local.example.php app/config.local.php   # then edit it
+# 1. Database credentials and settings
+cp .env.example .env    # then edit it (real env vars or app/config.local.php also work)
 
 # 2. Create tables, masters, the super admin and the administrator
 php database/install.php --superadmin-password='…' --admin-password='…'
@@ -71,6 +71,27 @@ location ~ \.php$ {
 ```
 
 If the portal is served from a sub-folder, set `base_path` (for example `/c2c`) in the config.
+
+## Deploying on cPanel (c2c.kdiscmis.org.in)
+
+`.cpanel.yml` deploys the repository at `/home/shooting/repositories/kdisc_campus_to_corporate` to the web root `/home/shooting/public_html/c2c.kdiscmis.org.in`.
+
+1. **Database:** in cPanel → *MySQL Databases*, create a database and a user (for example `shooting_c2c`), and give the user *All privileges* on the database.
+2. **Repository:** in cPanel → *Git Version Control*, clone the GitHub repository into `/home/shooting/repositories/kdisc_campus_to_corporate`.
+3. **Deploy:** click *Manage → Pull or Deploy → Update from Remote*, then *Deploy HEAD Commit*. The rsync step copies the code into the web root and removes files that were deleted from the repo. It never touches `.env`, `app/config.local.php` or uploaded logos and photos.
+4. **`.env`:** on the first deploy only, use *File Manager* or *Terminal* to copy `.env.example` from the repository into the web root as `.env`, then fill in the database values:
+   ```bash
+   cp ~/repositories/kdisc_campus_to_corporate/.env.example ~/public_html/c2c.kdiscmis.org.in/.env
+   nano ~/public_html/c2c.kdiscmis.org.in/.env
+   ```
+   The deploy sets `.env` to mode 600, and `.htaccess` blocks web access to it.
+5. **Install:** in cPanel *Terminal*, run this once (use your PHP version's binary if `php` isn't 8.1+, e.g. `/opt/cpanel/ea-php83/root/usr/bin/php`):
+   ```bash
+   cd ~/public_html/c2c.kdiscmis.org.in && php database/install.php --superadmin-password='…' --admin-password='…'
+   ```
+6. **PHP settings:** in *MultiPHP Manager*, select PHP 8.1 or newer for the domain, with the `pdo_mysql`, `gd`, `fileinfo` and `mbstring` extensions enabled.
+
+For later releases, push to GitHub, then *Update from Remote* and *Deploy HEAD Commit*. cPanel will only deploy when the repository's working tree is clean.
 
 ## Project layout
 

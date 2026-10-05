@@ -7,7 +7,7 @@ DirectoryIndex index.php
 
     # Block internal folders and dotfiles
     RewriteRule ^(app|database|node_modules)(/|$) - [F,L]
-    RewriteRule (^|/)\. - [F,L]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
     RewriteRule ^(package(-lock)?\.json|router\.php)$ - [F,L]
 
     # Externally redirect "/page.php" -> "/page" (hide the .php extension)
@@ -23,6 +23,11 @@ DirectoryIndex index.php
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.+?)/?$ $1.php [L,QSA]
 </IfModule>
+
+# Never serve configuration / deployment files
+<FilesMatch "^(\.env.*|\.cpanel\.yml|\.git.*|package(-lock)?\.json|router\.php|README\.md|.*\.sql)$">
+    Require all denied
+</FilesMatch>
 
 ErrorDocument 404 /404.php
 ErrorDocument 403 /404.php
