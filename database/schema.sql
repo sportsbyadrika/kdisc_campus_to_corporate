@@ -356,4 +356,6 @@ INSERT IGNORE INTO settings (`key`, `value`) VALUES
  ('academic_year','2026-27'),
  ('cohort_policy','The "Immediate Job-Seeker" strength is adopted as the primary operational target group for C2C interventions. Mandatory English Score Assessment completion acts as the gateway filter for student eligibility.'),
  ('footer_left','Campus to Corporate • Institutional Data & Tracking Layer • Integrated with DWMS'),
- ('footer_right','Government of Kerala • Head Office Operations');
+ ('footer_right','Government of Kerala • Head Office Operations'),
+ ('show_rpm','0'),
+ ('show_regional_head','0');

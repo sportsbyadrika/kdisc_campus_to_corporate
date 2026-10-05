@@ -11,8 +11,33 @@ $fields = [
     'footer_right'  => ['Footer text (right)', 'text'],
 ];
 
+$isSuper = user_role() === 'superadmin';
+
 if (is_post()) {
     verify_csrf();
+
+    // Feature visibility - super admin only (hidden from and not accepted for administrators)
+    if (input('action') === 'visibility') {
+        if (!$isSuper) {
+            forbidden();
+        }
+        $st = db()->prepare('INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)');
+        $changes = [];
+        foreach (SUPPORT_ROLE_SETTINGS as $role => $key) {
+            $new = input($key) === '1' ? '1' : '0';
+            $old = setting($key, '0');
+            $st->execute([$key, $new]);
+            if ($old !== $new) {
+                $changes[SUPPORT_ROLES[$role]['full']] = [$old === '1' ? 'shown' : 'hidden', $new === '1' ? 'shown' : 'hidden'];
+            }
+        }
+        if ($changes) {
+            log_activity('update', 'settings', null, 'Changed support team visibility', $changes);
+        }
+        flash('success', 'Visibility settings saved.');
+        redirect('settings');
+    }
+
     $current = [];
     foreach (db()->query('SELECT `key`, `value` FROM settings') as $r) {
         $current[$r['key']] = $r['value'];
@@ -73,7 +98,31 @@ require APP_ROOT . '/app/layout/header.php';
     <?php endforeach; ?>
     <div class="pt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save settings</button></div>
   </form>
-  <div class="card self-start">
+  <div class="space-y-6 self-start">
+  <?php if ($isSuper): ?>
+  <form method="post" class="card border-amber-200">
+    <?= csrf_field() ?><input type="hidden" name="action" value="visibility">
+    <div class="flex items-center gap-2 mb-1">
+      <h2 class="card-title">Feature visibility</h2>
+      <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800">Super Admin</span>
+    </div>
+    <p class="card-subtitle mb-4">Show or hide optional support team roles on the Districts &amp; Support Team page and on institution dashboards. Hidden details are kept, not deleted.</p>
+    <div class="space-y-3">
+      <?php foreach (SUPPORT_ROLE_SETTINGS as $role => $key): $r = SUPPORT_ROLES[$role]; ?>
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+          <input type="checkbox" name="<?= e($key) ?>" value="1" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600" <?= support_role_visible($role) ? 'checked' : '' ?>>
+          <span>
+            <span class="block text-sm font-semibold text-slate-900">Show <?= e($r['full']) ?><?= $r['short'] !== $r['full'] ? ' (' . e($r['short']) . ')' : '' ?></span>
+            <span class="block text-xs text-slate-500"><?= e($r['purpose']) ?></span>
+          </span>
+        </label>
+      <?php endforeach; ?>
+      <p class="text-[11px] text-slate-400">The Talent Connect Executive (TCE) is always shown.</p>
+    </div>
+    <div class="pt-4 mt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save visibility</button></div>
+  </form>
+  <?php endif; ?>
+  <div class="card">
     <h2 class="card-title mb-1">Academic years on record</h2>
     <p class="card-subtitle mb-4">Institutions with cohort or student data</p>
     <ul class="space-y-2 text-sm">
@@ -82,6 +131,7 @@ require APP_ROOT . '/app/layout/header.php';
       <?php endforeach; ?>
       <?php if (!$yearMap): ?><li class="text-xs text-slate-400 italic">No data yet.</li><?php endif; ?>
     </ul>
+  </div>
   </div>
 </div>
 <?php require APP_ROOT . '/app/layout/footer.php';
