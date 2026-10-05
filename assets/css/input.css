@@ -66,6 +66,15 @@
   .bar-fill { @apply h-2 rounded-full bg-sky-600 transition-all duration-300; }
 }
 
+/* Tooltip bubble (see tooltip() in app/helpers.php) */
+.tip-body {
+  @apply hidden absolute bottom-full mb-2 z-50 w-64 max-w-[calc(100vw-2rem)] rounded-xl bg-slate-900 px-3 py-2.5
+         text-left text-xs font-normal normal-case tracking-normal leading-snug shadow-lg pointer-events-none;
+}
+.tip:hover .tip-body, .tip:focus .tip-body, .tip:focus-within .tip-body { @apply block; }
+.tip:focus { @apply outline-none; }
+.tip:focus-visible > span:first-child { @apply rounded-full ring-2 ring-sky-400; }
+
 .step-badge-active { box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2); }
 
 @media print {

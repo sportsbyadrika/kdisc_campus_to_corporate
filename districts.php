@@ -6,10 +6,18 @@
 require __DIR__ . '/app/bootstrap.php';
 require_role('admin', 'state');
 
-$fields = [
-    'tce_name' => 'TCE name', 'tce_email' => 'TCE email', 'tce_phone' => 'TCE phone',
-    'rpm_name' => 'RPM name', 'rpm_email' => 'RPM email', 'rh_name' => 'Regional Head name', 'rh_email' => 'Regional Head email',
+// Fields grouped by support role (role definitions: SUPPORT_ROLES in app/helpers.php)
+$groups = [
+    'tce' => ['tce_name' => 'Name', 'tce_email' => 'Email', 'tce_phone' => 'Phone'],
+    'rpm' => ['rpm_name' => 'Name', 'rpm_email' => 'Email'],
+    'rh'  => ['rh_name' => 'Name', 'rh_email' => 'Email'],
 ];
+$fields = [];
+foreach ($groups as $role => $gf) {
+    foreach ($gf as $k => $label) {
+        $fields[$k] = SUPPORT_ROLES[$role]['short'] . ' ' . strtolower($label);
+    }
+}
 
 if (is_post()) {
     verify_csrf();
@@ -46,7 +54,20 @@ require APP_ROOT . '/app/layout/header.php';
 <div class="mb-6">
   <nav class="text-xs text-slate-500 mb-2"><a class="link" href="<?= e(url('masters')) ?>">Masters</a> › Districts</nav>
   <h1 class="text-xl font-bold text-slate-900">Districts &amp; Support Team</h1>
-  <p class="text-sm text-slate-500">Talent Connect Executive, Regional Programme Manager and Regional Head shown on each institution's dashboard.</p>
+  <p class="text-sm text-slate-500">The support team assigned to each district is shown on the dashboard of every institution in that district.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <?php foreach (['tce' => 'bg-sky-100 text-sky-700', 'rpm' => 'bg-indigo-100 text-indigo-700', 'rh' => 'bg-purple-100 text-purple-700'] as $rk => $cls):
+      $r = SUPPORT_ROLES[$rk]; ?>
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-start gap-3">
+      <span class="px-2 py-1 rounded-lg text-[11px] font-bold shrink-0 <?= $cls ?>"><?= e($r['short'] === $r['full'] ? 'RH' : $r['short']) ?></span>
+      <div>
+        <p class="text-sm font-bold text-slate-900"><?= e($r['full']) ?></p>
+        <p class="text-xs text-slate-500 mt-0.5"><?= e($r['purpose']) ?></p>
+      </div>
+    </div>
+  <?php endforeach; ?>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -57,20 +78,37 @@ require APP_ROOT . '/app/layout/header.php';
         <?php if (!$editing): ?><a href="<?= e(url('districts', ['edit' => $d['id']])) ?>#d<?= $d['id'] ?>" class="btn-secondary btn-xs"><?= icon('pencil', 'w-3.5 h-3.5') ?> Edit</a><?php endif; ?>
       </div>
       <?php if ($editing): ?>
-        <form method="post" id="d<?= $d['id'] ?>" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form method="post" id="d<?= $d['id'] ?>" class="space-y-4">
           <?= csrf_field() ?><input type="hidden" name="id" value="<?= $d['id'] ?>">
-          <?php foreach ($fields as $k => $label): ?>
-            <div><label class="label"><?= e($label) ?></label><input class="input input-sm" name="<?= $k ?>" value="<?= e($d[$k]) ?>" type="<?= str_ends_with($k, '_email') ? 'email' : 'text' ?>"></div>
+          <?php foreach ($groups as $role => $gf): $r = SUPPORT_ROLES[$role]; ?>
+            <fieldset class="rounded-xl border border-slate-200 p-3">
+              <legend class="px-1.5 text-xs font-bold text-slate-800">
+                <?= e($r['full']) ?><?= $r['short'] !== $r['full'] ? ' <span class="font-semibold text-slate-400">(' . e($r['short']) . ')</span>' : '' ?>
+                <?= role_tooltip($role) ?>
+              </legend>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <?php $i = 0; foreach ($gf as $k => $label): ?>
+                  <div>
+                    <label class="label flex items-center gap-1" for="f-<?= $d['id'] ?>-<?= $k ?>">
+                      <?= e($r['short']) ?> <?= e($label) ?> <?= role_tooltip($role, $i++ % 2 ? 'right' : 'left') ?>
+                    </label>
+                    <input class="input input-sm" id="f-<?= $d['id'] ?>-<?= $k ?>" name="<?= $k ?>" value="<?= e($d[$k]) ?>"
+                           type="<?= str_ends_with($k, '_email') ? 'email' : (str_ends_with($k, '_phone') ? 'tel' : 'text') ?>"
+                           placeholder="<?= e($r['full']) ?> <?= e(strtolower($label)) ?>">
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </fieldset>
           <?php endforeach; ?>
-          <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
+          <div class="flex justify-end gap-2 pt-1">
             <a href="<?= e(url('districts')) ?>" class="btn-secondary btn-xs">Cancel</a>
             <button class="btn-primary btn-xs">Save</button>
           </div>
         </form>
       <?php else: ?>
         <dl class="grid grid-cols-3 gap-3 text-xs">
-          <?php foreach ([['TCE', $d['tce_name'], $d['tce_email']], ['RPM', $d['rpm_name'], $d['rpm_email']], ['Regional Head', $d['rh_name'], $d['rh_email']]] as [$role, $n, $em]): ?>
-            <div><dt class="text-[10px] uppercase font-bold tracking-wider text-slate-400"><?= $role ?></dt><dd class="font-semibold text-slate-800"><?= e($n ?: '—') ?></dd><dd class="text-slate-500 truncate"><?= e($em ?: '') ?></dd></div>
+          <?php foreach ([['tce', $d['tce_name'], $d['tce_email'], 'left'], ['rpm', $d['rpm_name'], $d['rpm_email'], 'left'], ['rh', $d['rh_name'], $d['rh_email'], 'right']] as [$role, $n, $em, $align]): ?>
+            <div><dt class="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1"><?= e(SUPPORT_ROLES[$role]['short']) ?> <?= role_tooltip($role, $align) ?></dt><dd class="font-semibold text-slate-800"><?= e($n ?: '—') ?></dd><dd class="text-slate-500 truncate"><?= e($em ?: '') ?></dd></div>
           <?php endforeach; ?>
         </dl>
       <?php endif; ?>
