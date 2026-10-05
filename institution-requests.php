@@ -107,7 +107,7 @@ require APP_ROOT . '/app/layout/header.php';
   <p class="card-subtitle mb-5">The State office reviews the request and adds the institution to the portal.</p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
     <div class="md:col-span-2"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" required></div>
-    <div><label class="label">AISHE / Affiliation Code</label><input class="input" name="code"></div>
+    <div><label class="label">Affiliation Code</label><input class="input" name="code"></div>
     <div>
       <label class="label">Affiliated University</label>
       <select class="input" name="university_id"><option value="">Select University</option>

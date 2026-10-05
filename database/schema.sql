@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS institutions (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name           VARCHAR(255) NOT NULL,
-  code           VARCHAR(40)  NULL COMMENT 'AISHE / affiliation code',
+  code           VARCHAR(40)  NULL COMMENT 'Affiliation code',
   email          VARCHAR(160) NULL,
   phone          VARCHAR(30)  NULL,
   website        VARCHAR(200) NULL,

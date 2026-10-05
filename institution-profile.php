@@ -98,7 +98,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <?php if (!$isOffice): ?><span class="hint">Contact your district office to correct the registered name.</span><?php endif; ?>
     </div>
     <div>
-      <label class="label">AISHE / Affiliation Code</label>
+      <label class="label">Affiliation Code</label>
       <input class="input" name="code" value="<?= e($v('code')) ?>" placeholder="e.g. C-43521" <?= $isOffice && $canEdit ? '' : 'disabled' ?>>
     </div>
 
