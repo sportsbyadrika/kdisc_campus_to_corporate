@@ -390,3 +390,47 @@ function icon(string $name, string $class = 'w-4 h-4'): string
     }
     return '<svg class="' . e($class) . '" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">' . $out . '</svg>';
 }
+
+/* ---------------------------------------------------------------------------
+ * District support team roles (shown on the district master and institution dashboards)
+ * ------------------------------------------------------------------------- */
+
+const SUPPORT_ROLES = [
+    'tce' => [
+        'short'   => 'TCE',
+        'full'    => 'Talent Connect Executive',
+        'purpose' => 'Field executive assigned to the institutions of the district. Day-to-day point of contact for the placement cell: drives DWMS registration, the English Score / assessment drives, mock interviews and the rollout of DWMS services.',
+    ],
+    'rpm' => [
+        'short'   => 'RPM',
+        'full'    => 'Regional Programme Manager',
+        'purpose' => 'Manages programme delivery for the region the district belongs to. Supervises the TCEs, monitors institution onboarding and cohort progress, resolves escalations and coordinates placement drives.',
+    ],
+    'rh' => [
+        'short'   => 'Regional Head',
+        'full'    => 'Regional Head',
+        'purpose' => 'Senior lead for the region (South / Central / North). Oversees the RPMs and TCEs, reviews regional performance and liaises with the State head office on Campus to Corporate operations.',
+    ],
+];
+
+/**
+ * Small info icon with an accessible tooltip (hover, keyboard focus, or tap on touch screens).
+ * $align: 'left' anchors the bubble to the icon's left edge, 'right' to its right edge.
+ */
+function tooltip(string $title, string $body, string $align = 'left'): string
+{
+    $pos = $align === 'right' ? 'right-0' : 'left-0';
+    return '<span class="tip group relative inline-flex align-middle" tabindex="0" aria-label="' . e($title . ': ' . $body) . '">'
+        . '<span class="text-slate-400 group-hover:text-sky-600 group-focus:text-sky-600 cursor-help">' . icon('info', 'w-3.5 h-3.5') . '</span>'
+        . '<span role="tooltip" class="tip-body ' . $pos . '">'
+        . '<span class="block font-bold text-white">' . e($title) . '</span>'
+        . '<span class="block mt-0.5 text-slate-300">' . e($body) . '</span></span></span>';
+}
+
+/** Tooltip describing one support role: "TCE — Talent Connect Executive" + purpose. */
+function role_tooltip(string $key, string $align = 'left'): string
+{
+    $r = SUPPORT_ROLES[$key];
+    $title = $r['short'] === $r['full'] ? $r['full'] : $r['short'] . ' — ' . $r['full'];
+    return tooltip($title, $r['purpose'], $align);
+}

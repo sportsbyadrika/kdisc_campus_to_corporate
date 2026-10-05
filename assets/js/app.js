@@ -181,3 +181,28 @@
     apply();
   }
 })();
+
+/* Tooltips inside <label>: keep a tap/click on the info icon from focusing the input instead. */
+document.addEventListener('click', (e) => {
+  const tip = e.target.closest('.tip');
+  if (!tip) return;
+  e.preventDefault();
+  tip.focus();
+});
+
+/* Keep tooltip bubbles inside the viewport (layouts collapse to one column on phones). */
+['mouseover', 'focusin'].forEach((evt) => document.addEventListener(evt, (e) => {
+  const tip = e.target.closest && e.target.closest('.tip');
+  if (!tip) return;
+  const body = tip.querySelector('.tip-body');
+  if (!body) return;
+  body.style.transform = '';
+  requestAnimationFrame(() => {
+    const r = body.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    let dx = 0;
+    if (r.left < 8) dx = 8 - r.left;
+    else if (r.right > vw - 8) dx = vw - 8 - r.right;
+    if (dx) body.style.transform = `translateX(${Math.round(dx)}px)`;
+  });
+}));

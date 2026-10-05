@@ -157,16 +157,16 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   <!-- Support hierarchy -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <?php foreach ([
-        ['TC', 'sky', 'Assigned TCE (Talent Connect Executive)', $district['tce_name'] ?? null, trim(($district['tce_email'] ?? '') . (($district['tce_phone'] ?? '') ? ' • ' . $district['tce_phone'] : ''))],
-        ['RP', 'indigo', 'Regional Programme Manager (RPM)', $district['rpm_name'] ?? null, $district['rpm_email'] ?? ''],
-        ['RH', 'purple', 'Regional Head', $district['rh_name'] ?? null, $district['rh_email'] ?? ''],
-    ] as [$ab, $col, $role, $name, $contact]):
+        ['TC', 'sky', 'Assigned TCE (Talent Connect Executive)', 'tce', $district['tce_name'] ?? null, trim(($district['tce_email'] ?? '') . (($district['tce_phone'] ?? '') ? ' • ' . $district['tce_phone'] : ''))],
+        ['RP', 'indigo', 'Regional Programme Manager (RPM)', 'rpm', $district['rpm_name'] ?? null, $district['rpm_email'] ?? ''],
+        ['RH', 'purple', 'Regional Head', 'rh', $district['rh_name'] ?? null, $district['rh_email'] ?? ''],
+    ] as [$ab, $col, $role, $roleKey, $name, $contact]):
         $cls = ['sky' => 'bg-sky-100 text-sky-700', 'indigo' => 'bg-indigo-100 text-indigo-700', 'purple' => 'bg-purple-100 text-purple-700'][$col];
         $txt = ['sky' => 'text-sky-700', 'indigo' => 'text-indigo-700', 'purple' => 'text-purple-700'][$col]; ?>
       <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
         <div class="w-12 h-12 rounded-xl <?= $cls ?> flex items-center justify-center font-bold text-lg shrink-0"><?= $ab ?></div>
         <div class="min-w-0">
-          <span class="text-[10px] font-bold uppercase tracking-wider <?= $txt ?> block"><?= e($role) ?></span>
+          <span class="text-[10px] font-bold uppercase tracking-wider <?= $txt ?> flex items-center gap-1"><?= e($role) ?> <?= role_tooltip($roleKey, $roleKey === 'rh' ? 'right' : 'left') ?></span>
           <p class="text-sm font-bold text-slate-900"><?= e($name ?: 'To be assigned') ?></p>
           <p class="text-xs text-slate-500 truncate"><?= e($contact ?: 'Contact via district office') ?></p>
         </div>
