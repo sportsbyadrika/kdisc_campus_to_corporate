@@ -113,10 +113,14 @@ function logout_user(): void
 /** IDs of the institutions an institution user is assigned to. */
 function assigned_institution_ids(?int $userId = null): array
 {
+    static $cache = [];
     $userId ??= (int) (current_user()['id'] ?? 0);
-    $st = db()->prepare('SELECT institution_id FROM user_institutions WHERE user_id = ?');
-    $st->execute([$userId]);
-    return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    if (!isset($cache[$userId])) {
+        $st = db()->prepare('SELECT institution_id FROM user_institutions WHERE user_id = ?');
+        $st->execute([$userId]);
+        $cache[$userId] = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+    return $cache[$userId];
 }
 
 /**

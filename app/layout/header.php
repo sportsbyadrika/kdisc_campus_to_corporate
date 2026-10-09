@@ -7,13 +7,14 @@ $page = current_page();
 $nav = [];
 if ($user) {
     $nav[] = ['dashboard', 'Dashboard', 'home', ['dashboard', 'institution-dashboard']];
-    if (has_role('admin', 'state', 'district')) {
-        $nav[] = ['reports', 'Reports', 'chart', ['reports']];
-    }
+    $nav[] = ['reports', 'Reports', 'chart', ['reports']];
     $nav[] = ['institutions', $user['role'] === 'institution' ? 'My Institutions' : 'Institutions', 'building',
         ['institutions', 'institution-profile', 'institution-officers', 'institution-students', 'institution-cohorts', 'institution-services']];
     if (has_role('admin', 'state', 'district')) {
         $nav[] = ['institution-requests', 'Requests', 'inbox', ['institution-requests']];
+    }
+    if (has_role('admin', 'district')) {
+        $nav[] = ['vendor-upload', 'Test Upload', 'clipboard', ['vendor-upload']];
     }
     if (has_role('admin', 'district')) {
         $nav[] = ['users', 'Users', 'users', ['users', 'user-edit']];

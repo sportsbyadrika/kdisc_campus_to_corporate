@@ -16,7 +16,23 @@ $st = db()->prepare('SELECT * FROM institution_cohorts WHERE institution_id = ? 
 $st->execute([$instId, $ay]);
 $cohort = $st->fetch() ?: null;
 
+// Campus-placed students are also captured for the previous academic year (for comparison)
+$prevAy = previous_academic_year($ay);
+$st = db()->prepare('SELECT campus_placed FROM institution_cohorts WHERE institution_id = ? AND academic_year = ?');
+$st->execute([$instId, $prevAy]);
+$prevCampusRow = $st->fetch() ?: null;
+$prevCampus = $prevCampusRow['campus_placed'] ?? null;
+$optionalCount = function (string $key): ?int {
+    $raw = $_POST[$key] ?? '';
+    return is_string($raw) && trim($raw) !== '' && is_numeric($raw) ? max(0, (int) $raw) : null;
+};
+
 $tests = assessment_tests_for($inst['university_id'] ? (int) $inst['university_id'] : null);
+
+// Tests conducted as reported by the vendor software (bulk-uploaded by Admin / District; read-only here)
+$st = db()->prepare('SELECT * FROM assessment_vendor_counts WHERE institution_id = ? AND academic_year = ?');
+$st->execute([$instId, $ay]);
+$vendor = array_column($st->fetchAll(), null, 'assessment_test_id');
 $st = db()->prepare('SELECT * FROM institution_assessments WHERE institution_id = ? AND academic_year = ?');
 $st->execute([$instId, $ay]);
 $progress = [];
@@ -37,7 +53,10 @@ if (is_post()) {
         'remarks'          => nullable(input('remarks')),
     ];
     $errors = [];
+    $campus = $optionalCount('campus_placed');
+    $campusPrev = $optionalCount('campus_placed_prev');
     if ($data['total_final_year'] < 1) $errors[] = 'Total final-year students must be at least 1.';
+    if ($campus !== null && $campus > $data['total_final_year']) $errors[] = "Campus-placed students ({$ay}) cannot exceed total final-year students.";
     if ($data['dwms_registered'] > $data['total_final_year']) $errors[] = 'DWMS registrations cannot exceed total final-year students.';
     if ($data['job_seekers'] + $data['higher_studies'] > $data['total_final_year']) $errors[] = 'Job seekers + higher-studies aspirants cannot exceed total final-year students.';
 
@@ -70,7 +89,18 @@ if (is_post()) {
                    ON DUPLICATE KEY UPDATE total_final_year = VALUES(total_final_year), dwms_registered = VALUES(dwms_registered),
                      job_seekers = VALUES(job_seekers), higher_studies = VALUES(higher_studies), remarks = VALUES(remarks), updated_by = VALUES(updated_by)')
         ->execute([$instId, $ay, ...array_values($data), $uid]);
-    $changes = diff_changes($cohort ?? [], $data, [
+    db()->prepare('UPDATE institution_cohorts SET campus_placed = ? WHERE institution_id = ? AND academic_year = ?')->execute([$campus, $instId, $ay]);
+    if ($campusPrev !== null || $prevCampusRow) {
+        db()->prepare('INSERT INTO institution_cohorts (institution_id, academic_year, campus_placed, updated_by) VALUES (?,?,?,?)
+                       ON DUPLICATE KEY UPDATE campus_placed = VALUES(campus_placed)')
+            ->execute([$instId, $prevAy, $campusPrev, $uid]);
+    }
+    $changes = diff_changes(
+        ['campus' => $cohort['campus_placed'] ?? null, 'campus_prev' => $prevCampus],
+        ['campus' => $campus, 'campus_prev' => $campusPrev],
+        ['campus' => "Campus-placed {$ay}", 'campus_prev' => "Campus-placed {$prevAy}"]
+    );
+    $changes += diff_changes($cohort ?? [], $data, [
         'total_final_year' => 'Final-year students', 'dwms_registered' => 'DWMS registered',
         'job_seekers' => 'Immediate job seekers', 'higher_studies' => 'Higher studies', 'remarks' => 'Remarks',
     ]);
@@ -113,6 +143,36 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   <div class="p-4 bg-sky-50 border border-sky-200 rounded-xl mb-6 flex items-start gap-3">
     <div class="text-sky-600 mt-0.5"><?= icon('info', 'w-5 h-5') ?></div>
     <div class="text-xs text-sky-900"><span class="font-bold">Principal Operational Cohort Policy:</span> <?= e(setting('cohort_policy')) ?></div>
+  </div>
+
+  <?php
+    $campusNow = $old['campus_placed'] ?? $cohort['campus_placed'] ?? '';
+    $campusPrevVal = $old['campus_placed_prev'] ?? $prevCampus ?? '';
+    $delta = ($campusNow !== '' && $campusPrevVal !== '') ? (int) $campusNow - (int) $campusPrevVal : null;
+  ?>
+  <div class="p-4 rounded-xl border border-teal-200 bg-teal-50/50 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+      <div>
+        <span class="text-xs font-semibold uppercase text-teal-800 flex items-center gap-1">Campus-Placed Students
+          <?= tooltip('Campus-placed students', 'Students who received job offers through campus recruitment (on-campus or pooled campus drives). Recorded for the current and the previous academic year so the change can be tracked.') ?></span>
+        <span class="text-[11px] text-teal-700">Current academic year compared with last academic year.</span>
+      </div>
+      <?php if ($delta !== null): ?>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?= $delta >= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700' ?>">
+          <?= $delta >= 0 ? '▲' : '▼' ?> <?= num(abs($delta)) ?> vs <?= e($prevAy) ?><?= (int) $campusPrevVal > 0 ? ' (' . ($delta >= 0 ? '+' : '−') . abs((int) round($delta / (int) $campusPrevVal * 100)) . '%)' : '' ?>
+        </span>
+      <?php endif; ?>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="label text-teal-800" for="campus-placed">This year · <?= e($ay) ?></label>
+        <input type="number" id="campus-placed" name="campus_placed" min="0" value="<?= e($campusNow) ?>" placeholder="Not reported" class="w-full text-2xl font-bold text-teal-800 bg-white border border-teal-300 rounded-lg p-2 font-mono" <?= $ro ?>>
+      </div>
+      <div>
+        <label class="label text-teal-800" for="campus-placed-prev">Last year · <?= e($prevAy) ?></label>
+        <input type="number" id="campus-placed-prev" name="campus_placed_prev" min="0" value="<?= e($campusPrevVal) ?>" placeholder="Not reported" class="w-full text-2xl font-bold text-slate-600 bg-white border border-teal-200 rounded-lg p-2 font-mono" <?= $ro ?>>
+      </div>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
@@ -167,7 +227,8 @@ require APP_ROOT . '/app/layout/institution_nav.php';
           <span class="text-sm font-bold text-emerald-600 block" data-badge>0 / 0 Done</span>
         </div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+      <?php $vc = $vendor[$tid] ?? null; ?>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
         <div>
           <label class="label">Students Completed</label>
           <input type="number" min="0" name="assess[<?= $tid ?>][completed]" value="<?= e($done) ?>" data-done class="input font-mono" <?= $ro ?>>
@@ -183,6 +244,16 @@ require APP_ROOT . '/app/layout/institution_nav.php';
         <div>
           <label class="label">Drive Date</label>
           <input type="date" name="assess[<?= $tid ?>][drive_date]" value="<?= e($p['drive_date'] ?? '') ?>" class="input" <?= $ro ?>>
+        </div>
+        <div>
+          <span class="label flex items-center gap-1">Tests Conducted (Vendor)
+            <?= tooltip('Tests conducted — vendor software', 'Count reported by the assessment vendor\'s dashboard for this institution\'s DWMS Institution ID. Uploaded in bulk by the Administrator or District office; it cannot be edited here. Use it to cross-check the field figure you enter in Students Completed.', 'right') ?></span>
+          <div class="h-[42px] px-4 rounded-xl border border-dashed border-violet-300 bg-violet-50/60 flex items-center justify-between gap-2"
+               <?= $vc ? 'data-vendor="' . (int) $vc['tests_conducted'] . '"' : '' ?>>
+            <span class="font-mono font-bold <?= $vc ? 'text-violet-800' : 'text-slate-400' ?>"><?= $vc ? num($vc['tests_conducted']) : '—' ?></span>
+            <span class="text-[10px] text-violet-600 text-right leading-tight"><?= $vc ? 'Uploaded ' . e(date('d M Y', strtotime($vc['uploaded_at']))) : 'Not uploaded yet' ?></span>
+          </div>
+          <span class="hint" data-vendor-note><?= $inst['dwms_id'] ? '' : 'Needs a DWMS Institution ID to match uploads.' ?></span>
         </div>
       </div>
       <div class="mt-4 pt-3 border-t border-slate-100">

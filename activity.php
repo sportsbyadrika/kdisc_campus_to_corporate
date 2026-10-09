@@ -38,7 +38,7 @@ if ($f['institution']) {
     $instName = $s->fetchColumn();
 }
 $entities = ['institution' => 'Institution profile', 'officer' => 'Placement officers', 'departments' => 'Student strength', 'cohort' => 'Cohorts & assessments',
-    'services' => 'DWMS services', 'request' => 'Institution requests', 'user' => 'Users', 'district' => 'Districts',
+    'services' => 'DWMS services', 'vendor_counts' => 'Vendor test counts', 'vendor_upload' => 'Vendor test uploads', 'request' => 'Institution requests', 'user' => 'Users', 'district' => 'Districts',
     'universities' => 'Universities', 'categories' => 'Categories', 'courses' => 'Courses', 'assessments' => 'Assessment tests', 'settings' => 'Settings'];
 $actionColors = ['create' => 'bg-emerald-100 text-emerald-700', 'update' => 'bg-sky-100 text-sky-700', 'delete' => 'bg-rose-100 text-rose-700',
     'approve' => 'bg-emerald-100 text-emerald-700', 'reject' => 'bg-rose-100 text-rose-700'];

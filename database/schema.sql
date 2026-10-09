@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS institutions (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name           VARCHAR(255) NOT NULL,
   code           VARCHAR(40)  NULL COMMENT 'Affiliation code',
+  dwms_id        VARCHAR(40)  NULL COMMENT 'DWMS institution id',
   email          VARCHAR(160) NULL,
   phone          VARCHAR(30)  NULL,
   website        VARCHAR(200) NULL,
@@ -111,6 +112,7 @@ CREATE TABLE IF NOT EXISTS institutions (
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE KEY uq_inst_dwms (dwms_id),
   KEY idx_inst_district (district_id),
   KEY idx_inst_university (university_id),
   KEY idx_inst_category (category_id),
@@ -180,6 +182,7 @@ CREATE TABLE IF NOT EXISTS institution_cohorts (
   id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
   institution_id    INT UNSIGNED NOT NULL,
   academic_year     VARCHAR(9)   NOT NULL,
+  campus_placed     INT UNSIGNED NULL COMMENT 'Students placed through campus recruitment',
   total_final_year  INT UNSIGNED NOT NULL DEFAULT 0,
   dwms_registered   INT UNSIGNED NOT NULL DEFAULT 0,
   job_seekers       INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Immediate job seekers - primary target cohort',
@@ -227,6 +230,20 @@ CREATE TABLE IF NOT EXISTS institution_services (
   UNIQUE KEY uq_inst_service (institution_id, service_id),
   CONSTRAINT fk_isvc_inst    FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE,
   CONSTRAINT fk_isvc_service FOREIGN KEY (service_id) REFERENCES dwms_services (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tests conducted as reported by the assessment vendor's software (bulk uploaded by Admin / District)
+CREATE TABLE IF NOT EXISTS assessment_vendor_counts (
+  institution_id      INT UNSIGNED NOT NULL,
+  academic_year       VARCHAR(9)   NOT NULL,
+  assessment_test_id  INT UNSIGNED NOT NULL,
+  tests_conducted     INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Value reported by the test vendor software',
+  uploaded_by         INT UNSIGNED NULL,
+  uploaded_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (institution_id, academic_year, assessment_test_id),
+  KEY idx_vendor_test (assessment_test_id),
+  CONSTRAINT fk_vendor_inst FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE,
+  CONSTRAINT fk_vendor_test FOREIGN KEY (assessment_test_id) REFERENCES assessment_tests (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Point-in-time snapshots so changes in the field can be tracked over time

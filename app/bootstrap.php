@@ -18,6 +18,7 @@ require __DIR__ . '/helpers.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/metrics.php';
 require __DIR__ . '/charts.php';
+require __DIR__ . '/migrations.php';
 
 function config(string $key, mixed $default = null): mixed
 {
@@ -60,4 +61,6 @@ if (PHP_SAPI !== 'cli') {
     header('X-Frame-Options: SAMEORIGIN');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
+
+    ensure_schema(); // upgrades an older database in place (no-op once current)
 }

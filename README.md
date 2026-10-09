@@ -23,7 +23,10 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
   4. *Cohorts & assessments*: final-year total, DWMS registered, immediate job seekers and higher-studies aspirants. The assessment tests come from the masters, filtered by the institution's university. One test can be marked as the mandatory gateway.
   5. *DWMS services*: each service has a status, the number of students who benefited, a date and remarks.
   6. *Dashboard*: identity banner, statewide rank and readiness score, the district support team (TCE / RPM / Regional Head), KPIs, a live milestone tracker, a list of next tasks, a cohort trend chart, a course breakdown, a map and recent changes.
-- **Drill-down reports**: Kerala → the 14 districts → the institutions of a district → an institution dashboard. You can filter by university and category, export to CSV or print.
+- **Drill-down reports**: Kerala → the 14 districts → the institutions of a district. Every signed-in user can view them read-only; an institution row opens its dashboard only for users who manage that institution. You can filter by university and category, print, and (Admin, State and District users) export to CSV.
+- **Campus-placed students**: recorded on the Cohorts & Tests page for the current academic year and the previous one, with the change shown alongside and in reports.
+- **DWMS Institution ID**: a unique ID per institution, set by the Administrator / State (Institutions) or the District office (profile). It is used to match vendor uploads.
+- **Vendor test counts** (*Test Upload*, Admin and District users): download a CSV template listing institutions by DWMS Institution ID with one column per assessment test, fill in the tests-conducted counts from the test vendor's dashboard and upload it. The figures appear read-only as *Tests Conducted (Vendor)* next to each test on the Cohorts & Tests page, compared with the institution's own field figure.
 - **Change tracking**: every change is written to `activity_log` with old and new values. Cohort figures are also saved as snapshots, which feed the trend charts.
 - **Readiness score** = 30% DWMS coverage + 50% gateway-assessment coverage of job seekers + 20% onboarding completion.
 - **Security**: CSRF tokens, prepared statements, `password_hash`, session regeneration, login throttling, role- and district-scoped access checks on every page. Uploaded images are re-encoded through GD, and script execution is blocked in `uploads/`.
@@ -99,6 +102,10 @@ For later releases, push to GitHub, then *Update from Remote* and *Deploy HEAD C
 - Read the deploy logs: `~/c2c-deploy.log`, written by `deploy/cpanel-deploy.sh`, and cPanel's own logs in `~/.cpanel/logs/` (files named `vc_*_git_deploy.log`).
 - Run the deploy by hand in *Terminal* to see any errors directly:
   `cd ~/repositories/kdisc_campus_to_corporate && bash deploy/cpanel-deploy.sh`
+
+## Database upgrades
+
+The portal upgrades an existing database automatically: on the first page load after a deploy it applies any pending schema changes (tracked in `settings.schema_version`, see `app/migrations.php`). The changes only add columns and tables, never remove data. Running `php database/install.php` again does the same.
 
 ## Project layout
 

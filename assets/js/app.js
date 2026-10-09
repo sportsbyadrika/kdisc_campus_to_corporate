@@ -206,3 +206,22 @@ document.addEventListener('click', (e) => {
     if (dx) body.style.transform = `translateX(${Math.round(dx)}px)`;
   });
 }));
+
+/* Cohorts page: compare the field-entered completions with the vendor-reported count. */
+(function () {
+  const rows = document.querySelectorAll('[data-assess-row]');
+  if (!rows.length) return;
+  const sync = () => rows.forEach((row) => {
+    const box = row.querySelector('[data-vendor]');
+    const note = row.querySelector('[data-vendor-note]');
+    if (!box || !note) return;
+    const vendor = parseInt(box.dataset.vendor, 10) || 0;
+    const done = parseInt(row.querySelector('[data-done]')?.value, 10) || 0;
+    const diff = done - vendor;
+    note.textContent = diff === 0 ? 'Matches the vendor count.'
+      : `Field figure is ${Math.abs(diff)} ${diff > 0 ? 'above' : 'below'} the vendor count.`;
+    note.className = 'hint ' + (diff === 0 ? 'text-emerald-600' : 'text-amber-600');
+  });
+  document.addEventListener('input', (e) => { if (e.target.matches('[data-done]')) sync(); });
+  sync();
+})();
