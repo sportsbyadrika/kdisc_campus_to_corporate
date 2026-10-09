@@ -25,10 +25,12 @@ if (is_post()) {
     if ($isOffice) {
         $data['name'] = (string) input('name');
         $data['code'] = nullable(input('code'));
+        $data['dwms_id'] = nullable(input('dwms_id'));
     }
 
     $errors = [];
     if ($isOffice && $data['name'] === '') $errors[] = 'Institution name is required.';
+    if ($isOffice && ($dwmsError = dwms_id_error($data['dwms_id'], (int) $inst['id']))) $errors[] = $dwmsError;
     if ($data['email'] && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid institutional email.';
     if ($data['website'] && !filter_var($data['website'], FILTER_VALIDATE_URL)) $errors[] = 'Website must be a full URL (https://…).';
     if (!$data['university_id']) $errors[] = 'Select the affiliated university.';
@@ -98,14 +100,24 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <?php if (!$isOffice): ?><span class="hint">Contact your district office to correct the registered name.</span><?php endif; ?>
     </div>
     <div>
+      <label class="label">District</label>
+      <input class="input" value="<?= e($inst['district_name']) ?>" disabled>
+    </div>
+
+    <div>
       <label class="label">Affiliation Code</label>
       <input class="input" name="code" value="<?= e($v('code')) ?>" placeholder="e.g. C-43521" <?= $isOffice && $canEdit ? '' : 'disabled' ?>>
     </div>
-
+    <div>
+      <label class="label flex items-center gap-1">DWMS Institution ID <?= tooltip('DWMS Institution ID', 'Unique ID of this institution in DWMS (Digital Workforce Management System). Used to match the test counts uploaded from the assessment vendor software.') ?></label>
+      <input class="input font-mono" name="dwms_id" value="<?= e($v('dwms_id')) ?>" maxlength="40" placeholder="e.g. DWMS12345" <?= $isOffice && $canEdit ? '' : 'disabled' ?>>
+      <?php if (!$isOffice): ?><span class="hint">Set by your district office.</span><?php endif; ?>
+    </div>
     <div>
       <label class="label">Official Institutional Email</label>
       <input class="input" type="email" name="email" value="<?= e($v('email')) ?>" placeholder="placement@college.ac.in" <?= $ro ?>>
     </div>
+
     <div>
       <label class="label">Phone</label>
       <input class="input" name="phone" value="<?= e($v('phone')) ?>" placeholder="0471-2300000" <?= $ro ?>>
@@ -114,7 +126,6 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <label class="label">Website</label>
       <input class="input" type="url" name="website" value="<?= e($v('website')) ?>" placeholder="https://" <?= $ro ?>>
     </div>
-
     <div>
       <label class="label">Affiliated University <span class="req">*</span></label>
       <select class="input" name="university_id" required <?= $ro ?>>
@@ -125,6 +136,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       </select>
       <span class="hint">Determines the assessment tests available to this institution.</span>
     </div>
+
     <div>
       <label class="label">Institution Category <span class="req">*</span></label>
       <select class="input" name="category_id" required <?= $ro ?>>
@@ -134,11 +146,6 @@ require APP_ROOT . '/app/layout/institution_nav.php';
         <?php endforeach; ?>
       </select>
     </div>
-    <div>
-      <label class="label">District</label>
-      <input class="input" value="<?= e($inst['district_name']) ?>" disabled>
-    </div>
-
     <div class="md:col-span-2">
       <label class="label">Campus Physical Address</label>
       <input class="input" name="address" value="<?= e($v('address')) ?>" placeholder="Vanchiyoor P.O., Barton Hill" <?= $ro ?>>

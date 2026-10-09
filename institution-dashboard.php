@@ -22,8 +22,11 @@ $st = db()->prepare('SELECT s.name, s.tag, s.tag_color, x.status, x.beneficiarie
 $st->execute([$instId]);
 $services = $st->fetchAll();
 
-$st = db()->prepare('SELECT t.name, t.is_mandatory, a.students_completed, a.status, a.drive_date FROM institution_assessments a
+$st = db()->prepare('SELECT t.name, t.is_mandatory, a.students_completed, a.status, a.drive_date, v.tests_conducted AS vendor_count
+                     FROM institution_assessments a
                      JOIN assessment_tests t ON t.id = a.assessment_test_id
+                     LEFT JOIN assessment_vendor_counts v ON v.institution_id = a.institution_id AND v.academic_year = a.academic_year
+                          AND v.assessment_test_id = a.assessment_test_id
                      WHERE a.institution_id = ? AND a.academic_year = ? ORDER BY t.is_mandatory DESC, t.name');
 $st->execute([$instId, $ay]);
 $assessments = $st->fetchAll();
@@ -128,7 +131,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
         <div class="space-y-1.5">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider <?= $inst['is_active'] ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30' : 'bg-rose-400/20 text-rose-200 border border-rose-400/30' ?>"><?= $inst['is_active'] ? 'Active Institution' : 'Inactive' ?></span>
-            <span class="text-xs text-slate-300 font-mono">ID: <?= e($instCode) ?><?= $inst['code'] ? ' · ' . e($inst['code']) : '' ?></span>
+            <span class="text-xs text-slate-300 font-mono">ID: <?= e($instCode) ?><?= $inst['dwms_id'] ? ' · DWMS ' . e($inst['dwms_id']) : '' ?><?= $inst['code'] ? ' · ' . e($inst['code']) : '' ?></span>
           </div>
           <h2 class="text-2xl font-black text-white break-words"><?= e($inst['name']) ?></h2>
           <p class="text-xs text-slate-300 flex items-center gap-2 flex-wrap">
@@ -176,7 +179,12 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   </div>
 
   <!-- Cohort KPIs -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div class="kpi">
+      <span class="kpi-label">Campus Placed</span>
+      <span class="kpi-value text-teal-700"><?= $m['campus_placed'] === null ? '—' : num($m['campus_placed']) ?></span>
+      <span class="kpi-note">Last year (<?= e(previous_academic_year($ay)) ?>): <?= $m['campus_placed_prev'] === null ? '—' : num($m['campus_placed_prev']) ?></span>
+    </div>
     <div class="kpi">
       <span class="kpi-label">Final-Year Students</span>
       <span class="kpi-value"><?= num($m['final_year']) ?></span>
@@ -272,7 +280,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       </div>
       <?php foreach ($assessments as $a): ?>
         <?= meter($a['name'] . ($a['is_mandatory'] ? ' ★' : ''), pct($a['students_completed'], $m['gateway_base']), num($a['students_completed']) . ' · ' . pct($a['students_completed'], $m['gateway_base']) . '%') ?>
-        <p class="text-[11px] text-slate-400 -mt-2"><?= e($a['status']) ?><?= $a['drive_date'] ? ' · ' . e(date('d M Y', strtotime($a['drive_date']))) : '' ?></p>
+        <p class="text-[11px] text-slate-400 -mt-2"><?= e($a['status']) ?><?= $a['drive_date'] ? ' · ' . e(date('d M Y', strtotime($a['drive_date']))) : '' ?><?= $a['vendor_count'] !== null ? ' · <span class="text-violet-600">vendor: ' . num($a['vendor_count']) . '</span>' : '' ?></p>
       <?php endforeach; ?>
       <?php if (!$assessments): ?><p class="text-xs text-slate-400 italic">No assessment data recorded.</p><?php endif; ?>
       <div class="pt-3 border-t border-slate-100 space-y-4">

@@ -134,8 +134,9 @@ function meter(string $label, int $pct, string $value = '', string $barClass = '
 /** Six headline KPI tiles for an aggregate (state / district) row. */
 function kpi_strip(array $t): void
 { ?>
-  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
     <div class="kpi"><span class="kpi-label">Institutions</span><span class="kpi-value"><?= num($t['institutions']) ?></span><span class="kpi-note"><?= num($t['onboarded']) ?> onboarded · <?= $t['onboarded_pct'] ?>%</span></div>
+    <div class="kpi"><span class="kpi-label">Campus Placed</span><span class="kpi-value text-teal-700"><?= num($t['campus_placed']) ?></span><span class="kpi-note">Last year: <?= num($t['campus_placed_prev']) ?></span></div>
     <div class="kpi"><span class="kpi-label">Final-Year Students</span><span class="kpi-value"><?= num($t['final_year']) ?></span><span class="kpi-note">Total eligible strength</span></div>
     <div class="kpi"><span class="kpi-label">Registered on DWMS</span><span class="kpi-value text-sky-600"><?= num($t['dwms_registered']) ?></span><span class="text-[11px] text-sky-600 font-semibold block mt-1"><?= $t['dwms_pct'] ?>% coverage</span></div>
     <div class="kpi"><span class="kpi-label">Immediate Job Seekers</span><span class="kpi-value text-emerald-600"><?= num($t['job_seekers']) ?></span><span class="text-[11px] text-emerald-600 font-semibold block mt-1"><?= $t['jobseeker_pct'] ?>% of batch</span></div>

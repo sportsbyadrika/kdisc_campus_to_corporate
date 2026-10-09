@@ -38,7 +38,8 @@ $pdo = db();
 $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
 $pdo->exec(file_get_contents(__DIR__ . '/schema.sql'));
 $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-$out('✔ Schema and master data installed.');
+ensure_schema();
+$out('✔ Schema and master data installed (schema version ' . SCHEMA_VERSION . ').');
 
 function ensure_user(string $username, string $name, string $role, ?string $password, ?int $districtId = null): array
 {

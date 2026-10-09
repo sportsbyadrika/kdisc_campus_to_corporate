@@ -344,7 +344,7 @@ function status_badge(string $status): string
         'rejected'    => 'bg-rose-100 text-rose-700',
     ];
     $cls = $map[$status] ?? 'bg-slate-100 text-slate-600';
-    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ' . $cls . '">' . e(ucfirst($status)) . '</span>';
+    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ' . $cls . '">' . e(ucfirst($status)) . '</span>';
 }
 
 /** Inline SVG icons (Heroicons outline paths used throughout the design). */
@@ -459,4 +459,19 @@ function grid_cols_class(int $n, string $prefix = ''): string
     $map = ['' => [1 => 'grid-cols-1', 2 => 'grid-cols-2', 3 => 'grid-cols-3'],
             'md:' => [1 => 'md:grid-cols-1', 2 => 'md:grid-cols-2', 3 => 'md:grid-cols-3']];
     return $map[$prefix][max(1, min(3, $n))];
+}
+
+/** Validation message for a DWMS institution id, or null when it is valid and not used by another institution. */
+function dwms_id_error(?string $dwmsId, int $institutionId = 0): ?string
+{
+    if ($dwmsId === null || $dwmsId === '') {
+        return null;
+    }
+    if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_\/.]{0,39}$/', $dwmsId)) {
+        return 'DWMS Institution ID may contain only letters and numbers (and - _ / .), up to 40 characters.';
+    }
+    $st = db()->prepare('SELECT name FROM institutions WHERE dwms_id = ? AND id <> ?');
+    $st->execute([$dwmsId, $institutionId]);
+    $other = $st->fetchColumn();
+    return $other ? "DWMS Institution ID {$dwmsId} is already assigned to {$other}." : null;
 }

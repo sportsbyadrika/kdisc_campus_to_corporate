@@ -9,6 +9,7 @@ function institution_registry_input(): array
     $d = [
         'name'          => mb_substr((string) input('name'), 0, 255),
         'code'          => nullable(input('code')),
+        'dwms_id'       => nullable(input('dwms_id')),
         'email'         => nullable(input('email')),
         'address'       => nullable(input('address')),
         'district_id'   => (int) int_input('district_id', 0),
@@ -19,6 +20,7 @@ function institution_registry_input(): array
     if ($d['name'] === '') $errors[] = 'Institution name is required.';
     if (!in_array($d['district_id'], array_map('intval', array_column(districts(), 'id')), true)) $errors[] = 'Select a valid district.';
     if ($d['email'] && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email.';
+    if ($err = dwms_id_error($d['dwms_id'], (int) int_input('id', 0))) $errors[] = $err;
     return [$d, $errors];
 }
 
@@ -57,8 +59,10 @@ if (is_post()) {
         if ($changes) log_activity('update', 'institution', $id, "Updated registry details of {$d['name']}", $changes, $id);
         flash('success', 'Institution updated.');
     } else {
-        db()->prepare('INSERT INTO institutions (name, code, email, address, district_id, university_id, category_id, created_by) VALUES (?,?,?,?,?,?,?,?)')
-            ->execute([...array_values($d), $user['id']]);
+        $d['created_by'] = $user['id'];
+        $cols = implode(', ', array_map(fn($k) => "`$k`", array_keys($d)));
+        db()->prepare("INSERT INTO institutions ({$cols}) VALUES (" . implode(',', array_fill(0, count($d), '?')) . ')')
+            ->execute(array_values($d));
         $id = (int) db()->lastInsertId();
         log_activity('create', 'institution', $id, "Added institution {$d['name']}", [], $id, $d['district_id']);
         flash('success', 'Institution added. District users can now assign an institution user to it.');
@@ -71,7 +75,7 @@ if (is_post()) {
 $where = [$scopeSql];
 $params = $scopeParams;
 $f = ['q' => (string) input('q'), 'district' => int_input('district'), 'university' => int_input('university'), 'status' => (string) input('status')];
-if ($f['q'] !== '') { $where[] = '(i.name LIKE ? OR i.code LIKE ?)'; $params[] = '%' . $f['q'] . '%'; $params[] = '%' . $f['q'] . '%'; }
+if ($f['q'] !== '') { $where[] = '(i.name LIKE ? OR i.code LIKE ? OR i.dwms_id LIKE ?)'; array_push($params, '%' . $f['q'] . '%', '%' . $f['q'] . '%', '%' . $f['q'] . '%'); }
 if ($f['district'] && is_state_level()) { $where[] = 'i.district_id = ?'; $params[] = $f['district']; }
 if ($f['university']) { $where[] = 'i.university_id = ?'; $params[] = $f['university']; }
 $rows = institution_metrics(implode(' AND ', $where), $params);
@@ -111,8 +115,9 @@ require APP_ROOT . '/app/layout/header.php';
   <h2 class="card-title mb-1"><?= $editing ? 'Edit institution registry details' : 'Add a new institution' ?></h2>
   <p class="card-subtitle mb-5"><?= $editing ? 'Profile details are maintained by the institution / district in the workspace.' : 'Typically added on request from a district office. The institution completes the rest of the profile.' ?></p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-    <div class="md:col-span-2"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" value="<?= e($v('name')) ?>" required></div>
+    <div class="md:col-span-3"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" value="<?= e($v('name')) ?>" required></div>
     <div><label class="label">Affiliation Code</label><input class="input" name="code" value="<?= e($v('code')) ?>"></div>
+    <div><label class="label flex items-center gap-1">DWMS Institution ID <?= tooltip('DWMS Institution ID', 'Unique ID of this institution in DWMS. Used to match the test counts uploaded from the assessment vendor software.') ?></label><input class="input font-mono" name="dwms_id" value="<?= e($v('dwms_id')) ?>" maxlength="40" placeholder="e.g. DWMS12345"></div>
     <div>
       <label class="label">District <span class="req">*</span></label>
       <select class="input" name="district_id" required>
@@ -148,7 +153,7 @@ require APP_ROOT . '/app/layout/header.php';
 <form method="get" class="card p-4 mb-4 flex flex-wrap items-center gap-2">
   <div class="relative grow min-w-48">
     <span class="absolute left-3 top-2 text-slate-400"><?= icon('search') ?></span>
-    <input name="q" value="<?= e($f['q']) ?>" class="input input-sm pl-9" placeholder="Search by name or code">
+    <input name="q" value="<?= e($f['q']) ?>" class="input input-sm pl-9" placeholder="Search by name, code or DWMS ID">
   </div>
   <?php if (is_state_level()): ?>
   <select name="district" class="input input-sm w-auto">
@@ -182,7 +187,7 @@ require APP_ROOT . '/app/layout/header.php';
             <div class="flex items-center gap-2.5">
               <?php if ($r['logo']): ?><img src="<?= e(upload_url($r['logo'])) ?>" alt="" class="w-8 h-8 rounded-lg object-contain border border-slate-200 bg-white shrink-0">
               <?php else: ?><span class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 text-[11px] font-bold flex items-center justify-center shrink-0"><?= e(initials($r['name'])) ?></span><?php endif; ?>
-              <div class="min-w-0"><p class="font-semibold text-slate-900"><?= e($r['name']) ?></p><p class="text-[11px] text-slate-400 font-mono"><?= e($r['code'] ?: '—') ?></p></div>
+              <div class="min-w-0"><p class="font-semibold text-slate-900"><?= e($r['name']) ?></p><p class="text-[11px] text-slate-400 font-mono"><?= $r['dwms_id'] ? 'DWMS ' . e($r['dwms_id']) . ' · ' : '' ?><?= e($r['code'] ?: '—') ?></p></div>
             </div>
           </td>
           <?php if (is_state_level()): ?><td class="text-xs"><?= e($r['district_name']) ?></td><?php endif; ?>

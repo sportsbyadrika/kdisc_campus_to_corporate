@@ -48,7 +48,7 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
   </div>
   <div class="flex gap-2 flex-wrap">
     <?php if ($user['role'] === 'district'): ?>
-      <a href="<?= e(url('reports')) ?>" class="btn-primary"><?= icon('chart') ?> District report</a>
+      <a href="<?= e(url('reports', ['district' => $user['district_id']])) ?>" class="btn-primary"><?= icon('chart') ?> District report</a>
       <a href="<?= e(url('users', ['new' => 1])) ?>" class="btn-secondary"><?= icon('plus') ?> Institution user</a>
     <?php elseif (has_role('admin', 'state')): ?>
       <a href="<?= e(url('reports')) ?>" class="btn-primary"><?= icon('chart') ?> Drill-down report</a>
