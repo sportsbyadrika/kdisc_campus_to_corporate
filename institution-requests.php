@@ -20,13 +20,14 @@ if (is_post()) {
             'address'       => nullable(input('address')),
             'university_id' => int_input('university_id'),
             'category_id'   => int_input('category_id'),
+            'type_id'       => valid_type_id(int_input('type_id')),
             'remarks'       => nullable(mb_substr((string) input('remarks'), 0, 1000)),
         ];
         if ($d['name'] === '' || ($d['email'] && !filter_var($d['email'], FILTER_VALIDATE_EMAIL))) {
             flash('error', $d['name'] === '' ? 'Institution name is required.' : 'Enter a valid email.');
             redirect('institution-requests', ['new' => 1]);
         }
-        db()->prepare('INSERT INTO institution_requests (district_id, name, code, email, address, university_id, category_id, remarks, requested_by) VALUES (?,?,?,?,?,?,?,?,?)')
+        db()->prepare('INSERT INTO institution_requests (district_id, name, code, email, address, university_id, category_id, type_id, remarks, requested_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
             ->execute([(int) $user['district_id'], ...array_values($d), $user['id']]);
         log_activity('create', 'request', (int) db()->lastInsertId(), "Requested new institution {$d['name']}", [], null, (int) $user['district_id']);
         flash('success', 'Request submitted to the State office.');
@@ -54,8 +55,8 @@ if (is_post()) {
         db()->beginTransaction();
         $instId = null;
         if ($action === 'approve') {
-            db()->prepare('INSERT INTO institutions (name, code, email, address, district_id, university_id, category_id, created_by) VALUES (?,?,?,?,?,?,?,?)')
-                ->execute([$req['name'], $req['code'], $req['email'], $req['address'], $req['district_id'], $req['university_id'], $req['category_id'], $user['id']]);
+            db()->prepare('INSERT INTO institutions (name, code, email, address, district_id, university_id, category_id, type_id, created_by) VALUES (?,?,?,?,?,?,?,?,?)')
+                ->execute([$req['name'], $req['code'], $req['email'], $req['address'], $req['district_id'], $req['university_id'], $req['category_id'], valid_type_id($req['type_id'] !== null ? (int) $req['type_id'] : null), $user['id']]);
             $instId = (int) db()->lastInsertId();
         }
         db()->prepare('UPDATE institution_requests SET status = ?, review_remarks = ?, institution_id = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?')
@@ -73,10 +74,11 @@ $where = ['1=1'];
 $params = [];
 if ($isDistrict) { $where[] = 'r.district_id = ?'; $params[] = (int) $user['district_id']; }
 if (in_array($status, ['pending', 'approved', 'rejected'], true)) { $where[] = 'r.status = ?'; $params[] = $status; }
-$st = db()->prepare('SELECT r.*, d.name AS district_name, u.short_name AS university_short, c.name AS category_name,
+$st = db()->prepare('SELECT r.*, d.name AS district_name, u.short_name AS university_short, c.name AS category_name, it.name AS type_name,
                             ' . user_name_sql('rq') . ' AS requested_by_name, ' . user_name_sql('rv') . ' AS reviewed_by_name
                      FROM institution_requests r JOIN districts d ON d.id = r.district_id
                      LEFT JOIN universities u ON u.id = r.university_id LEFT JOIN institution_categories c ON c.id = r.category_id
+                     LEFT JOIN institution_types it ON it.id = r.type_id
                      LEFT JOIN users rq ON rq.id = r.requested_by LEFT JOIN users rv ON rv.id = r.reviewed_by
                      WHERE ' . implode(' AND ', $where) . ' ORDER BY r.created_at DESC');
 $st->execute($params);
@@ -120,8 +122,12 @@ require APP_ROOT . '/app/layout/header.php';
         <?php foreach (lookup('institution_categories') as $c): ?><option value="<?= $c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
+    <div>
+      <label class="label">Institution Type</label>
+      <select class="input" name="type_id"><?= institution_type_options(null) ?></select>
+    </div>
     <div><label class="label">Official Email</label><input class="input" type="email" name="email"></div>
-    <div class="md:col-span-3"><label class="label">Address</label><input class="input" name="address"></div>
+    <div class="md:col-span-2"><label class="label">Address</label><input class="input" name="address"></div>
     <div class="md:col-span-3"><label class="label">Justification / Remarks</label><textarea class="input min-h-20" name="remarks" placeholder="Why should this institution be included in the programme?"></textarea></div>
   </div>
   <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end gap-2">
@@ -141,7 +147,7 @@ require APP_ROOT . '/app/layout/header.php';
             <?= status_badge($r['status']) ?>
           </div>
           <p class="text-xs text-slate-500 mt-1">
-            <?= e($r['district_name']) ?> · <?= e($r['university_short'] ?: 'University —') ?> · <?= e($r['category_name'] ?: 'Category —') ?><?= $r['code'] ? ' · ' . e($r['code']) : '' ?>
+            <?= e($r['district_name']) ?> · <?= e($r['type_name'] ?: 'Type —') ?> · <?= e($r['university_short'] ?: 'University —') ?> · <?= e($r['category_name'] ?: 'Category —') ?><?= $r['code'] ? ' · ' . e($r['code']) : '' ?>
           </p>
           <?php if ($r['address'] || $r['email']): ?><p class="text-xs text-slate-500"><?= e(trim(($r['address'] ?? '') . ($r['email'] ? ' · ' . $r['email'] : ''), ' ·')) ?></p><?php endif; ?>
           <?php if ($r['remarks']): ?><p class="text-sm text-slate-700 mt-2 bg-slate-50 rounded-lg p-2.5 border border-slate-100"><?= e($r['remarks']) ?></p><?php endif; ?>

@@ -137,6 +137,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
           <p class="text-xs text-slate-300 flex items-center gap-2 flex-wrap">
             <span><?= e($inst['district_name']) ?></span> &bull;
             <span><?= e($inst['university_short'] ?: ($inst['university_name'] ?: 'University not set')) ?></span> &bull;
+            <span><?= e($inst['type_name'] ?: 'Type not set') ?></span> &bull;
             <span><?= e($inst['category_name'] ?: 'Category not set') ?></span> &bull;
             <span>Nodal Officer: <strong class="text-white"><?= e($nodal['name'] ?? 'Not assigned') ?></strong></span>
           </p>

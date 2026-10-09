@@ -120,4 +120,4 @@ uploads/              institution logos and photos (no script execution)
 
 ## Masters
 
-These are managed by the State user or the Administrator under **Masters**: universities, institution categories, courses/streams, assessment tests (per university, or global when the university is blank; one can be the mandatory gateway), DWMS services, and the district support team. The current **academic year** is set under **Settings**. Student strength, cohorts and assessments are stored per academic year, so earlier years are kept.
+These are managed by the State user or the Administrator under **Masters**: universities, institution categories, institution types (Engineering College, Arts & Science College, Polytechnic, … — pre-filled and editable), courses/streams, assessment tests (per university, or global when the university is blank; one can be the mandatory gateway), DWMS services, and the district support team. The current **academic year** is set under **Settings**. Student strength, cohorts and assessments are stored per academic year, so earlier years are kept.

@@ -116,6 +116,9 @@ if (isset($opts['demo'])) {
                     $adminId, $created_at]);
                 $iid = (int) db()->lastInsertId();
                 $instCount++;
+                $typeName = ['College of Engineering' => 'Engineering College', 'Arts and Science College' => 'Arts & Science College',
+                    'Institute of Management' => 'Management Institute (MBA)', 'Polytechnic College' => 'Polytechnic College'][$kind[0]];
+                db()->prepare('UPDATE institutions SET type_id = (SELECT id FROM institution_types WHERE name = ?) WHERE id = ?')->execute([$typeName, $iid]);
 
                 if ($stage > 2) {
                     db()->prepare('INSERT INTO institution_officers (institution_id, name, designation, email, phone, is_primary) VALUES (?,?,?,?,?,1)')
