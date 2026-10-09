@@ -148,12 +148,12 @@ function district_name(?int $id): string
 
 function lookup(string $table, bool $activeOnly = true): array
 {
-    $allowed = ['universities', 'institution_categories', 'courses', 'dwms_services'];
+    $allowed = ['universities', 'institution_categories', 'institution_types', 'courses', 'dwms_services'];
     if (!in_array($table, $allowed, true)) {
         throw new InvalidArgumentException('Unknown lookup table');
     }
     $sql = "SELECT * FROM {$table}" . ($activeOnly ? ' WHERE is_active = 1' : '') . ' ORDER BY ' .
-        ($table === 'dwms_services' ? 'sort_order, name' : 'name');
+        (in_array($table, ['dwms_services', 'institution_types'], true) ? 'sort_order, name' : 'name');
     return db()->query($sql)->fetchAll();
 }
 
@@ -474,4 +474,33 @@ function dwms_id_error(?string $dwmsId, int $institutionId = 0): ?string
     $st->execute([$dwmsId, $institutionId]);
     $other = $st->fetchColumn();
     return $other ? "DWMS Institution ID {$dwmsId} is already assigned to {$other}." : null;
+}
+
+/**
+ * <option> list of institution types: active types in display order, plus the currently
+ * selected type even if it has since been deactivated (so editing never loses it).
+ */
+function institution_type_options(?int $selected, string $placeholder = 'Select Institution Type'): string
+{
+    $html = '<option value="">' . e($placeholder) . '</option>';
+    foreach (lookup('institution_types', false) as $t) {
+        $isSel = $selected !== null && (int) $t['id'] === $selected;
+        if (!$t['is_active'] && !$isSel) {
+            continue;
+        }
+        $html .= '<option value="' . (int) $t['id'] . '"' . ($isSel ? ' selected' : '') . '>' . e($t['name'])
+            . ($t['is_active'] ? '' : ' (inactive)') . '</option>';
+    }
+    return $html;
+}
+
+/** Validates a submitted institution type id; returns the id or null. */
+function valid_type_id(?int $id): ?int
+{
+    if (!$id) {
+        return null;
+    }
+    $st = db()->prepare('SELECT id FROM institution_types WHERE id = ?');
+    $st->execute([$id]);
+    return $st->fetchColumn() ? $id : null;
 }

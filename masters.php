@@ -24,6 +24,15 @@ $MASTERS = [
         'fields' => ['name' => ['label' => 'Category name', 'type' => 'text', 'required' => true]],
         'usage' => 'SELECT COUNT(*) FROM institutions WHERE category_id = ?',
     ],
+    'types' => [
+        'title' => 'Institution Types', 'table' => 'institution_types', 'singular' => 'institution type', 'order' => 'sort_order, name',
+        'fields' => [
+            'name'       => ['label' => 'Type name', 'type' => 'text', 'required' => true, 'placeholder' => 'e.g. Engineering College'],
+            'sort_order' => ['label' => 'Display order', 'type' => 'number'],
+        ],
+        'usage' => 'SELECT COUNT(*) FROM institutions WHERE type_id = ?',
+        'help' => 'The kind of institution (engineering, arts & science, polytechnic, …). Shown in dropdowns in display order. Deactivate a type to hide it from new selections without changing institutions that already use it.',
+    ],
     'courses' => [
         'title' => 'Courses / Streams', 'table' => 'courses', 'singular' => 'course', 'order' => 'level, name',
         'fields' => [

@@ -42,6 +42,16 @@ CREATE TABLE IF NOT EXISTS institution_categories (
   UNIQUE KEY uq_category_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS institution_types (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(120) NOT NULL,
+  sort_order  SMALLINT     NOT NULL DEFAULT 0,
+  is_active   TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_type_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS courses (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name        VARCHAR(120) NOT NULL,
@@ -101,6 +111,7 @@ CREATE TABLE IF NOT EXISTS institutions (
   district_id    TINYINT UNSIGNED NOT NULL,
   university_id  INT UNSIGNED NULL,
   category_id    INT UNSIGNED NULL,
+  type_id        INT UNSIGNED NULL,
   latitude       DECIMAL(10,7) NULL,
   longitude      DECIMAL(10,7) NULL,
   logo           VARCHAR(255) NULL,
@@ -116,9 +127,11 @@ CREATE TABLE IF NOT EXISTS institutions (
   KEY idx_inst_district (district_id),
   KEY idx_inst_university (university_id),
   KEY idx_inst_category (category_id),
+  KEY idx_inst_type (type_id),
   CONSTRAINT fk_inst_district   FOREIGN KEY (district_id)   REFERENCES districts (id),
   CONSTRAINT fk_inst_university FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE SET NULL,
-  CONSTRAINT fk_inst_category   FOREIGN KEY (category_id)   REFERENCES institution_categories (id) ON DELETE SET NULL
+  CONSTRAINT fk_inst_category   FOREIGN KEY (category_id)   REFERENCES institution_categories (id) ON DELETE SET NULL,
+  CONSTRAINT fk_inst_type       FOREIGN KEY (type_id)       REFERENCES institution_types (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- New-institution requests raised by district users, approved by State / Admin
@@ -131,6 +144,7 @@ CREATE TABLE IF NOT EXISTS institution_requests (
   address        VARCHAR(400) NULL,
   university_id  INT UNSIGNED NULL,
   category_id    INT UNSIGNED NULL,
+  type_id        INT UNSIGNED NULL,
   remarks        VARCHAR(1000) NULL,
   status         ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   review_remarks VARCHAR(1000) NULL,
@@ -347,6 +361,22 @@ INSERT IGNORE INTO universities (id, name, short_name) VALUES
 
 INSERT IGNORE INTO institution_categories (id, name) VALUES
  (1,'Government'),(2,'Government-Aided'),(3,'Self-Financing'),(4,'Autonomous');
+
+INSERT IGNORE INTO institution_types (name, sort_order) VALUES
+ ('Engineering College',1),
+ ('Arts & Science College',2),
+ ('Polytechnic College',3),
+ ('Management Institute (MBA)',4),
+ ('Computer Applications Institute (MCA / BCA)',5),
+ ('Medical College',6),
+ ('Nursing & Paramedical College',7),
+ ('Pharmacy College',8),
+ ('Teacher Training College (B.Ed / D.El.Ed)',9),
+ ('Law College',10),
+ ('Architecture College',11),
+ ('ITI / Vocational Training Institute',12),
+ ('University Department / Centre',13),
+ ('Other',99);
 
 INSERT IGNORE INTO courses (id, name, level) VALUES
  (1,'B.Tech','UG'),(2,'B.Sc','UG'),(3,'B.Com','UG'),(4,'BA','UG'),(5,'BBA','UG'),(6,'BCA','UG'),

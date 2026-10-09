@@ -179,11 +179,12 @@ function can_edit_institution(array $inst): bool
 function load_institution(int $id): array
 {
     $st = db()->prepare('SELECT i.*, d.name AS district_name, u.name AS university_name, u.short_name AS university_short,
-                                c.name AS category_name
+                                c.name AS category_name, t.name AS type_name
                          FROM institutions i
                          JOIN districts d ON d.id = i.district_id
                          LEFT JOIN universities u ON u.id = i.university_id
                          LEFT JOIN institution_categories c ON c.id = i.category_id
+                         LEFT JOIN institution_types t ON t.id = i.type_id
                          WHERE i.id = ?');
     $st->execute([$id]);
     $inst = $st->fetch();

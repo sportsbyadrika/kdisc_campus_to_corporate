@@ -21,7 +21,7 @@ function institution_metrics(string $where = '1=1', array $params = [], ?string 
     $ay ??= academic_year();
     $sql = "SELECT i.id, i.name, i.code, i.dwms_id, i.district_id, d.name AS district_name, i.logo, i.is_active,
                    i.university_id, u.short_name AS university_short, u.name AS university_name,
-                   c.name AS category_name, i.address, i.latitude, i.longitude, i.updated_at,
+                   c.name AS category_name, i.type_id, it.name AS type_name, i.address, i.latitude, i.longitude, i.updated_at,
                    COALESCE(dep.dept_count, 0)  AS dept_count,
                    COALESCE(dep.final_sum, 0)   AS dept_final_year,
                    COALESCE(dep.total_sum, 0)   AS dept_total_students,
@@ -39,6 +39,7 @@ function institution_metrics(string $where = '1=1', array $params = [], ?string 
             JOIN districts d ON d.id = i.district_id
             LEFT JOIN universities u ON u.id = i.university_id
             LEFT JOIN institution_categories c ON c.id = i.category_id
+            LEFT JOIN institution_types it ON it.id = i.type_id
             LEFT JOIN (SELECT institution_id, COUNT(*) dept_count, SUM(final_year_count) final_sum, SUM(total_students) total_sum
                        FROM institution_departments WHERE academic_year = ? GROUP BY institution_id) dep ON dep.institution_id = i.id
             LEFT JOIN institution_cohorts co ON co.institution_id = i.id AND co.academic_year = ?

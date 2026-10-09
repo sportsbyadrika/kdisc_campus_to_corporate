@@ -15,6 +15,7 @@ function institution_registry_input(): array
         'district_id'   => (int) int_input('district_id', 0),
         'university_id' => int_input('university_id'),
         'category_id'   => int_input('category_id'),
+        'type_id'       => valid_type_id(int_input('type_id')),
     ];
     $errors = [];
     if ($d['name'] === '') $errors[] = 'Institution name is required.';
@@ -74,10 +75,11 @@ if (is_post()) {
 [$scopeSql, $scopeParams] = institution_scope('i');
 $where = [$scopeSql];
 $params = $scopeParams;
-$f = ['q' => (string) input('q'), 'district' => int_input('district'), 'university' => int_input('university'), 'status' => (string) input('status')];
+$f = ['q' => (string) input('q'), 'district' => int_input('district'), 'university' => int_input('university'), 'type' => int_input('type'), 'status' => (string) input('status')];
 if ($f['q'] !== '') { $where[] = '(i.name LIKE ? OR i.code LIKE ? OR i.dwms_id LIKE ?)'; array_push($params, '%' . $f['q'] . '%', '%' . $f['q'] . '%', '%' . $f['q'] . '%'); }
 if ($f['district'] && is_state_level()) { $where[] = 'i.district_id = ?'; $params[] = $f['district']; }
 if ($f['university']) { $where[] = 'i.university_id = ?'; $params[] = $f['university']; }
+if ($f['type']) { $where[] = 'i.type_id = ?'; $params[] = $f['type']; }
 $rows = institution_metrics(implode(' AND ', $where), $params);
 if ($f['status'] !== '') {
     $rows = array_values(array_filter($rows, fn($r) => $r['status'] === $f['status']));
@@ -139,6 +141,10 @@ require APP_ROOT . '/app/layout/header.php';
         <?php foreach ($categories as $c): ?><option value="<?= $c['id'] ?>" <?= (int) $v('category_id') === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
+    <div>
+      <label class="label">Institution Type</label>
+      <select class="input" name="type_id"><?= institution_type_options($v('type_id') !== '' ? (int) $v('type_id') : null) ?></select>
+    </div>
     <div><label class="label">Official Email</label><input class="input" type="email" name="email" value="<?= e($v('email')) ?>"></div>
     <div class="md:col-span-2"><label class="label">Address</label><input class="input" name="address" value="<?= e($v('address')) ?>"></div>
   </div>
@@ -165,6 +171,7 @@ require APP_ROOT . '/app/layout/header.php';
     <option value="">All universities</option>
     <?php foreach ($universities as $u): ?><option value="<?= $u['id'] ?>" <?= $f['university'] === (int) $u['id'] ? 'selected' : '' ?>><?= e($u['short_name'] ?: $u['name']) ?></option><?php endforeach; ?>
   </select>
+  <select name="type" class="input input-sm w-auto"><?= institution_type_options($f['type'], 'All types') ?></select>
   <select name="status" class="input input-sm w-auto">
     <option value="">Any status</option>
     <?php foreach (['Onboarded', 'In Progress', 'Not Started', 'Inactive'] as $s): ?><option <?= $f['status'] === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?>
@@ -178,7 +185,7 @@ require APP_ROOT . '/app/layout/header.php';
   <div class="overflow-x-auto">
     <table class="table">
       <thead><tr>
-        <th>Institution</th><?php if (is_state_level()): ?><th>District</th><?php endif; ?><th>University / Category</th><th>Status</th><th class="min-w-36">Completion</th><th class="text-right">Final-year</th><th class="text-right">Actions</th>
+        <th>Institution</th><?php if (is_state_level()): ?><th>District</th><?php endif; ?><th>Type / University / Category</th><th>Status</th><th class="min-w-36">Completion</th><th class="text-right">Final-year</th><th class="text-right">Actions</th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r): ?>
@@ -191,7 +198,7 @@ require APP_ROOT . '/app/layout/header.php';
             </div>
           </td>
           <?php if (is_state_level()): ?><td class="text-xs"><?= e($r['district_name']) ?></td><?php endif; ?>
-          <td class="text-xs"><?= e($r['university_short'] ?: '—') ?><span class="block text-slate-400"><?= e($r['category_name'] ?: '—') ?></span></td>
+          <td class="text-xs"><span class="block font-medium text-slate-700"><?= e($r['type_name'] ?: '—') ?></span><?= e($r['university_short'] ?: '—') ?> · <span class="text-slate-400"><?= e($r['category_name'] ?: '—') ?></span></td>
           <td><?= status_badge($r['status']) ?></td>
           <td><div class="flex items-center gap-2" title="<?= $r['profile_pct'] ?>% of onboarding sections complete"><div class="bar-track"><div class="h-2 rounded-full bg-emerald-600" style="width: <?= $r['profile_pct'] ?>%"></div></div><span class="text-xs font-semibold w-9 text-right"><?= $r['profile_pct'] ?>%</span></div></td>
           <td class="text-right font-mono"><?= num($r['final_year']) ?></td>

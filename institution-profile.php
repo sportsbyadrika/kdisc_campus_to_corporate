@@ -18,6 +18,7 @@ if (is_post()) {
         'established_year' => int_input('established_year'),
         'university_id'    => int_input('university_id'),
         'category_id'      => int_input('category_id'),
+        'type_id'          => valid_type_id(int_input('type_id')),
         'latitude'         => is_numeric(input('latitude')) ? round((float) input('latitude'), 7) : null,
         'longitude'        => is_numeric(input('longitude')) ? round((float) input('longitude'), 7) : null,
         'history'          => nullable(input('history')),
@@ -35,6 +36,7 @@ if (is_post()) {
     if ($data['website'] && !filter_var($data['website'], FILTER_VALIDATE_URL)) $errors[] = 'Website must be a full URL (https://…).';
     if (!$data['university_id']) $errors[] = 'Select the affiliated university.';
     if (!$data['category_id']) $errors[] = 'Select the institution category.';
+    if (!$data['type_id']) $errors[] = 'Select the institution type.';
     if ($data['latitude'] !== null && ($data['latitude'] < 8 || $data['latitude'] > 13)) $errors[] = 'Latitude is outside Kerala (8° – 13° N).';
     if ($data['longitude'] !== null && ($data['longitude'] < 74 || $data['longitude'] > 78)) $errors[] = 'Longitude is outside Kerala (74° – 78° E).';
     if ($data['established_year'] !== null && ($data['established_year'] < 1800 || $data['established_year'] > (int) date('Y'))) $errors[] = 'Enter a valid year of establishment.';
@@ -126,6 +128,17 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <label class="label">Website</label>
       <input class="input" type="url" name="website" value="<?= e($v('website')) ?>" placeholder="https://" <?= $ro ?>>
     </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="label">PIN Code</label>
+        <input class="input" name="pincode" value="<?= e($v('pincode')) ?>" pattern="[0-9]{6}" placeholder="695035" <?= $ro ?>>
+      </div>
+      <div>
+        <label class="label">Established</label>
+        <input class="input" type="number" name="established_year" value="<?= e($v('established_year')) ?>" min="1800" max="<?= date('Y') ?>" placeholder="1939" <?= $ro ?>>
+      </div>
+    </div>
+
     <div>
       <label class="label">Affiliated University <span class="req">*</span></label>
       <select class="input" name="university_id" required <?= $ro ?>>
@@ -146,19 +159,15 @@ require APP_ROOT . '/app/layout/institution_nav.php';
         <?php endforeach; ?>
       </select>
     </div>
-    <div class="md:col-span-2">
+    <div>
+      <label class="label flex items-center gap-1">Institution Type <span class="req">*</span> <?= tooltip('Institution Type', 'The kind of institution, e.g. Engineering College, Arts & Science College or Polytechnic. The list is maintained by the State office under Masters.', 'right') ?></label>
+      <select class="input" name="type_id" required <?= $ro ?>>
+        <?= institution_type_options($v('type_id') !== '' ? (int) $v('type_id') : null) ?>
+      </select>
+    </div>
+    <div class="md:col-span-3">
       <label class="label">Campus Physical Address</label>
       <input class="input" name="address" value="<?= e($v('address')) ?>" placeholder="Vanchiyoor P.O., Barton Hill" <?= $ro ?>>
-    </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="label">PIN Code</label>
-        <input class="input" name="pincode" value="<?= e($v('pincode')) ?>" pattern="[0-9]{6}" placeholder="695035" <?= $ro ?>>
-      </div>
-      <div>
-        <label class="label">Established</label>
-        <input class="input" type="number" name="established_year" value="<?= e($v('established_year')) ?>" min="1800" max="<?= date('Y') ?>" placeholder="1939" <?= $ro ?>>
-      </div>
     </div>
   </div>
 

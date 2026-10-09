@@ -23,12 +23,14 @@ if ($districtId) {
 $filters = [
     'university' => int_input('university'),
     'category'   => int_input('category'),
+    'type'       => int_input('type'),
 ];
 $where = ['1=1'];
 $params = [];
 if ($districtId) { $where[] = 'i.district_id = ?'; $params[] = $districtId; }
 if ($filters['university']) { $where[] = 'i.university_id = ?'; $params[] = $filters['university']; }
 if ($filters['category']) { $where[] = 'i.category_id = ?'; $params[] = $filters['category']; }
+if ($filters['type']) { $where[] = 'i.type_id = ?'; $params[] = $filters['type']; }
 $rows = institution_metrics(implode(' AND ', $where), $params, $ay);
 $total = aggregate_metrics($rows);
 $districtRows = $level === 'districts' ? district_rollup($rows) : [];
@@ -42,9 +44,9 @@ if (input('export') === 'csv' && $canExport) {
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
     if ($level === 'district') {
-        fputcsv($out, ['Institution', 'Code', 'University', 'Category', 'Status', 'Profile %', 'DWMS Institution ID', 'Campus placed', 'Campus placed (last year)', 'Final-year', 'DWMS registered', 'DWMS %', 'Job seekers', 'Gateway completed', 'Gateway %', 'Gateway tests (vendor)', 'Services', 'Beneficiaries', 'Readiness score']);
+        fputcsv($out, ['Institution', 'Code', 'Institution type', 'University', 'Category', 'Status', 'Profile %', 'DWMS Institution ID', 'Campus placed', 'Campus placed (last year)', 'Final-year', 'DWMS registered', 'DWMS %', 'Job seekers', 'Gateway completed', 'Gateway %', 'Gateway tests (vendor)', 'Services', 'Beneficiaries', 'Readiness score']);
         foreach ($rows as $r) {
-            fputcsv($out, [$r['name'], $r['code'], $r['university_short'], $r['category_name'], $r['status'], $r['profile_pct'], $r['dwms_id'], $r['campus_placed'], $r['campus_placed_prev'], $r['final_year'], $r['dwms_registered'], $r['dwms_pct'], $r['job_seekers'], $r['gateway_done'], $r['gateway_pct'], $r['has_vendor'] ? $r['gateway_vendor'] : '', $r['services'], $r['beneficiaries'], $r['score']]);
+            fputcsv($out, [$r['name'], $r['code'], $r['type_name'], $r['university_short'], $r['category_name'], $r['status'], $r['profile_pct'], $r['dwms_id'], $r['campus_placed'], $r['campus_placed_prev'], $r['final_year'], $r['dwms_registered'], $r['dwms_pct'], $r['job_seekers'], $r['gateway_done'], $r['gateway_pct'], $r['has_vendor'] ? $r['gateway_vendor'] : '', $r['services'], $r['beneficiaries'], $r['score']]);
         }
     } else {
         fputcsv($out, ['District', 'Institutions', 'Onboarded', 'In progress', 'Not started', 'Campus placed', 'Campus placed (last year)', 'Final-year', 'DWMS registered', 'DWMS %', 'Job seekers', 'Gateway completed', 'Gateway %', 'Gateway tests (vendor)', 'Services', 'Beneficiaries', 'Avg readiness']);
@@ -58,7 +60,7 @@ if (input('export') === 'csv' && $canExport) {
 
 $universities = lookup('universities', false);
 $categories = lookup('institution_categories', false);
-$q = fn(array $extra = []) => array_merge(['university' => $filters['university'], 'category' => $filters['category']], $extra);
+$q = fn(array $extra = []) => array_merge(['university' => $filters['university'], 'category' => $filters['category'], 'type' => $filters['type']], $extra);
 $maxFinal = max([1, ...array_map(fn($d) => $d['final_year'], $districtRows)]);
 
 $pageTitle = 'Reports';
@@ -84,6 +86,7 @@ require APP_ROOT . '/app/layout/header.php';
       <option value="">All universities</option>
       <?php foreach ($universities as $u): ?><option value="<?= $u['id'] ?>" <?= $filters['university'] === (int) $u['id'] ? 'selected' : '' ?>><?= e($u['short_name'] ?: $u['name']) ?></option><?php endforeach; ?>
     </select>
+    <select name="type" class="input input-sm w-auto" onchange="this.form.submit()"><?= institution_type_options($filters['type'], 'All institution types') ?></select>
     <select name="category" class="input input-sm w-auto" onchange="this.form.submit()">
       <option value="">All categories</option>
       <?php foreach ($categories as $c): ?><option value="<?= $c['id'] ?>" <?= $filters['category'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
@@ -180,7 +183,7 @@ require APP_ROOT . '/app/layout/header.php';
               <<?= $href ? 'a href="' . e($href) . '"' : 'div' ?> class="flex items-center gap-2.5 group">
                 <?php if ($r['logo']): ?><img src="<?= e(upload_url($r['logo'])) ?>" alt="" class="w-8 h-8 rounded-lg object-contain border border-slate-200 bg-white shrink-0">
                 <?php else: ?><span class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 text-[11px] font-bold flex items-center justify-center shrink-0"><?= e(initials($r['name'])) ?></span><?php endif; ?>
-                <span class="min-w-0"><span class="block font-semibold text-slate-900 <?= $href ? 'group-hover:text-sky-700' : '' ?>"><?= e($r['name']) ?></span><span class="block text-[11px] text-slate-400"><?= e($r['category_name'] ?: '—') ?></span></span>
+                <span class="min-w-0"><span class="block font-semibold text-slate-900 <?= $href ? 'group-hover:text-sky-700' : '' ?>"><?= e($r['name']) ?></span><span class="block text-[11px] text-slate-400"><?= e(implode(' · ', array_filter([$r['type_name'], $r['category_name']])) ?: '—') ?></span></span>
               </<?= $href ? 'a' : 'div' ?>>
             </td>
             <td class="text-xs"><?= e($r['university_short'] ?: '—') ?></td>
