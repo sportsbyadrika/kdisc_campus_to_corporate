@@ -6,9 +6,9 @@ DirectoryIndex index.php
     RewriteEngine On
 
     # Block internal folders and dotfiles
-    RewriteRule ^(app|database|node_modules)(/|$) - [F,L]
+    RewriteRule ^(app|database|deploy|vendor|node_modules)(/|$) - [F,L]
     RewriteRule (^|/)\.(?!well-known/) - [F,L]
-    RewriteRule ^(package(-lock)?\.json|router\.php)$ - [F,L]
+    RewriteRule ^(package(-lock)?\.json|composer\.(json|lock)|router\.php)$ - [F,L]
 
     # Externally redirect "/page.php" -> "/page" (hide the .php extension)
     RewriteCond %{ENV:REDIRECT_STATUS} ^$
@@ -25,7 +25,7 @@ DirectoryIndex index.php
 </IfModule>
 
 # Never serve configuration / deployment files
-<FilesMatch "^(\.env.*|\.cpanel\.yml|\.git.*|package(-lock)?\.json|router\.php|README\.md|.*\.sql)$">
+<FilesMatch "^(\.env.*|\.cpanel\.yml|\.git.*|package(-lock)?\.json|composer\.(json|lock)|router\.php|README\.md|.*\.sql)$">
     Require all denied
 </FilesMatch>
 

@@ -117,6 +117,10 @@ CREATE TABLE IF NOT EXISTS institutions (
   logo           VARCHAR(255) NULL,
   photo          VARCHAR(255) NULL,
   history        TEXT NULL,
+  head_name      VARCHAR(160) NULL COMMENT 'Head of the institution',
+  head_designation VARCHAR(160) NULL,
+  head_email     VARCHAR(160) NULL,
+  head_phone     VARCHAR(20)  NULL,
   established_year SMALLINT UNSIGNED NULL,
   is_active      TINYINT(1) NOT NULL DEFAULT 1,
   created_by     INT UNSIGNED NULL,
@@ -166,6 +170,7 @@ CREATE TABLE IF NOT EXISTS institution_officers (
   email           VARCHAR(160) NULL,
   phone           VARCHAR(20)  NULL,
   alt_phone       VARCHAR(30)  NULL,
+  photo           VARCHAR(255) NULL,
   is_primary      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Nodal officer',
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -337,6 +342,72 @@ CREATE TABLE IF NOT EXISTS activity_log (
   KEY idx_log_inst (institution_id, created_at),
   KEY idx_log_district (district_id, created_at),
   KEY idx_log_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Public "Enroll my Institution" requests, approved by district users
+CREATE TABLE IF NOT EXISTS enrollment_requests (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  district_id       TINYINT UNSIGNED NOT NULL,
+  institution_id    INT UNSIGNED NOT NULL,
+  head_name         VARCHAR(160) NOT NULL,
+  head_designation  VARCHAR(160) NOT NULL,
+  head_email        VARCHAR(160) NOT NULL,
+  head_phone        VARCHAR(20)  NOT NULL,
+  po_name           VARCHAR(160) NOT NULL,
+  po_email          VARCHAR(160) NOT NULL,
+  po_phone          VARCHAR(20)  NOT NULL,
+  status            ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  open_flag         TINYINT AS (IF(status IN ('pending','approved'), 1, NULL)) STORED COMMENT 'Enforces one open request per institution',
+  review_comment    VARCHAR(1000) NULL,
+  reviewed_by       INT UNSIGNED NULL,
+  reviewed_at       DATETIME NULL,
+  user_id           INT UNSIGNED NULL COMMENT 'Login created on approval',
+  ip                VARCHAR(45) NULL,
+  user_agent        VARCHAR(255) NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_enroll_open (institution_id, open_flag),
+  KEY idx_enroll_district (district_id, status),
+  CONSTRAINT fk_enroll_inst FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE,
+  CONSTRAINT fk_enroll_district FOREIGN KEY (district_id) REFERENCES districts (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One-time set-password / reset-password links (only the SHA-256 hash is stored)
+CREATE TABLE IF NOT EXISTS password_tokens (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id     INT UNSIGNED NOT NULL,
+  token_hash  CHAR(64)     NOT NULL COMMENT 'SHA-256 of the token; the token itself is only ever emailed',
+  purpose     ENUM('setup','reset') NOT NULL DEFAULT 'reset',
+  expires_at  DATETIME     NOT NULL,
+  used_at     DATETIME     NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_token_hash (token_hash),
+  KEY idx_token_user (user_id),
+  CONSTRAINT fk_token_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Outgoing email log
+CREATE TABLE IF NOT EXISTS mail_log (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  recipient   VARCHAR(160) NOT NULL,
+  subject     VARCHAR(255) NOT NULL,
+  template    VARCHAR(40)  NOT NULL,
+  status      ENUM('sent','failed','logged') NOT NULL,
+  error       VARCHAR(500) NULL,
+  body        MEDIUMTEXT   NULL COMMENT 'Only stored with the log driver (development)',
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_mail_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Generic rate limiting (public enrollment form, CAPTCHA, password reset)
+CREATE TABLE IF NOT EXISTS throttle (
+  id        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  bucket    VARCHAR(120) NOT NULL,
+  hit_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_throttle (bucket, hit_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

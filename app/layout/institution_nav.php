@@ -5,7 +5,7 @@
  */
 $steps = [
     1 => ['institution-profile',   'Profile',        'profile',  'Institution Profile',              'Affiliation, category, location, logo, photo & history'],
-    2 => ['institution-officers',  'Placement Officers', 'officers', 'Placement / Nodal Officers',  'Designated coordinators for Campus to Corporate activities'],
+    2 => ['institution-officers',  'Placement Officers', 'officers', 'Placement Officers',  'Placement officers coordinating Campus to Corporate activities'],
     3 => ['institution-students',  'Student Strength', 'students', 'Course / Department-wise Student Strength', 'Course-wise final-year batch counts for ' . academic_year()],
     4 => ['institution-cohorts',   'Cohorts & Tests', 'cohorts',  'Student Cohorts & Assessments',     'Immediate job-seeker cohort and university assessment progress'],
     5 => ['institution-services',  'DWMS Services',  'services', 'DWMS Services Availed',             'Employability services and modules availed by the institution'],

@@ -9,20 +9,27 @@ $error = null;
 $username = '';
 if (is_post()) {
     verify_csrf();
-    $username = mb_substr((string) input('username'), 0, 60);
+    $username = mb_substr((string) input('username'), 0, 160);
     $password = (string) ($_POST['password'] ?? '');
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
     $st = db()->prepare('SELECT COUNT(*) FROM login_attempts WHERE (username = ? OR ip = ?) AND attempted_at > NOW() - INTERVAL 15 MINUTE');
-    $st->execute([$username, $ip]);
+    $st->execute([mb_substr($username, 0, 60), $ip]);
     if ((int) $st->fetchColumn() >= 8) {
         $error = 'Too many failed attempts. Please wait 15 minutes and try again.';
     } else {
+        // Sign in with the username, or with the email address when it belongs to exactly one account
         $st = db()->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
-        $st->execute([$username]);
+        $st->execute([strtolower($username)]);
         $user = $st->fetch();
+        if (!$user && str_contains($username, '@')) {
+            $st = db()->prepare('SELECT * FROM users WHERE email = ? LIMIT 2');
+            $st->execute([strtolower($username)]);
+            $matches = $st->fetchAll();
+            $user = count($matches) === 1 ? $matches[0] : null;
+        }
         if ($user && $user['is_active'] && password_verify($password, $user['password_hash'])) {
-            db()->prepare('DELETE FROM login_attempts WHERE username = ?')->execute([$username]);
+            db()->prepare('DELETE FROM login_attempts WHERE username IN (?, ?)')->execute([mb_substr($username, 0, 60), $user['username']]);
             if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
                 db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
                     ->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
@@ -36,12 +43,13 @@ if (is_post()) {
             }
             redirect('dashboard');
         }
-        db()->prepare('INSERT INTO login_attempts (username, ip) VALUES (?, ?)')->execute([$username, $ip]);
+        db()->prepare('INSERT INTO login_attempts (username, ip) VALUES (?, ?)')->execute([mb_substr($username, 0, 60), $ip]);
         $error = ($user && !$user['is_active']) ? 'This account has been deactivated. Contact your administrator.'
             : 'Invalid username or password.';
     }
 }
 $appName = setting('app_name', 'Campus to Corporate');
+send_public_csp();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -85,23 +93,27 @@ $appName = setting('app_name', 'Campus to Corporate');
         <?php if ($error): ?>
           <div class="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-2"><?= icon('warning') ?> <?= e($error) ?></div>
         <?php endif; ?>
-        <?php foreach (take_flashes() as $f): ?>
-          <div class="mb-5 p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-sm"><?= e($f['message']) ?></div>
+        <?php foreach (take_flashes() as $flashMsg): $ok = $flashMsg['type'] === 'success'; ?>
+          <div class="mb-5 p-3 rounded-xl text-sm <?= $ok ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-sky-50 border border-sky-200 text-sky-900' ?>"><?= e($flashMsg['message']) ?></div>
         <?php endforeach; ?>
 
         <form method="post" class="space-y-5" autocomplete="on">
           <?= csrf_field() ?>
           <div>
-            <label class="label" for="username">Username</label>
+            <label class="label" for="username">Username or email</label>
             <input class="input" id="username" name="username" value="<?= e($username) ?>" required autofocus autocomplete="username">
           </div>
           <div>
-            <label class="label" for="password">Password</label>
+            <div class="flex items-center justify-between"><label class="label" for="password">Password</label><a href="<?= e(url('forgot-password')) ?>" class="text-xs link mb-1">Forgot password?</a></div>
             <input class="input" id="password" type="password" name="password" required autocomplete="current-password">
           </div>
           <button class="btn-primary w-full">Sign in <?= icon('arrow-right') ?></button>
         </form>
-        <p class="text-xs text-slate-400 mt-8">Forgot your password? Contact your district coordinator or the portal administrator to reset it.</p>
+        <div class="mt-8 pt-6 border-t border-slate-100">
+          <p class="text-sm font-semibold text-slate-800">New to the programme?</p>
+          <p class="text-xs text-slate-500 mb-3">Institutions can request access; the district office approves it and the Placement Officer receives a login by email.</p>
+          <a href="<?= e(url('enroll')) ?>" class="btn-secondary w-full border-sky-300 text-sky-700 hover:bg-sky-50"><?= icon('building') ?> Enroll my Institution</a>
+        </div>
       </div>
     </div>
   </main>

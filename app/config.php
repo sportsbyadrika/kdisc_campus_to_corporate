@@ -53,6 +53,17 @@ $config = [
     'timezone'    => $env('C2C_TIMEZONE', 'Asia/Kolkata'),
     'upload_max_bytes' => (int) $env('C2C_UPLOAD_MAX_MB', '2') * 1024 * 1024,
     'session_name'     => $env('C2C_SESSION_NAME', 'c2c_session'),
+    // Public URL used in emailed links, e.g. https://campustocorporate.kdisc.in (no trailing slash)
+    'app_url'          => rtrim($env('C2C_APP_URL'), '/'),
+    // Email: driver "mail" (PHP mail / cPanel sendmail), "smtp", or "log" (development: store in mail_log only)
+    'mail_driver'      => $env('C2C_MAIL_DRIVER', 'mail'),
+    'mail_from'        => $env('C2C_MAIL_FROM'),
+    'mail_from_name'   => $env('C2C_MAIL_FROM_NAME', 'Campus to Corporate'),
+    'smtp_host'        => $env('C2C_SMTP_HOST'),
+    'smtp_port'        => (int) $env('C2C_SMTP_PORT', '587'),
+    'smtp_user'        => $env('C2C_SMTP_USER'),
+    'smtp_pass'        => $env('C2C_SMTP_PASS'),
+    'smtp_secure'      => strtolower($env('C2C_SMTP_SECURE', 'tls')), // tls (STARTTLS), ssl, none
 ];
 
 $local = __DIR__ . '/config.local.php';

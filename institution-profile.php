@@ -22,6 +22,10 @@ if (is_post()) {
         'latitude'         => is_numeric(input('latitude')) ? round((float) input('latitude'), 7) : null,
         'longitude'        => is_numeric(input('longitude')) ? round((float) input('longitude'), 7) : null,
         'history'          => nullable(input('history')),
+        'head_name'        => nullable(mb_substr((string) input('head_name'), 0, 160)),
+        'head_designation' => nullable(mb_substr((string) input('head_designation'), 0, 160)),
+        'head_email'       => nullable(strtolower(mb_substr((string) input('head_email'), 0, 160))),
+        'head_phone'       => input('head_phone') !== '' ? normalize_phone((string) input('head_phone')) : null,
     ];
     if ($isOffice) {
         $data['name'] = (string) input('name');
@@ -37,6 +41,8 @@ if (is_post()) {
     if (!$data['university_id']) $errors[] = 'Select the affiliated university.';
     if (!$data['category_id']) $errors[] = 'Select the institution category.';
     if (!$data['type_id']) $errors[] = 'Select the institution type.';
+    if ($data['head_email'] && !filter_var($data['head_email'], FILTER_VALIDATE_EMAIL)) $errors[] = "Enter a valid email for the Head of the Institution.";
+    if ($data['head_phone'] && !valid_mobile($data['head_phone'])) $errors[] = "Enter a valid 10-digit mobile number for the Head of the Institution.";
     if ($data['latitude'] !== null && ($data['latitude'] < 8 || $data['latitude'] > 13)) $errors[] = 'Latitude is outside Kerala (8° – 13° N).';
     if ($data['longitude'] !== null && ($data['longitude'] < 74 || $data['longitude'] > 78)) $errors[] = 'Longitude is outside Kerala (74° – 78° E).';
     if ($data['established_year'] !== null && ($data['established_year'] < 1800 || $data['established_year'] > (int) date('Y'))) $errors[] = 'Enter a valid year of establishment.';
@@ -168,6 +174,18 @@ require APP_ROOT . '/app/layout/institution_nav.php';
     <div class="md:col-span-3">
       <label class="label">Campus Physical Address</label>
       <input class="input" name="address" value="<?= e($v('address')) ?>" placeholder="Vanchiyoor P.O., Barton Hill" <?= $ro ?>>
+    </div>
+  </div>
+
+  <!-- Head of the institution -->
+  <div class="mt-8 p-4 rounded-xl border border-slate-200">
+    <h3 class="text-sm font-bold text-slate-800 mb-1">Head of the Institution</h3>
+    <p class="text-xs text-slate-500 mb-4">Principal / Director. Receives programme confirmations; has no portal login.</p>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div><label class="label">Name</label><input class="input" name="head_name" maxlength="160" value="<?= e($v('head_name')) ?>" placeholder="Dr. Anitha S" <?= $ro ?>></div>
+      <div><label class="label">Designation</label><input class="input" name="head_designation" maxlength="160" value="<?= e($v('head_designation')) ?>" placeholder="Principal" <?= $ro ?>></div>
+      <div><label class="label">Email</label><input class="input" type="email" name="head_email" maxlength="160" value="<?= e($v('head_email')) ?>" placeholder="principal@college.ac.in" <?= $ro ?>></div>
+      <div><label class="label">Contact Number</label><input class="input" type="tel" name="head_phone" maxlength="16" value="<?= e($v('head_phone')) ?>" placeholder="10-digit mobile" <?= $ro ?>></div>
     </div>
   </div>
 

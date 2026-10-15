@@ -20,6 +20,8 @@ if (is_post()) {
         $o = $fetchOfficer((int) int_input('officer_id'));
         if ($o) {
             db()->prepare('DELETE FROM institution_officers WHERE id = ?')->execute([$o['id']]);
+            delete_upload($o['photo']);
+            ensure_primary_officer($instId);
             log_activity('delete', 'officer', (int) $o['id'], "Removed placement officer {$o['name']}", [], $instId);
             flash('success', 'Officer removed.');
         }
@@ -27,35 +29,57 @@ if (is_post()) {
     }
 
     $data = [
-        'name'        => (string) input('name'),
-        'designation' => nullable(input('designation')),
-        'email'       => nullable(input('email')),
-        'phone'       => nullable(input('phone')),
-        'alt_phone'   => nullable(input('alt_phone')),
-        'is_primary'  => input('is_primary') === '1' ? 1 : 0,
+        'name'        => mb_substr((string) input('name'), 0, 160),
+        'designation' => nullable(mb_substr((string) input('designation'), 0, 160)),
+        'email'       => nullable(strtolower(mb_substr((string) input('email'), 0, 160))),
+        'phone'       => input('phone') !== '' ? normalize_phone((string) input('phone')) : null,
+        'alt_phone'   => nullable(mb_substr((string) input('alt_phone'), 0, 30)),
     ];
     $errors = [];
     if ($data['name'] === '') $errors[] = "Officer's name is required.";
     if ($data['email'] && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email address.';
-    if ($data['phone'] && !preg_match('/^[6-9][0-9]{9}$/', $data['phone'])) $errors[] = 'Mobile number must be a valid 10-digit number.';
+    if ($data['phone'] && !valid_mobile($data['phone'])) $errors[] = 'Mobile number must be a valid 10-digit number.';
     $oid = int_input('officer_id');
     $existing = $oid ? $fetchOfficer($oid) : null;
     if ($oid && !$existing) $errors[] = 'Officer not found.';
 
+    // Photo: cropped image from the browser (data URL), or a plain file upload when JavaScript is off
+    $photo = null;
+    if (!$errors) {
+        try {
+            $photo = store_image_data_url((string) ($_POST['photo_data'] ?? ''), 'officers', 400);
+            $f = $_FILES['photo_file'] ?? null;
+            if (!$photo && $f && ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                // No-JavaScript / no-cropper fallback: validate, then centre-crop to a square like the cropper would
+                if ($f['error'] !== UPLOAD_ERR_OK || $f['size'] > config('upload_max_bytes')) {
+                    throw new RuntimeException('The photo must be a JPG, PNG or WEBP image under ' . round(config('upload_max_bytes') / 1048576, 1) . ' MB.');
+                }
+                $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
+                if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                    throw new RuntimeException('The photo must be a JPG, PNG or WEBP image.');
+                }
+                $photo = store_image_data_url('data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($f['tmp_name'])), 'officers', 400);
+            }
+        } catch (RuntimeException $ex) {
+            $errors[] = $ex->getMessage();
+        }
+    }
+
     if ($errors) {
         foreach ($errors as $err) flash('error', $err);
-        $_SESSION['_old'] = $_POST;
+        $old = $_POST;
+        unset($old['photo_data']);
+        $_SESSION['_old'] = $old;
         redirect('institution-officers', ['id' => $instId, 'edit' => $oid]);
     }
 
+    if ($photo) {
+        $data['photo'] = $photo;
+    } elseif (input('remove_photo') === '1') {
+        $data['photo'] = null;
+    }
+
     db()->beginTransaction();
-    $count = (int) db()->query('SELECT COUNT(*) FROM institution_officers WHERE institution_id = ' . $instId)->fetchColumn();
-    if ($count === 0 || ($existing && $count === 1)) {
-        $data['is_primary'] = 1; // the first officer is always the nodal officer
-    }
-    if ($data['is_primary']) {
-        db()->prepare('UPDATE institution_officers SET is_primary = 0 WHERE institution_id = ?')->execute([$instId]);
-    }
     if ($existing) {
         $set = implode(', ', array_map(fn($k) => "`$k` = ?", array_keys($data)));
         db()->prepare("UPDATE institution_officers SET {$set} WHERE id = ?")->execute([...array_values($data), $existing['id']]);
@@ -64,16 +88,21 @@ if (is_post()) {
             log_activity('update', 'officer', (int) $existing['id'], "Updated placement officer {$data['name']}", $changes, $instId);
         }
     } else {
-        db()->prepare('INSERT INTO institution_officers (institution_id, name, designation, email, phone, alt_phone, is_primary) VALUES (?,?,?,?,?,?,?)')
+        $cols = implode(', ', array_map(fn($k) => "`$k`", array_keys($data)));
+        db()->prepare("INSERT INTO institution_officers (institution_id, {$cols}) VALUES (?" . str_repeat(',?', count($data)) . ')')
             ->execute([$instId, ...array_values($data)]);
         log_activity('create', 'officer', (int) db()->lastInsertId(), "Added placement officer {$data['name']}", [], $instId);
     }
+    ensure_primary_officer($instId);
     db()->commit();
+    if ($existing && array_key_exists('photo', $data) && $existing['photo'] !== $data['photo']) {
+        delete_upload($existing['photo']);
+    }
     flash('success', $existing ? 'Officer details updated.' : 'Placement officer added.');
     redirect(input('go') === 'next' ? 'institution-students' : 'institution-officers', ['id' => $instId]);
 }
 
-$st = db()->prepare('SELECT * FROM institution_officers WHERE institution_id = ? ORDER BY is_primary DESC, name');
+$st = db()->prepare('SELECT * FROM institution_officers WHERE institution_id = ? ORDER BY is_primary DESC, id');
 $st->execute([$instId]);
 $officers = $st->fetchAll();
 
@@ -85,12 +114,17 @@ $v = fn(string $k) => $old[$k] ?? $editing[$k] ?? '';
 $showForm = $canEdit && ($editing || !$officers || isset($_GET['add']) || $old);
 
 $pageTitle = $inst['name'] . ' · Placement Officers';
+$extraHead = ['<link rel="stylesheet" href="' . e(asset('assets/vendor/cropperjs/cropper.min.css')) . '">'];
+$extraScripts = [
+    '<script src="' . e(asset('assets/vendor/cropperjs/cropper.min.js')) . '"></script>',
+    '<script src="' . e(asset('assets/js/photo-crop.js')) . '"></script>',
+];
 require APP_ROOT . '/app/layout/header.php';
 require APP_ROOT . '/app/layout/institution_nav.php';
 ?>
 <div class="card sm:p-8">
   <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-    <?php section_heading('user', 'indigo', 'Step 2: Placement Officer / Nodal Officer Profile', 'Designated institutional coordinators for Campus to Corporate activities.'); ?>
+    <?php section_heading('user', 'indigo', 'Step 2: Placement Officer Profile', 'Placement officers coordinating Campus to Corporate activities for the institution.'); ?>
     <?php if ($canEdit && !$showForm): ?>
       <a href="<?= e(url('institution-officers', ['id' => $instId, 'add' => 1])) ?>" class="btn-soft shrink-0"><?= icon('plus', 'w-3.5 h-3.5') ?> Add Officer</a>
     <?php endif; ?>
@@ -99,10 +133,13 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   <?php if ($officers): ?>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
     <?php foreach ($officers as $o): ?>
-      <div class="p-4 rounded-xl border <?= $o['is_primary'] ? 'border-indigo-200 bg-indigo-50/40' : 'border-slate-200' ?> flex items-start gap-3.5">
-        <div class="w-12 h-12 rounded-xl <?= $o['is_primary'] ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600' ?> flex items-center justify-center font-bold text-lg shrink-0"><?= e(initials($o['name'])) ?></div>
+      <div class="p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
+        <?php if ($o['photo']): ?>
+          <img src="<?= e(upload_url($o['photo'])) ?>" alt="<?= e($o['name']) ?>" class="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0">
+        <?php else: ?>
+          <div class="w-16 h-16 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg shrink-0"><?= e(initials($o['name'])) ?></div>
+        <?php endif; ?>
         <div class="min-w-0 grow">
-          <?php if ($o['is_primary']): ?><span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">Nodal Officer</span><?php endif; ?>
           <p class="text-sm font-bold text-slate-900"><?= e($o['name']) ?></p>
           <p class="text-xs text-slate-500"><?= e($o['designation'] ?: '—') ?></p>
           <p class="text-xs text-slate-600 mt-1.5 break-all">
@@ -126,11 +163,29 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   <?php endif; ?>
 
   <?php if ($showForm): ?>
-  <form method="post" class="<?= $officers ? 'pt-6 border-t border-slate-100' : '' ?>">
+  <form method="post" enctype="multipart/form-data" class="<?= $officers ? 'pt-6 border-t border-slate-100' : '' ?>" data-photo-form>
     <?= csrf_field() ?>
     <input type="hidden" name="officer_id" value="<?= e($editing['id'] ?? '') ?>">
     <h3 class="text-sm font-bold text-slate-800 mb-4"><?= $editing ? 'Edit officer' : 'Add a placement officer' ?></h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+    <div class="flex flex-col md:flex-row gap-8">
+    <!-- Photo with crop -->
+    <div class="shrink-0 md:w-44">
+      <label class="label">Photo</label>
+      <div class="w-40 h-40 rounded-2xl bg-slate-50 border border-dashed border-slate-300 overflow-hidden flex items-center justify-center">
+        <img id="photo-preview" src="<?= e(($editing['photo'] ?? null) ? upload_url($editing['photo']) : '') ?>" alt="Officer photo" class="w-full h-full object-cover <?= ($editing['photo'] ?? null) ? '' : 'hidden' ?>">
+        <span id="photo-placeholder" class="text-xs text-slate-400 text-center px-3 <?= ($editing['photo'] ?? null) ? 'hidden' : '' ?>">No photo</span>
+      </div>
+      <input type="hidden" name="photo_data" id="photo-data">
+      <input type="file" id="photo-file" name="photo_file" accept="image/jpeg,image/png,image/webp" class="hidden">
+      <div class="flex flex-wrap gap-1.5 mt-2">
+        <button type="button" class="btn-secondary btn-xs" data-photo-choose data-no-busy><?= icon('pencil', 'w-3.5 h-3.5') ?> <?= ($editing['photo'] ?? null) ? 'Change' : 'Upload' ?></button>
+      </div>
+      <?php if ($editing['photo'] ?? null): ?>
+        <label class="mt-2 flex items-center gap-1.5 text-xs text-slate-500"><input type="checkbox" name="remove_photo" value="1" class="rounded border-slate-300"> Remove photo</label>
+      <?php endif; ?>
+      <span class="hint">JPG / PNG / WEBP. You can crop it to a square after choosing.</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl grow">
       <div>
         <label class="label">Officer Full Name <span class="req">*</span></label>
         <input class="input" name="name" value="<?= e($v('name')) ?>" required placeholder="Prof. Rajesh K">
@@ -151,12 +206,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
         <label class="label">Alternative Contact / Placement Cell Helpline</label>
         <input class="input" name="alt_phone" value="<?= e($v('alt_phone')) ?>" placeholder="0471-2300000">
       </div>
-      <div class="flex items-end">
-        <label class="flex items-center gap-2 text-sm text-slate-700 pb-2.5">
-          <input type="checkbox" name="is_primary" value="1" class="h-4 w-4 rounded border-slate-300 text-sky-600" <?= ($v('is_primary') || !$officers) ? 'checked' : '' ?>>
-          Nodal officer (primary contact)
-        </label>
-      </div>
+    </div>
     </div>
     <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
       <a href="<?= e(url('institution-officers', ['id' => $instId])) ?>" class="btn-secondary"><?= $officers ? 'Cancel' : '&larr; Back' ?></a>
@@ -172,5 +222,24 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <a href="<?= e(url('institution-students', ['id' => $instId])) ?>" class="btn-primary">Proceed to Student Strength <?= icon('arrow-right') ?></a>
     </div>
   <?php endif; ?>
+</div>
+<!-- Crop dialog -->
+<div id="crop-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="crop-title">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
+    <h3 id="crop-title" class="card-title mb-1">Crop photo</h3>
+    <p class="card-subtitle mb-3">Drag to position, scroll or use the buttons to zoom.</p>
+    <div class="h-80 bg-slate-100 rounded-xl overflow-hidden"><img id="crop-image" alt="" class="block max-w-full"></div>
+    <div class="flex flex-wrap items-center justify-between gap-2 mt-4">
+      <div class="flex gap-1.5">
+        <button type="button" class="btn-secondary btn-xs" data-crop="zoom-in" title="Zoom in">＋</button>
+        <button type="button" class="btn-secondary btn-xs" data-crop="zoom-out" title="Zoom out">－</button>
+        <button type="button" class="btn-secondary btn-xs" data-crop="rotate" title="Rotate">⟳ Rotate</button>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" class="btn-secondary btn-xs" data-crop="cancel">Cancel</button>
+        <button type="button" class="btn-primary btn-xs" data-crop="apply"><?= icon('check', 'w-3.5 h-3.5') ?> Use photo</button>
+      </div>
+    </div>
+  </div>
 </div>
 <?php require APP_ROOT . '/app/layout/footer.php';

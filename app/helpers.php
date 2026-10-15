@@ -333,6 +333,9 @@ function status_badge(string $status): string
     $map = [
         'Onboarded'   => 'bg-emerald-100 text-emerald-700',
         'Active'      => 'bg-emerald-100 text-emerald-700',
+        'Sent'        => 'bg-emerald-100 text-emerald-700',
+        'Failed'      => 'bg-rose-100 text-rose-700',
+        'Logged'      => 'bg-sky-100 text-sky-700',
         'In Progress' => 'bg-amber-100 text-amber-800',
         'Not Started' => 'bg-slate-100 text-slate-600',
         'Inactive'    => 'bg-rose-100 text-rose-700',
@@ -503,4 +506,55 @@ function valid_type_id(?int $id): ?int
     $st = db()->prepare('SELECT id FROM institution_types WHERE id = ?');
     $st->execute([$id]);
     return $st->fetchColumn() ? $id : null;
+}
+
+/**
+ * Store a cropped image sent from the browser as a data URL (data:image/jpeg;base64,...).
+ * The image is decoded and re-encoded through GD as a square JPEG of $size px, which strips
+ * metadata and anything embedded. Returns the relative path, or null when no image was sent.
+ */
+function store_image_data_url(string $dataUrl, string $folder, int $size = 400): ?string
+{
+    if ($dataUrl === '') {
+        return null;
+    }
+    if (!preg_match('#^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=\s]+)$#', $dataUrl, $m)) {
+        throw new RuntimeException('The cropped photo could not be read. Please choose the photo again.');
+    }
+    if (strlen($m[2]) > 4 * 1024 * 1024) {
+        throw new RuntimeException('The cropped photo is too large.');
+    }
+    $bin = base64_decode(preg_replace('/\s+/', '', $m[2]), true);
+    $src = $bin !== false ? @imagecreatefromstring($bin) : false;
+    if ($src === false || imagesx($src) < 50 || imagesy($src) < 50 || imagesx($src) > 4000 || imagesy($src) > 4000) {
+        throw new RuntimeException('The cropped photo is not a valid image.');
+    }
+    $side = min(imagesx($src), imagesy($src));
+    $dst = imagecreatetruecolor($size, $size);
+    imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+    imagecopyresampled($dst, $src, 0, 0, (int) ((imagesx($src) - $side) / 2), (int) ((imagesy($src) - $side) / 2), $size, $size, $side, $side);
+    imagedestroy($src);
+
+    $dir = APP_ROOT . '/uploads/' . $folder;
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        throw new RuntimeException('Upload folder is not writable.');
+    }
+    $name = date('Ymd') . '_' . bin2hex(random_bytes(8)) . '.jpg';
+    $ok = imagejpeg($dst, $dir . '/' . $name, 88);
+    imagedestroy($dst);
+    if (!$ok) {
+        throw new RuntimeException('The photo could not be saved.');
+    }
+    return $folder . '/' . $name;
+}
+
+/** Keep exactly one main contact (is_primary) per institution: the earliest officer when none is set. */
+function ensure_primary_officer(int $institutionId): void
+{
+    $st = db()->prepare('SELECT id, is_primary FROM institution_officers WHERE institution_id = ? ORDER BY is_primary DESC, id');
+    $st->execute([$institutionId]);
+    $rows = $st->fetchAll();
+    if ($rows && !(int) $rows[0]['is_primary']) {
+        db()->prepare('UPDATE institution_officers SET is_primary = 1 WHERE id = ?')->execute([$rows[0]['id']]);
+    }
 }

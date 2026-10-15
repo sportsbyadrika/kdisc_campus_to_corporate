@@ -6,8 +6,8 @@
 $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
 $root = __DIR__;
 
-if (preg_match('#^/(app|database|node_modules)(/|$)#', $path) || preg_match('#/\.#', $path)
-    || preg_match('#^/(router\.php|package(-lock)?\.json)$#', $path)) {
+if (preg_match('#^/(app|database|deploy|vendor|node_modules)(/|$)#', $path) || preg_match('#/\.#', $path)
+    || preg_match('#^/(router\.php|package(-lock)?\.json|composer\.(json|lock))$#', $path)) {
     http_response_code(403);
     require $root . '/404.php';
     return true;

@@ -12,7 +12,7 @@ foreach (districts() as $d) {
 
 $st = db()->prepare('SELECT * FROM institution_officers WHERE institution_id = ? ORDER BY is_primary DESC, name LIMIT 1');
 $st->execute([$instId]);
-$nodal = $st->fetch();
+$placementOfficer = $st->fetch();
 
 $rank = statewide_ranks();
 $myRank = $rank['ranks'][$instId] ?? null;
@@ -60,7 +60,7 @@ $gatewayStatus = $m['gateway_pct'] >= 80 ? 'Completed' : ($m['gateway_done'] > 0
 $milestones = [
     ['Institution Account & Workspace Creation', 'District / State Office', 'Completed', date('d M Y', strtotime($inst['created_at']))],
     ['Institution Profile, Affiliation & Location', 'Placement Cell', $m['sections']['profile'] ? 'Completed' : 'Pending', 'Step 1'],
-    ['Placement Officer Profile & Nodal Assignment', 'Placement Cell', $m['sections']['officers'] ? 'Completed' : 'Pending', 'Step 2'],
+    ['Placement Officer Profile', 'Placement Cell', $m['sections']['officers'] ? 'Completed' : 'Pending', 'Step 2'],
     ['Department & Student Baseline Ingestion', 'Placement Cell & TCE', $m['sections']['students'] ? 'Completed' : 'Pending', 'Step 3'],
     ['Immediate Job-Seeker Cohort Identified', 'Placement Officer', $m['job_seekers'] > 0 ? 'Completed' : 'Pending', 'Step 4'],
     ['Mandatory Gateway Assessment (≥ 80% of job seekers)', 'Students / TCE', $gatewayStatus, $m['gateway_pct'] . '% done'],
@@ -73,7 +73,7 @@ $milestonesDone = count(array_filter($milestones, fn($x) => $x[2] === 'Completed
 $tasks = [];
 $links = ['profile' => 'institution-profile', 'officers' => 'institution-officers', 'students' => 'institution-students', 'cohorts' => 'institution-cohorts', 'services' => 'institution-services'];
 $labels = ['profile' => 'Complete the institution profile (university, category, address & map location).',
-    'officers' => 'Add the placement / nodal officer details.', 'students' => 'Record course / department-wise student strength.',
+    'officers' => 'Add the placement officer details.', 'students' => 'Record course / department-wise student strength.',
     'cohorts' => 'Enter the cohort figures and assessment progress.', 'services' => 'Select the DWMS services availed.'];
 foreach ($m['sections'] as $k => $ok) {
     if (!$ok) $tasks[] = [$labels[$k], url($links[$k], ['id' => $instId])];
@@ -99,7 +99,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
       <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center"><?= icon('check', 'w-5 h-5') ?></div>
       <div>
         <h3 class="text-sm font-bold text-emerald-900">Institution Onboarding Completed</h3>
-        <p class="text-xs text-emerald-700">Profile verified, nodal officer attached, baseline mapped to the assigned TCE team.</p>
+        <p class="text-xs text-emerald-700">Profile verified, placement officer attached, baseline mapped to the assigned TCE team.</p>
       </div>
     </div>
   <?php else: ?>
@@ -139,7 +139,8 @@ require APP_ROOT . '/app/layout/institution_nav.php';
             <span><?= e($inst['university_short'] ?: ($inst['university_name'] ?: 'University not set')) ?></span> &bull;
             <span><?= e($inst['type_name'] ?: 'Type not set') ?></span> &bull;
             <span><?= e($inst['category_name'] ?: 'Category not set') ?></span> &bull;
-            <span>Nodal Officer: <strong class="text-white"><?= e($nodal['name'] ?? 'Not assigned') ?></strong></span>
+            <span>Placement Officer: <strong class="text-white"><?= e($placementOfficer['name'] ?? 'Not assigned') ?></strong></span>
+            <?php if ($inst['head_name']): ?> &bull; <span>Head: <strong class="text-white"><?= e($inst['head_name']) ?></strong><?= $inst['head_designation'] ? ' (' . e($inst['head_designation']) . ')' : '' ?></span><?php endif; ?>
           </p>
         </div>
       </div>

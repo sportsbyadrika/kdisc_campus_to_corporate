@@ -13,6 +13,12 @@ if ($user) {
     if (has_role('admin', 'state', 'district')) {
         $nav[] = ['institution-requests', 'Requests', 'inbox', ['institution-requests']];
     }
+    if (has_role('admin', 'state', 'district')) {
+        $st = db()->prepare("SELECT COUNT(*) FROM enrollment_requests WHERE status = 'pending'" . ($user['role'] === 'district' ? ' AND district_id = ?' : ''));
+        $st->execute($user['role'] === 'district' ? [(int) $user['district_id']] : []);
+        $pendingEnrollments = (int) $st->fetchColumn();
+        $nav[] = ['enrollments', 'Enrollments', 'user', ['enrollments'], $pendingEnrollments];
+    }
     if (has_role('admin', 'district')) {
         $nav[] = ['vendor-upload', 'Test Upload', 'clipboard', ['vendor-upload']];
     }
@@ -90,11 +96,14 @@ $roleLabel = $user ? ROLES[$user['role']] . ($user['role'] === 'district' ? ' ·
   <?php if ($user): ?>
   <nav class="border-t border-slate-100 bg-white">
     <div id="main-nav" class="hidden lg:flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-col lg:flex-row gap-1 py-2">
-      <?php foreach ($nav as [$href, $label, $ico, $navPages]):
+      <?php foreach ($nav as $navItem):
+          [$href, $label, $ico, $navPages] = $navItem;
+          $badge = $navItem[4] ?? 0;
           $active = in_array($page, $navPages, true); ?>
         <a href="<?= e(url($href)) ?>"
            class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors <?= $active ? 'bg-sky-50 text-sky-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' ?>">
           <?= icon($ico) ?> <?= e($label) ?>
+          <?php if ($badge): ?><span class="ml-0.5 min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center" title="<?= (int) $badge ?> pending"><?= (int) $badge ?></span><?php endif; ?>
         </a>
       <?php endforeach; ?>
     </div>
