@@ -75,6 +75,9 @@ foreach ($years as $y) {
     $yearMap[$y['academic_year']] = max($yearMap[$y['academic_year']] ?? 0, (int) $y['n']);
 }
 
+$recentMail = db()->query('SELECT recipient, subject, template, status, error, created_at FROM mail_log ORDER BY id DESC LIMIT 15')->fetchAll();
+$mailDriver = config('mail_driver', 'mail');
+
 $pageTitle = 'Settings';
 require APP_ROOT . '/app/layout/header.php';
 ?>
@@ -122,6 +125,23 @@ require APP_ROOT . '/app/layout/header.php';
     <div class="pt-4 mt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save visibility</button></div>
   </form>
   <?php endif; ?>
+  <div class="card">
+    <h2 class="card-title mb-1">Recent emails</h2>
+    <p class="card-subtitle mb-3">Delivery method: <span class="font-mono"><?= e($mailDriver) ?></span><?= $mailDriver === 'log' ? ' (testing - nothing is actually sent)' : '' ?> · set in <span class="font-mono">.env</span></p>
+    <ul class="divide-y divide-slate-100 text-xs max-h-80 overflow-auto">
+      <?php foreach ($recentMail as $ml): ?>
+        <li class="py-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate text-slate-700"><?= e($ml['recipient']) ?></span>
+            <?= status_badge(ucfirst($ml['status'])) ?>
+          </div>
+          <p class="text-slate-500 truncate"><?= e($ml['subject']) ?> · <?= e(time_ago($ml['created_at'])) ?></p>
+          <?php if ($ml['error']): ?><p class="text-rose-600 break-words"><?= e($ml['error']) ?></p><?php endif; ?>
+        </li>
+      <?php endforeach; ?>
+      <?php if (!$recentMail): ?><li class="py-2 text-slate-400 italic">No emails yet.</li><?php endif; ?>
+    </ul>
+  </div>
   <div class="card">
     <h2 class="card-title mb-1">Academic years on record</h2>
     <p class="card-subtitle mb-4">Institutions with cohort or student data</p>

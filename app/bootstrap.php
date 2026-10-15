@@ -14,11 +14,14 @@ if (config('debug')) {
     ini_set('display_errors', '0');
 }
 
+require APP_ROOT . '/vendor/autoload.php';
 require __DIR__ . '/helpers.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/metrics.php';
 require __DIR__ . '/charts.php';
 require __DIR__ . '/migrations.php';
+require __DIR__ . '/security.php';
+require __DIR__ . '/mailer.php';
 
 function config(string $key, mixed $default = null): mixed
 {

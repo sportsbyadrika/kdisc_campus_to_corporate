@@ -33,7 +33,7 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
 
 ## Requirements
 
-- PHP 8.1+ with `pdo_mysql`, `gd`, `fileinfo`, `mbstring`
+- PHP 8.1+ with `pdo_mysql`, `gd`, `fileinfo`, `mbstring`, `openssl`
 - MySQL 8.0+ or MariaDB 10.6+
 - Apache with `mod_rewrite` (the `.htaccess` file hides `.php`), or nginx (see below)
 - Node 18+ **only** to rebuild the CSS. The compiled `assets/css/app.css` is committed.
@@ -102,6 +102,37 @@ For later releases, push to GitHub, then *Update from Remote* and *Deploy HEAD C
 - Read the deploy logs: `~/c2c-deploy.log`, written by `deploy/cpanel-deploy.sh`, and cPanel's own logs in `~/.cpanel/logs/` (files named `vc_*_git_deploy.log`).
 - Run the deploy by hand in *Terminal* to see any errors directly:
   `cd ~/repositories/kdisc_campus_to_corporate && bash deploy/cpanel-deploy.sh`
+
+## Institution self-enrollment
+
+The sign-in page has an **Enroll my Institution** button (`/enroll`). An institution picks its district and then itself from the list, and enters the Head of the Institution and the Placement Officer (names, emails, mobile numbers).
+
+- **One request per institution.** This is enforced by a unique database key. An institution can apply again only after a rejection. Institutions that are already enrolled, or that have a pending request, are shown but can't be selected.
+- **Validation.** The Head and the Placement Officer must have different email addresses and mobile numbers. The Placement Officer's email must not already belong to a portal user.
+- **Bot and abuse protection.**
+  - CSRF token and a self-hosted CAPTCHA image (`/captcha`, single use).
+  - A hidden honeypot field and a minimum time to fill in the form.
+  - Per-IP rate limits: 15 submissions an hour, 5 successful requests a day, and limits on CAPTCHA images and institution lookups.
+  - Strict server-side validation with length limits.
+  - A strict Content-Security-Policy on all public pages (no inline scripts).
+- **Review.** District users review requests under **Enrollments** (with a pending-count badge). Administrators can act on any district; State users can view only.
+  - **Approve** creates an institution login for the Placement Officer (username from their email; they can also sign in with the email). It assigns the login to the institution and stores the Head and Officer details. The Placement Officer is emailed a one-time **set-password link**, valid for 72 hours. The Head receives a confirmation email **without** any login link.
+  - **Reject** requires a comment, which is emailed to both contacts.
+  - **Resend login email** issues a new link and cancels the old ones.
+- **Forgot password?** on the sign-in page emails a one-time reset link. The reply is the same whether or not the account exists. Password links are stored only as SHA-256 hashes.
+
+### Email (PHPMailer)
+
+Emails are sent with [PHPMailer](https://github.com/PHPMailer/PHPMailer) 6.12. It is committed in `vendor/`, so the server needs no Composer run. To update it, run `composer update` locally and commit `vendor/`. Configure email in `.env` (see `.env.example`):
+
+| Setting | Purpose |
+|---|---|
+| `C2C_APP_URL` | Public address used in email links, e.g. `https://campustocorporate.kdisc.in` |
+| `C2C_MAIL_DRIVER` | `mail` (server mail), `sendmail`, `smtp` (recommended) or `log` (testing; nothing is sent) |
+| `C2C_MAIL_FROM`, `C2C_MAIL_FROM_NAME` | Sender, e.g. a `no-reply@` mailbox created in cPanel → Email Accounts |
+| `C2C_SMTP_HOST`, `C2C_SMTP_PORT`, `C2C_SMTP_SECURE`, `C2C_SMTP_USER`, `C2C_SMTP_PASS` | SMTP details from cPanel → Email Accounts → Connect Devices (usually port 465 with `ssl`) |
+
+Every email is recorded in the `mail_log` table. Administrators can see recent deliveries and any errors under **Settings → Recent emails**. For good deliverability, make sure SPF and DKIM are enabled for the domain (cPanel → Email Deliverability).
 
 ## Database upgrades
 

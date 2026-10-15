@@ -8,7 +8,7 @@ declare(strict_types=1);
  * is behind SCHEMA_VERSION. Every step checks the current structure first, so it is safe
  * to run against a fresh install (where schema.sql already has the change) or to re-run.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function ensure_schema(): void
 {
@@ -68,6 +68,25 @@ function schema_migrations(): array
                 db()->exec('ALTER TABLE institution_requests ADD COLUMN type_id INT UNSIGNED NULL AFTER category_id');
             }
         },
+        // v3: public institution enrollment, password set/reset tokens, mail log, rate limiting, institution head
+        3 => function (): void {
+            foreach ([ENROLLMENT_DDL, PASSWORD_TOKENS_DDL, MAIL_LOG_DDL, THROTTLE_DDL] as $ddl) {
+                db()->exec($ddl);
+            }
+            foreach ([
+                'head_name' => "VARCHAR(160) NULL COMMENT 'Head of the institution' AFTER history",
+                'head_designation' => 'VARCHAR(160) NULL AFTER head_name',
+                'head_email' => 'VARCHAR(160) NULL AFTER head_designation',
+                'head_phone' => 'VARCHAR(20) NULL AFTER head_email',
+            ] as $col => $def) {
+                if (!column_exists('institutions', $col)) {
+                    db()->exec("ALTER TABLE institutions ADD COLUMN {$col} {$def}");
+                }
+            }
+            if (!column_exists('institution_officers', 'photo')) {
+                db()->exec('ALTER TABLE institution_officers ADD COLUMN photo VARCHAR(255) NULL AFTER alt_phone');
+            }
+        },
     ];
 }
 
@@ -82,6 +101,68 @@ const VENDOR_COUNTS_DDL = "CREATE TABLE IF NOT EXISTS assessment_vendor_counts (
   KEY idx_vendor_test (assessment_test_id),
   CONSTRAINT fk_vendor_inst FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE,
   CONSTRAINT fk_vendor_test FOREIGN KEY (assessment_test_id) REFERENCES assessment_tests (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+const ENROLLMENT_DDL = "CREATE TABLE IF NOT EXISTS enrollment_requests (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  district_id       TINYINT UNSIGNED NOT NULL,
+  institution_id    INT UNSIGNED NOT NULL,
+  head_name         VARCHAR(160) NOT NULL,
+  head_designation  VARCHAR(160) NOT NULL,
+  head_email        VARCHAR(160) NOT NULL,
+  head_phone        VARCHAR(20)  NOT NULL,
+  po_name           VARCHAR(160) NOT NULL,
+  po_email          VARCHAR(160) NOT NULL,
+  po_phone          VARCHAR(20)  NOT NULL,
+  status            ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  open_flag         TINYINT AS (IF(status IN ('pending','approved'), 1, NULL)) STORED COMMENT 'Enforces one open request per institution',
+  review_comment    VARCHAR(1000) NULL,
+  reviewed_by       INT UNSIGNED NULL,
+  reviewed_at       DATETIME NULL,
+  user_id           INT UNSIGNED NULL COMMENT 'Login created on approval',
+  ip                VARCHAR(45) NULL,
+  user_agent        VARCHAR(255) NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_enroll_open (institution_id, open_flag),
+  KEY idx_enroll_district (district_id, status),
+  CONSTRAINT fk_enroll_inst FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE,
+  CONSTRAINT fk_enroll_district FOREIGN KEY (district_id) REFERENCES districts (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+const PASSWORD_TOKENS_DDL = "CREATE TABLE IF NOT EXISTS password_tokens (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id     INT UNSIGNED NOT NULL,
+  token_hash  CHAR(64)     NOT NULL COMMENT 'SHA-256 of the token; the token itself is only ever emailed',
+  purpose     ENUM('setup','reset') NOT NULL DEFAULT 'reset',
+  expires_at  DATETIME     NOT NULL,
+  used_at     DATETIME     NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_token_hash (token_hash),
+  KEY idx_token_user (user_id),
+  CONSTRAINT fk_token_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+const MAIL_LOG_DDL = "CREATE TABLE IF NOT EXISTS mail_log (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  recipient   VARCHAR(160) NOT NULL,
+  subject     VARCHAR(255) NOT NULL,
+  template    VARCHAR(40)  NOT NULL,
+  status      ENUM('sent','failed','logged') NOT NULL,
+  error       VARCHAR(500) NULL,
+  body        MEDIUMTEXT   NULL COMMENT 'Only stored with the log driver (development)',
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_mail_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+const THROTTLE_DDL = "CREATE TABLE IF NOT EXISTS throttle (
+  id        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  bucket    VARCHAR(120) NOT NULL,
+  hit_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_throttle (bucket, hit_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
 const INSTITUTION_TYPES_DDL = "CREATE TABLE IF NOT EXISTS institution_types (

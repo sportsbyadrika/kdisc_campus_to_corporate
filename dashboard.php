@@ -81,6 +81,12 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
 
   <?php kpi_strip($total); ?>
 
+  <?php if (!empty($pendingEnrollments) && has_role('admin', 'district')): ?>
+    <a href="<?= e(url('enrollments')) ?>" class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 hover:bg-amber-100 transition-colors">
+      <span class="flex items-center gap-3 text-sm text-amber-900"><?= icon('user', 'w-5 h-5') ?> <strong><?= (int) $pendingEnrollments ?></strong> institution enrollment request<?= $pendingEnrollments > 1 ? 's' : '' ?> awaiting your approval</span>
+      <?= icon('chevron-right') ?>
+    </a>
+  <?php endif; ?>
   <?php if ($pending): ?>
     <a href="<?= e(url('institution-requests')) ?>" class="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-between gap-3 hover:bg-indigo-100 transition-colors">
       <span class="flex items-center gap-3 text-sm text-indigo-900"><?= icon('inbox', 'w-5 h-5') ?> <strong><?= $pending ?></strong> new institution request<?= $pending > 1 ? 's' : '' ?> <?= $user['role'] === 'district' ? 'awaiting State approval' : 'awaiting your review' ?></span>
