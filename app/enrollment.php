@@ -17,7 +17,7 @@ const SETUP_LINK_HOURS = 72;
  */
 function enrollment_institutions(int $districtId): array
 {
-    $st = db()->prepare("SELECT i.id, i.name,
+    $st = db()->prepare("SELECT i.id, i.name, i.type_id, i.category_id,
             (SELECT er.status FROM enrollment_requests er WHERE er.institution_id = i.id AND er.open_flag = 1 LIMIT 1) AS open_status,
             (SELECT COUNT(*) FROM user_institutions ui JOIN users u ON u.id = ui.user_id
               WHERE ui.institution_id = i.id AND u.is_active = 1 AND u.role = 'institution') AS logins
@@ -26,6 +26,8 @@ function enrollment_institutions(int $districtId): array
     return array_map(fn($r) => [
         'id'    => (int) $r['id'],
         'name'  => $r['name'],
+        'type'  => $r['type_id'] !== null ? (int) $r['type_id'] : null,
+        'category' => $r['category_id'] !== null ? (int) $r['category_id'] : null,
         'state' => $r['open_status'] === 'pending' ? 'pending' : (($r['open_status'] === 'approved' || (int) $r['logins'] > 0) ? 'enrolled' : 'available'),
     ], $st->fetchAll());
 }
@@ -79,15 +81,22 @@ function approve_enrollment(array $req, int $reviewerId, ?string $comment): arra
     db()->prepare('INSERT INTO user_institutions (user_id, institution_id, assigned_by) VALUES (?,?,?)')
         ->execute([$userId, $req['institution_id'], $reviewerId]);
 
+    // Head of the institution -> institution profile columns
     db()->prepare('UPDATE institutions SET head_name = ?, head_designation = ?, head_email = ?, head_phone = ? WHERE id = ?')
         ->execute([$req['head_name'], $req['head_designation'], $req['head_email'], $req['head_phone'], $req['institution_id']]);
 
-    $st = db()->prepare('SELECT COUNT(*) FROM institution_officers WHERE institution_id = ? AND email = ?');
-    $st->execute([$req['institution_id'], $req['po_email']]);
-    if (!(int) $st->fetchColumn()) {
-        $hasPrimary = (int) db()->query('SELECT COUNT(*) FROM institution_officers WHERE is_primary = 1 AND institution_id = ' . (int) $req['institution_id'])->fetchColumn();
-        db()->prepare("INSERT INTO institution_officers (institution_id, name, designation, email, phone, is_primary) VALUES (?, ?, 'Placement Officer', ?, ?, ?)")
-            ->execute([$req['institution_id'], $req['po_name'], $req['po_email'], $req['po_phone'], $hasPrimary ? 0 : 1]);
+    // Placement officer -> the institution's officer list (Step 2), as the main contact.
+    // An existing officer with the same email is updated rather than duplicated.
+    $instId = (int) $req['institution_id'];
+    db()->prepare('UPDATE institution_officers SET is_primary = 0 WHERE institution_id = ?')->execute([$instId]);
+    $st = db()->prepare('SELECT id FROM institution_officers WHERE institution_id = ? AND email = ? LIMIT 1');
+    $st->execute([$instId, $req['po_email']]);
+    if ($officerId = $st->fetchColumn()) {
+        db()->prepare('UPDATE institution_officers SET name = ?, phone = ?, is_primary = 1 WHERE id = ?')
+            ->execute([$req['po_name'], $req['po_phone'], $officerId]);
+    } else {
+        db()->prepare("INSERT INTO institution_officers (institution_id, name, designation, email, phone, is_primary) VALUES (?, ?, 'Placement Officer', ?, ?, 1)")
+            ->execute([$instId, $req['po_name'], $req['po_email'], $req['po_phone']]);
     }
 
     db()->prepare("UPDATE enrollment_requests SET status = 'approved', review_comment = ?, reviewed_by = ?, reviewed_at = NOW(), user_id = ? WHERE id = ?")

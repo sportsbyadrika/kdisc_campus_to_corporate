@@ -9,3 +9,5 @@
 /.env
 /uploads/officers/*
 !/uploads/officers/.gitkeep
+/uploads/branding/*
+!/uploads/branding/.gitkeep

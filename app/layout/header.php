@@ -47,7 +47,7 @@ $roleLabel = $user ? ROLES[$user['role']] . ($user['role'] === 'district' ? ' ·
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= e(asset('assets/css/app.css')) ?>">
-  <link rel="icon" href="<?= e(asset('assets/img/favicon.svg')) ?>" type="image/svg+xml">
+  <?= favicon_tag() ?>
   <?php foreach ($extraHead ?? [] as $h) echo $h, "\n"; ?>
   <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
 </head>
@@ -56,7 +56,7 @@ $roleLabel = $user ? ROLES[$user['role']] . ($user['role'] === 'district' ? ' ·
 <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
     <a href="<?= e(url($user ? 'dashboard' : '')) ?>" class="flex items-center space-x-3 shrink-0">
-      <div class="w-10 h-10 rounded-xl bg-linear-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">C2C</div>
+      <?= app_logo_html() ?>
       <div>
         <span class="text-lg font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
           <?= e($appName) ?>

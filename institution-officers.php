@@ -47,19 +47,7 @@ if (is_post()) {
     $photo = null;
     if (!$errors) {
         try {
-            $photo = store_image_data_url((string) ($_POST['photo_data'] ?? ''), 'officers', 400);
-            $f = $_FILES['photo_file'] ?? null;
-            if (!$photo && $f && ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-                // No-JavaScript / no-cropper fallback: validate, then centre-crop to a square like the cropper would
-                if ($f['error'] !== UPLOAD_ERR_OK || $f['size'] > config('upload_max_bytes')) {
-                    throw new RuntimeException('The photo must be a JPG, PNG or WEBP image under ' . round(config('upload_max_bytes') / 1048576, 1) . ' MB.');
-                }
-                $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
-                if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
-                    throw new RuntimeException('The photo must be a JPG, PNG or WEBP image.');
-                }
-                $photo = store_image_data_url('data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($f['tmp_name'])), 'officers', 400);
-            }
+            $photo = store_cropped_image('photo_data', 'photo_file', 'officers', 400);
         } catch (RuntimeException $ex) {
             $errors[] = $ex->getMessage();
         }
@@ -223,23 +211,5 @@ require APP_ROOT . '/app/layout/institution_nav.php';
     </div>
   <?php endif; ?>
 </div>
-<!-- Crop dialog -->
-<div id="crop-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="crop-title">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
-    <h3 id="crop-title" class="card-title mb-1">Crop photo</h3>
-    <p class="card-subtitle mb-3">Drag to position, scroll or use the buttons to zoom.</p>
-    <div class="h-80 bg-slate-100 rounded-xl overflow-hidden"><img id="crop-image" alt="" class="block max-w-full"></div>
-    <div class="flex flex-wrap items-center justify-between gap-2 mt-4">
-      <div class="flex gap-1.5">
-        <button type="button" class="btn-secondary btn-xs" data-crop="zoom-in" title="Zoom in">＋</button>
-        <button type="button" class="btn-secondary btn-xs" data-crop="zoom-out" title="Zoom out">－</button>
-        <button type="button" class="btn-secondary btn-xs" data-crop="rotate" title="Rotate">⟳ Rotate</button>
-      </div>
-      <div class="flex gap-2">
-        <button type="button" class="btn-secondary btn-xs" data-crop="cancel">Cancel</button>
-        <button type="button" class="btn-primary btn-xs" data-crop="apply"><?= icon('check', 'w-3.5 h-3.5') ?> Use photo</button>
-      </div>
-    </div>
-  </div>
-</div>
+<?php require APP_ROOT . '/app/layout/crop_modal.php'; ?>
 <?php require APP_ROOT . '/app/layout/footer.php';

@@ -513,7 +513,7 @@ function valid_type_id(?int $id): ?int
  * The image is decoded and re-encoded through GD as a square JPEG of $size px, which strips
  * metadata and anything embedded. Returns the relative path, or null when no image was sent.
  */
-function store_image_data_url(string $dataUrl, string $folder, int $size = 400): ?string
+function store_image_data_url(string $dataUrl, string $folder, int $size = 400, string $format = 'jpg'): ?string
 {
     if ($dataUrl === '') {
         return null;
@@ -531,7 +531,13 @@ function store_image_data_url(string $dataUrl, string $folder, int $size = 400):
     }
     $side = min(imagesx($src), imagesy($src));
     $dst = imagecreatetruecolor($size, $size);
-    imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+    if ($format === 'png') { // keep transparency (logos)
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 0, 0, 0, 127));
+    } else {
+        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+    }
     imagecopyresampled($dst, $src, 0, 0, (int) ((imagesx($src) - $side) / 2), (int) ((imagesy($src) - $side) / 2), $size, $size, $side, $side);
     imagedestroy($src);
 
@@ -539,8 +545,8 @@ function store_image_data_url(string $dataUrl, string $folder, int $size = 400):
     if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
         throw new RuntimeException('Upload folder is not writable.');
     }
-    $name = date('Ymd') . '_' . bin2hex(random_bytes(8)) . '.jpg';
-    $ok = imagejpeg($dst, $dir . '/' . $name, 88);
+    $name = date('Ymd') . '_' . bin2hex(random_bytes(8)) . ($format === 'png' ? '.png' : '.jpg');
+    $ok = $format === 'png' ? imagepng($dst, $dir . '/' . $name, 6) : imagejpeg($dst, $dir . '/' . $name, 88);
     imagedestroy($dst);
     if (!$ok) {
         throw new RuntimeException('The photo could not be saved.');
@@ -557,4 +563,52 @@ function ensure_primary_officer(int $institutionId): void
     if ($rows && !(int) $rows[0]['is_primary']) {
         db()->prepare('UPDATE institution_officers SET is_primary = 1 WHERE id = ?')->execute([$rows[0]['id']]);
     }
+}
+
+/* ---------------------------------------------------------------------------
+ * Branding (logo uploaded under Settings)
+ * ------------------------------------------------------------------------- */
+
+/** The portal logo as an <img>, or the default "C2C" badge when no logo has been uploaded. */
+function app_logo_html(string $size = 'w-10 h-10', string $badgeGradient = 'from-sky-600 to-indigo-600', string $imgExtra = ''): string
+{
+    $logo = setting('app_logo');
+    if ($logo !== '' && is_file(APP_ROOT . '/uploads/' . $logo)) {
+        return '<img src="' . e(asset('uploads/' . $logo)) . '" alt="' . e(setting('app_name', 'Campus to Corporate')) . '" class="' . e(trim($size . ' ' . $imgExtra)) . ' rounded-xl object-contain shrink-0">';
+    }
+    return '<div class="' . e($size) . ' rounded-xl bg-linear-to-tr ' . e($badgeGradient) . ' flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">C2C</div>';
+}
+
+function favicon_tag(): string
+{
+    $logo = setting('app_logo');
+    if ($logo !== '' && is_file(APP_ROOT . '/uploads/' . $logo)) {
+        return '<link rel="icon" href="' . e(asset('uploads/' . $logo)) . '" type="image/png">';
+    }
+    return '<link rel="icon" href="' . e(asset('assets/img/favicon.svg')) . '" type="image/svg+xml">';
+}
+
+const LOGIN_HEADING_DEFAULT = "Track every campus,\nevery cohort, every district.";
+const LOGIN_TEXT_DEFAULT = 'Unified onboarding, student strength, assessment gateway and DWMS service tracking for institutions across all 14 districts of Kerala.';
+
+/**
+ * Image from the crop dialog ($dataField holds the cropped data URL) or, when JavaScript or the
+ * cropper is unavailable, the plain file in $fileField - centre-cropped to a square either way.
+ * Returns the stored relative path, or null when nothing was submitted.
+ */
+function store_cropped_image(string $dataField, string $fileField, string $folder, int $size, string $format = 'jpg'): ?string
+{
+    $stored = store_image_data_url((string) ($_POST[$dataField] ?? ''), $folder, $size, $format);
+    $f = $_FILES[$fileField] ?? null;
+    if ($stored || !$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return $stored;
+    }
+    if ($f['error'] !== UPLOAD_ERR_OK || $f['size'] > config('upload_max_bytes')) {
+        throw new RuntimeException('The image must be a JPG, PNG or WEBP file under ' . round(config('upload_max_bytes') / 1048576, 1) . ' MB.');
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
+    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+        throw new RuntimeException('The image must be a JPG, PNG or WEBP file.');
+    }
+    return store_image_data_url('data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($f['tmp_name'])), $folder, $size, $format);
 }

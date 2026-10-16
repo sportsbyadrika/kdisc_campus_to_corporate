@@ -20,7 +20,7 @@ fi
 mkdir -p "$DEPLOYPATH" || { echo "ERROR: cannot create $DEPLOYPATH"; exit 1; }
 
 EXCLUDES=(.git .gitignore .cpanel.yml .env .env.example deploy node_modules package.json package-lock.json
-          router.php composer.json composer.lock app/config.local.php 'uploads/logos/*' 'uploads/photos/*' 'uploads/officers/*' error_log .well-known cgi-bin .user.ini php.ini)
+          router.php composer.json composer.lock app/config.local.php 'uploads/logos/*' 'uploads/photos/*' 'uploads/officers/*' 'uploads/branding/*' error_log .well-known cgi-bin .user.ini php.ini)
 
 RSYNC="$(command -v rsync || ls /usr/bin/rsync /bin/rsync 2>/dev/null | head -1)"
 if [ -n "$RSYNC" ]; then
@@ -40,10 +40,10 @@ else
         | while IFS= read -r f; do mkdir -p "$DEPLOYPATH/$(dirname "$f")" && cp -f "$f" "$DEPLOYPATH/$f"; done
 fi
 
-mkdir -p "$DEPLOYPATH/uploads/logos" "$DEPLOYPATH/uploads/photos" "$DEPLOYPATH/uploads/officers"
+mkdir -p "$DEPLOYPATH/uploads/logos" "$DEPLOYPATH/uploads/photos" "$DEPLOYPATH/uploads/officers" "$DEPLOYPATH/uploads/branding"
 find "$DEPLOYPATH" -path "$DEPLOYPATH/uploads" -prune -o -type d -exec chmod 755 {} + 2>/dev/null
 find "$DEPLOYPATH" -path "$DEPLOYPATH/uploads" -prune -o -type f -name '*.php' -exec chmod 644 {} + 2>/dev/null
-chmod 755 "$DEPLOYPATH/uploads" "$DEPLOYPATH/uploads/logos" "$DEPLOYPATH/uploads/photos" "$DEPLOYPATH/uploads/officers" 2>/dev/null
+chmod 755 "$DEPLOYPATH/uploads" "$DEPLOYPATH/uploads/logos" "$DEPLOYPATH/uploads/photos" "$DEPLOYPATH/uploads/officers" "$DEPLOYPATH/uploads/branding" 2>/dev/null
 
 if [ -f "$DEPLOYPATH/.env" ]; then
     chmod 640 "$DEPLOYPATH/.env" 2>/dev/null
