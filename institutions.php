@@ -8,7 +8,7 @@ function institution_registry_input(): array
 {
     $d = [
         'name'          => mb_substr((string) input('name'), 0, 255),
-        'code'          => nullable(input('code')),
+        'code'          => nullable(mb_substr((string) input('code'), 0, 40)),
         'dwms_id'       => nullable(input('dwms_id')),
         'email'         => nullable(input('email')),
         'address'       => nullable(input('address')),
@@ -19,6 +19,7 @@ function institution_registry_input(): array
     ];
     $errors = [];
     if ($d['name'] === '') $errors[] = 'Institution name is required.';
+    $errors = array_merge($errors, institution_required_errors($d));
     if (!in_array($d['district_id'], array_map('intval', array_column(districts(), 'id')), true)) $errors[] = 'Select a valid district.';
     if ($d['email'] && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email.';
     if ($err = dwms_id_error($d['dwms_id'], (int) int_input('id', 0))) $errors[] = $err;
@@ -118,7 +119,7 @@ require APP_ROOT . '/app/layout/header.php';
   <p class="card-subtitle mb-5"><?= $editing ? 'Profile details are maintained by the institution / district in the workspace.' : 'Typically added on request from a district office. The institution completes the rest of the profile.' ?></p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
     <div class="md:col-span-3"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" value="<?= e($v('name')) ?>" required></div>
-    <div><label class="label">Affiliation Code</label><input class="input" name="code" value="<?= e($v('code')) ?>"></div>
+    <div><label class="label">Affiliation Code <span class="req">*</span></label><input class="input" name="code" maxlength="40" required value="<?= e($v('code')) ?>"></div>
     <div><label class="label flex items-center gap-1">DWMS Institution ID <?= tooltip('DWMS Institution ID', 'Unique ID of this institution in DWMS. Used to match the test counts uploaded from the assessment vendor software.') ?></label><input class="input font-mono" name="dwms_id" value="<?= e($v('dwms_id')) ?>" maxlength="40" placeholder="e.g. DWMS12345"></div>
     <div>
       <label class="label">District <span class="req">*</span></label>
@@ -128,22 +129,22 @@ require APP_ROOT . '/app/layout/header.php';
       </select>
     </div>
     <div>
-      <label class="label">Affiliated University</label>
-      <select class="input" name="university_id">
+      <label class="label">Affiliated University <span class="req">*</span></label>
+      <select class="input" name="university_id" required>
         <option value="">Select University</option>
         <?php foreach ($universities as $u): ?><option value="<?= $u['id'] ?>" <?= (int) $v('university_id') === (int) $u['id'] ? 'selected' : '' ?>><?= e($u['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
     <div>
-      <label class="label">Institution Category</label>
-      <select class="input" name="category_id">
+      <label class="label">Institution Category <span class="req">*</span></label>
+      <select class="input" name="category_id" required>
         <option value="">Select Category</option>
         <?php foreach ($categories as $c): ?><option value="<?= $c['id'] ?>" <?= (int) $v('category_id') === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
     <div>
-      <label class="label">Institution Type</label>
-      <select class="input" name="type_id"><?= institution_type_options($v('type_id') !== '' ? (int) $v('type_id') : null) ?></select>
+      <label class="label">Institution Type <span class="req">*</span></label>
+      <select class="input" name="type_id" required><?= institution_type_options($v('type_id') !== '' ? (int) $v('type_id') : null) ?></select>
     </div>
     <div><label class="label">Official Email</label><input class="input" type="email" name="email" value="<?= e($v('email')) ?>"></div>
     <div class="md:col-span-2"><label class="label">Address</label><input class="input" name="address" value="<?= e($v('address')) ?>"></div>

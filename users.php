@@ -8,6 +8,36 @@
 require __DIR__ . '/app/bootstrap.php';
 $me = require_role('admin', 'district');
 $isDistrict = $me['role'] === 'district';
+
+// ---- JSON: institution search for the "Assigned institutions" picker ---------
+// Filtered server-side and capped, so the form never loads every institution at once.
+if (isset($_GET['inst_search'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    $where = ['i.is_active = 1'];
+    $params = [];
+    $district = $isDistrict ? (int) $me['district_id'] : (int) int_input('district', 0);
+    $type = (int) int_input('type', 0);
+    $category = (int) int_input('category', 0);
+    $q = mb_substr(trim((string) input('q')), 0, 100);
+    if (!$isDistrict && !$district && !$type && !$category && mb_strlen($q) < 2) {
+        exit(json_encode(['items' => [], 'total' => 0, 'hint' => 'Choose a district, type or management type, or type at least 2 letters of the name.']));
+    }
+    if ($district) { $where[] = 'i.district_id = ?'; $params[] = $district; }
+    if ($type) { $where[] = 'i.type_id = ?'; $params[] = $type; }
+    if ($category) { $where[] = 'i.category_id = ?'; $params[] = $category; }
+    if ($q !== '') { $where[] = '(i.name LIKE ? OR i.code LIKE ? OR i.dwms_id LIKE ?)'; array_push($params, "%{$q}%", "%{$q}%", "%{$q}%"); }
+    $sqlWhere = implode(' AND ', $where);
+    $st = db()->prepare("SELECT COUNT(*) FROM institutions i WHERE {$sqlWhere}");
+    $st->execute($params);
+    $total = (int) $st->fetchColumn();
+    $st = db()->prepare("SELECT i.id, i.name, d.name AS district, t.name AS type, c.name AS category
+                         FROM institutions i JOIN districts d ON d.id = i.district_id
+                         LEFT JOIN institution_types t ON t.id = i.type_id LEFT JOIN institution_categories c ON c.id = i.category_id
+                         WHERE {$sqlWhere} ORDER BY d.sort_order, i.name LIMIT 200");
+    $st->execute($params);
+    exit(json_encode(['items' => $st->fetchAll(), 'total' => $total], JSON_UNESCAPED_UNICODE));
+}
 $roles = creatable_roles();
 
 $loadUser = function (int $id): ?array {
@@ -150,13 +180,17 @@ unset($_SESSION['_old']);
 $v = fn(string $k, $def = '') => $old[$k] ?? $editing[$k] ?? $def;
 $selectedInst = isset($old['institutions']) ? array_map('intval', (array) $old['institutions']) : ($editing ? assigned_institution_ids((int) $editing['id']) : []);
 
-if ($showForm) {
-    $sql = 'SELECT i.id, i.name, i.district_id, d.name AS district_name FROM institutions i JOIN districts d ON d.id = i.district_id'
-        . ($isDistrict ? ' WHERE i.district_id = ' . (int) $me['district_id'] : '') . ' ORDER BY d.sort_order, i.name';
-    $allInst = db()->query($sql)->fetchAll();
+// Only the already-assigned institutions are loaded with the page; others are found through the search above.
+$selectedRows = [];
+if ($showForm && $selectedInst) {
+    $st = db()->prepare('SELECT i.id, i.name, d.name AS district FROM institutions i JOIN districts d ON d.id = i.district_id
+                         WHERE i.id IN (' . implode(',', array_fill(0, count($selectedInst), '?')) . ') ORDER BY i.name');
+    $st->execute($selectedInst);
+    $selectedRows = $st->fetchAll();
 }
 
 $pageTitle = 'Users';
+$extraScripts = [$showForm ? '<script src="' . e(asset('assets/js/inst-picker.js')) . '"></script>' : ''];
 require APP_ROOT . '/app/layout/header.php';
 ?>
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
@@ -207,23 +241,43 @@ require APP_ROOT . '/app/layout/header.php';
     </div>
   </div>
 
-  <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200" data-role-field="institution">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-      <div>
-        <h3 class="text-sm font-bold text-slate-800">Assigned institutions <span class="req">*</span></h3>
-        <p class="text-xs text-slate-500">The user can update and view the dashboard of each selected institution.</p>
+  <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200" data-role-field="institution" id="inst-picker"
+       data-search-url="<?= e(url('users', ['inst_search' => 1])) ?>">
+    <div class="mb-3">
+      <h3 class="text-sm font-bold text-slate-800">Assigned institutions <span class="req">*</span></h3>
+      <p class="text-xs text-slate-500">The user can update and view the dashboard of each selected institution. Filter to find institutions, then tick them.</p>
+    </div>
+
+    <div class="mb-3">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Selected (<span id="inst-selected-count"><?= count($selectedRows) ?></span>)</p>
+      <div id="inst-selected" class="flex flex-wrap gap-1.5 min-h-8">
+        <?php foreach ($selectedRows as $sr): ?>
+          <span class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg bg-sky-100 text-sky-800 text-xs font-medium" data-chip="<?= (int) $sr['id'] ?>">
+            <?= e($sr['name']) ?><?php if (!$isDistrict): ?> <span class="text-sky-600/70">· <?= e($sr['district']) ?></span><?php endif; ?>
+            <input type="hidden" name="institutions[]" value="<?= (int) $sr['id'] ?>">
+            <button type="button" class="p-0.5 rounded hover:bg-sky-200" data-chip-remove aria-label="Remove <?= e($sr['name']) ?>"><?= icon('x', 'w-3.5 h-3.5') ?></button>
+          </span>
+        <?php endforeach; ?>
+        <span id="inst-none" class="text-xs text-slate-400 italic py-1 <?= $selectedRows ? 'hidden' : '' ?>">No institution selected yet.</span>
       </div>
-      <input type="search" id="inst-filter" class="input input-sm sm:w-64" placeholder="Filter institutions">
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-72 overflow-auto pr-1">
-      <?php foreach ($allInst as $i): ?>
-        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-white text-sm" data-inst-option data-name="<?= e(mb_strtolower($i['name'])) ?>" data-district="<?= $i['district_id'] ?>">
-          <input type="checkbox" name="institutions[]" value="<?= $i['id'] ?>" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600" <?= in_array((int) $i['id'], $selectedInst, true) ? 'checked' : '' ?>>
-          <span><?= e($i['name']) ?><?php if (!$isDistrict): ?> <span class="text-[11px] text-slate-400"><?= e($i['district_name']) ?></span><?php endif; ?></span>
-        </label>
-      <?php endforeach; ?>
-      <?php if (!$allInst): ?><p class="text-xs text-slate-400 italic">No institutions available yet.</p><?php endif; ?>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
+      <?php if (!$isDistrict): ?>
+        <select id="pick-district" class="input input-sm" aria-label="District">
+          <option value="">All districts</option>
+          <?php foreach (districts() as $d): ?><option value="<?= (int) $d['id'] ?>"><?= e($d['name']) ?></option><?php endforeach; ?>
+        </select>
+      <?php endif; ?>
+      <select id="pick-type" class="input input-sm" aria-label="Institution type"><?= institution_type_options(null, 'All institution types') ?></select>
+      <select id="pick-category" class="input input-sm" aria-label="Management type">
+        <option value="">All management types</option>
+        <?php foreach (lookup('institution_categories') as $c): ?><option value="<?= (int) $c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?>
+      </select>
+      <input type="search" id="pick-q" class="input input-sm" placeholder="Search name / code / DWMS ID" autocomplete="off">
     </div>
+    <p class="text-[11px] text-slate-500 mb-2" id="inst-results-hint"><?= $isDistrict ? 'Loading institutions of your district…' : 'Choose a district, type or management type, or type at least 2 letters of the name.' ?></p>
+    <div id="inst-results" class="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-72 overflow-auto pr-1"></div>
   </div>
 
   <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end gap-2">

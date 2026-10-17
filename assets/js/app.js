@@ -163,23 +163,6 @@
     sync();
   }
 
-  // ---- Institution checklist filter (user form) --------------------------
-  const instFilter = document.getElementById('inst-filter');
-  if (instFilter) {
-    const distSel = document.getElementById('user-district');
-    const apply = () => {
-      const q = instFilter.value.toLowerCase();
-      const d = distSel && !distSel.disabled ? distSel.value : '';
-      document.querySelectorAll('[data-inst-option]').forEach((el) => {
-        const okText = el.dataset.name.includes(q);
-        const okDist = !d || el.dataset.district === d || el.querySelector('input').checked;
-        el.classList.toggle('hidden', !(okText && okDist));
-      });
-    };
-    instFilter.addEventListener('input', apply);
-    distSel && distSel.addEventListener('change', apply);
-    apply();
-  }
 })();
 
 /* Tooltips inside <label>: keep a tap/click on the info icon from focusing the input instead. */
