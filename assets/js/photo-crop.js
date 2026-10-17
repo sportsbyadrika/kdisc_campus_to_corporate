@@ -1,4 +1,4 @@
-/* Officer photo: choose -> crop to a square (Cropper.js) -> sent as a JPEG data URL in #photo-data.
+/* Officer photo / portal logo: choose -> crop to a square (Cropper.js) -> sent as a JPEG data URL in #photo-data.
    If Cropper.js could not load, the chosen file is uploaded as-is and cropped to a square on the server. */
 (function () {
   'use strict';
@@ -76,8 +76,10 @@
     if (act === 'rotate' && cropper) cropper.rotate(90);
     if (act === 'cancel') { fileInput.value = ''; closeModal(); }
     if (act === 'apply' && cropper) {
-      const canvas = cropper.getCroppedCanvas({ width: 400, height: 400, fillColor: '#fff', imageSmoothingQuality: 'high' });
-      const url = canvas.toDataURL('image/jpeg', 0.9);
+      const size = parseInt(form.dataset.cropSize || '400', 10);
+      const type = form.dataset.cropType || 'image/jpeg'; // image/png keeps transparency (logos)
+      const canvas = cropper.getCroppedCanvas({ width: size, height: size, imageSmoothingQuality: 'high', ...(type === 'image/png' ? {} : { fillColor: '#fff' }) });
+      const url = type === 'image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.9);
       dataInput.value = url;
       fileInput.value = ''; // the cropped version is sent instead of the original file
       showPreview(url);

@@ -26,6 +26,26 @@
     inst.disabled = !items.length;
   };
 
+  const fType = document.getElementById('filter-type');
+  const fCat = document.getElementById('filter-category');
+  let all = [];
+
+  // Apply the Type / Category filters to the loaded list (the selection is kept when it still matches)
+  const applyFilters = (selected) => {
+    if (!district.value) return; // nothing loaded yet - keep "Select a district first"
+    const t = fType.value, c = fCat.value;
+    const items = all.filter((it) => (!t || String(it.type) === t) && (!c || String(it.category) === c));
+    setOptions(items, selected !== undefined ? selected : inst.value);
+    const blocked = items.filter((i) => i.state !== 'available').length;
+    const filtered = t || c;
+    hint.textContent = (filtered ? `${items.length} of ${all.length} institutions match the selected type / category. ` : '')
+      + (blocked ? `${blocked} shown are already enrolled or have a pending request. ` : '')
+      + 'Not listed? Ask your district office to add the institution to the portal.';
+    if (filtered && !items.length) inst.innerHTML = '<option value="">No institutions match - clear the type / category filter</option>';
+  };
+  fType.addEventListener('change', () => applyFilters());
+  fCat.addEventListener('change', () => applyFilters());
+
   const load = async (selected) => {
     const id = district.value;
     inst.disabled = true;
@@ -38,11 +58,8 @@
       const res = await fetch(`${district.dataset.listUrl}?list=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not load institutions');
-      setOptions(data.institutions || [], selected);
-      const blocked = (data.institutions || []).filter((i) => i.state !== 'available').length;
-      hint.textContent = blocked
-        ? `${blocked} institution(s) are already enrolled or have a pending request. Not listed? Ask your district office to add it.`
-        : 'Not listed? Ask your district office to add the institution to the portal.';
+      all = data.institutions || [];
+      applyFilters(selected);
     } catch (e) {
       inst.innerHTML = '<option value="">Could not load institutions - please try again</option>';
     }

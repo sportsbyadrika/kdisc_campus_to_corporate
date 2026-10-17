@@ -45,6 +45,10 @@ function send_mail(string $to, string $subject, string $html, string $template, 
                 $mail->Host = (string) config('smtp_host');
                 $mail->Port = (int) config('smtp_port', 587);
                 $mail->Timeout = 20;
+                if (config('mail_debug')) { // set by database/mail-test.php to print the SMTP conversation
+                    $mail->SMTPDebug = PHPMailer\PHPMailer\SMTP::DEBUG_SERVER;
+                    $mail->Debugoutput = 'echo';
+                }
                 $secure = config('smtp_secure', 'tls');
                 $mail->SMTPSecure = $secure === 'ssl' ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
                     : ($secure === 'tls' ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS : '');

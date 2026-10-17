@@ -61,14 +61,14 @@ send_public_csp();
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= e(asset('assets/css/app.css')) ?>">
-  <link rel="icon" href="<?= e(asset('assets/img/favicon.svg')) ?>" type="image/svg+xml">
+  <?= favicon_tag() ?>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
   <main class="grow flex items-center justify-center px-4 py-10">
     <div class="w-full max-w-5xl grid lg:grid-cols-2 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="relative bg-linear-to-br from-slate-900 via-sky-950 to-indigo-950 text-white p-8 sm:p-10 flex flex-col justify-between gap-10">
         <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-linear-to-tr from-sky-500 to-indigo-500 flex items-center justify-center font-bold text-lg shadow-sm">C2C</div>
+          <?= app_logo_html('w-11 h-11', 'from-sky-500 to-indigo-500', 'bg-white p-0.5') ?>
           <div>
             <p class="text-lg font-bold tracking-tight"><?= e($appName) ?></p>
             <p class="text-xs text-slate-300"><?= e(setting('app_tagline')) ?></p>
@@ -76,8 +76,8 @@ send_public_csp();
         </div>
         <div class="space-y-4">
           <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">Academic Year <?= e(academic_year()) ?></span>
-          <h1 class="text-3xl font-black leading-tight">Track every campus,<br>every cohort, every district.</h1>
-          <p class="text-sm text-slate-300 max-w-md">Unified onboarding, student strength, assessment gateway and DWMS service tracking for institutions across all 14 districts of Kerala.</p>
+          <h1 class="text-3xl font-black leading-tight"><?= nl2br(e(setting('login_heading') ?: LOGIN_HEADING_DEFAULT)) ?></h1>
+          <p class="text-sm text-slate-300 max-w-md"><?= nl2br(e(setting('login_text') ?: LOGIN_TEXT_DEFAULT)) ?></p>
         </div>
         <div class="grid grid-cols-3 gap-3 text-center">
           <div class="bg-white/10 border border-white/15 rounded-xl p-3"><p class="text-xl font-extrabold text-amber-400">14</p><p class="text-[10px] uppercase tracking-wider text-sky-200">Districts</p></div>

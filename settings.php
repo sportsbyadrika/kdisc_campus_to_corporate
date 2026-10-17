@@ -9,12 +9,53 @@ $fields = [
     'cohort_policy' => ['Cohort policy notice (Step 4)', 'textarea'],
     'footer_left'   => ['Footer text (left)', 'text'],
     'footer_right'  => ['Footer text (right)', 'text'],
+    'login_heading' => ['Sign-in page heading', 'textarea'],
+    'login_text'    => ['Sign-in page description', 'textarea'],
 ];
+$defaults = ['login_heading' => LOGIN_HEADING_DEFAULT, 'login_text' => LOGIN_TEXT_DEFAULT];
 
 $isSuper = user_role() === 'superadmin';
 
 if (is_post()) {
     verify_csrf();
+
+    // Portal logo (cropped square PNG, transparency kept)
+    if (input('action') === 'logo') {
+        $old = setting('app_logo');
+        try {
+            $new = store_cropped_image('photo_data', 'photo_file', 'branding', 256, 'png');
+        } catch (RuntimeException $ex) {
+            flash('error', $ex->getMessage());
+            redirect('settings');
+        }
+        if (!$new && input('remove_photo') !== '1') {
+            flash('error', 'Choose an image to upload.');
+            redirect('settings');
+        }
+        db()->prepare("INSERT INTO settings (`key`, `value`) VALUES ('app_logo', ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)")->execute([$new ?? '']);
+        if ($old !== '' && $old !== $new) {
+            delete_upload($old);
+        }
+        log_activity('update', 'settings', null, $new ? 'Updated the portal logo' : 'Removed the portal logo');
+        flash('success', $new ? 'Logo updated. It now appears in the header, sign-in page and browser tab.' : 'Logo removed - the default badge is shown again.');
+        redirect('settings');
+    }
+
+    // Send a test email (administrators) to check the mail settings in .env
+    if (input('action') === 'test_email') {
+        $to = trim((string) input('test_to'));
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Enter a valid email address for the test.');
+            redirect('settings');
+        }
+        $ok = send_mail($to, 'Campus to Corporate - test email', email_layout('Test email',
+            '<p>This is a test message from the Campus to Corporate portal.</p><p>If you can read this, outgoing email is working.</p>'), 'test');
+        $err = db()->query("SELECT error FROM mail_log WHERE template = 'test' ORDER BY id DESC LIMIT 1")->fetchColumn();
+        flash($ok ? 'success' : 'error', $ok
+            ? "Test email handed to the mail server for {$to} (method: " . config('mail_driver') . '). If it does not arrive within a few minutes, check the spam folder and the domain\'s SPF/DKIM records.'
+            : "Test email failed: {$err}");
+        redirect('settings');
+    }
 
     // Feature visibility - super admin only (hidden from and not accepted for administrators)
     if (input('action') === 'visibility') {
@@ -44,7 +85,7 @@ if (is_post()) {
     }
     $new = [];
     foreach ($fields as $k => [$label]) {
-        $new[$k] = mb_substr((string) input($k), 0, $k === 'cohort_policy' ? 2000 : 200);
+        $new[$k] = mb_substr(trim((string) input($k)), 0, in_array($k, ['cohort_policy', 'login_text'], true) ? 2000 : ($k === 'login_heading' ? 300 : 200));
     }
     if (!preg_match('/^(\d{4})-(\d{2})$/', $new['academic_year'], $mt) || (int) $mt[2] !== ((int) $mt[1] + 1) % 100) {
         flash('error', 'Academic year must look like 2026-27.');
@@ -79,6 +120,12 @@ $recentMail = db()->query('SELECT recipient, subject, template, status, error, c
 $mailDriver = config('mail_driver', 'mail');
 
 $pageTitle = 'Settings';
+$extraHead = ['<link rel="stylesheet" href="' . e(asset('assets/vendor/cropperjs/cropper.min.css')) . '">'];
+$extraScripts = [
+    '<script src="' . e(asset('assets/vendor/cropperjs/cropper.min.js')) . '"></script>',
+    '<script src="' . e(asset('assets/js/photo-crop.js')) . '"></script>',
+];
+$logo = setting('app_logo');
 require APP_ROOT . '/app/layout/header.php';
 ?>
 <div class="mb-6">
@@ -89,10 +136,16 @@ require APP_ROOT . '/app/layout/header.php';
   <form method="post" class="card lg:col-span-2 space-y-5">
     <?= csrf_field() ?>
     <?php foreach ($fields as $k => [$label, $type]): ?>
+      <?php if ($k === 'login_heading'): ?>
+        <div class="pt-4 border-t border-slate-100">
+          <h3 class="text-sm font-bold text-slate-800">Sign-in page</h3>
+          <p class="text-xs text-slate-500">Text on the dark panel of the sign-in page. Press Enter for a new line. Leave empty to use the default text.</p>
+        </div>
+      <?php endif; ?>
       <div>
         <label class="label" for="<?= $k ?>"><?= e($label) ?></label>
         <?php if ($type === 'textarea'): ?>
-          <textarea class="input min-h-24" id="<?= $k ?>" name="<?= $k ?>"><?= e(setting($k)) ?></textarea>
+          <textarea class="input <?= $k === 'login_heading' ? 'min-h-20' : 'min-h-24' ?>" id="<?= $k ?>" name="<?= $k ?>" maxlength="<?= $k === 'login_heading' ? 300 : 2000 ?>"><?= e(setting($k) ?: ($defaults[$k] ?? '')) ?></textarea>
         <?php else: ?>
           <input class="input" id="<?= $k ?>" name="<?= $k ?>" value="<?= e(setting($k)) ?>" <?= $k === 'academic_year' ? 'pattern="\d{4}-\d{2}" placeholder="2026-27"' : '' ?>>
         <?php endif; ?>
@@ -102,6 +155,25 @@ require APP_ROOT . '/app/layout/header.php';
     <div class="pt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save settings</button></div>
   </form>
   <div class="space-y-6 self-start">
+  <form method="post" enctype="multipart/form-data" class="card" data-photo-form data-crop-size="256" data-crop-type="image/png">
+    <?= csrf_field() ?><input type="hidden" name="action" value="logo">
+    <h2 class="card-title mb-1">Portal logo</h2>
+    <p class="card-subtitle mb-4">Shown in the header, on the sign-in and public pages, and as the browser tab icon. Cropped to a square; transparent PNGs keep their transparency.</p>
+    <div class="flex items-center gap-4">
+      <div class="w-24 h-24 rounded-2xl bg-slate-50 border border-dashed border-slate-300 overflow-hidden flex items-center justify-center shrink-0">
+        <img id="photo-preview" src="<?= e($logo ? asset('uploads/' . $logo) : '') ?>" alt="Portal logo" class="w-full h-full object-contain <?= $logo ? '' : 'hidden' ?>">
+        <span id="photo-placeholder" class="<?= $logo ? 'hidden' : '' ?>"><?= app_logo_html('w-14 h-14') ?></span>
+      </div>
+      <div class="space-y-2">
+        <input type="hidden" name="photo_data" id="photo-data">
+        <input type="file" id="photo-file" name="photo_file" accept="image/jpeg,image/png,image/webp" class="hidden">
+        <button type="button" class="btn-secondary btn-xs" data-photo-choose data-no-busy><?= icon('pencil', 'w-3.5 h-3.5') ?> <?= $logo ? 'Change logo' : 'Upload logo' ?></button>
+        <?php if ($logo): ?><label class="flex items-center gap-1.5 text-xs text-slate-500"><input type="checkbox" name="remove_photo" value="1" class="rounded border-slate-300"> Remove logo</label><?php endif; ?>
+        <span class="hint">JPG / PNG / WEBP. Square, at least 256 × 256 px works best.</span>
+      </div>
+    </div>
+    <div class="pt-4 mt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary btn-xs">Save logo</button></div>
+  </form>
   <?php if ($isSuper): ?>
   <form method="post" class="card border-amber-200">
     <?= csrf_field() ?><input type="hidden" name="action" value="visibility">
@@ -125,6 +197,15 @@ require APP_ROOT . '/app/layout/header.php';
     <div class="pt-4 mt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save visibility</button></div>
   </form>
   <?php endif; ?>
+  <form method="post" class="card">
+    <?= csrf_field() ?><input type="hidden" name="action" value="test_email">
+    <h2 class="card-title mb-1">Send a test email</h2>
+    <p class="card-subtitle mb-3">Checks the email settings in <span class="font-mono">.env</span>. Sender: <span class="font-mono"><?= e(config('mail_from') ?: '(C2C_MAIL_FROM not set)') ?></span><?= config('mail_driver') === 'smtp' ? ' via <span class="font-mono">' . e(config('smtp_host')) . ':' . (int) config('smtp_port') . ' (' . e(config('smtp_secure')) . ')</span>' : '' ?></p>
+    <div class="flex gap-2">
+      <input class="input input-sm" type="email" name="test_to" required placeholder="you@example.com" value="<?= e(current_user()['email'] ?? '') ?>">
+      <button class="btn-primary btn-xs shrink-0">Send</button>
+    </div>
+  </form>
   <div class="card">
     <h2 class="card-title mb-1">Recent emails</h2>
     <p class="card-subtitle mb-3">Delivery method: <span class="font-mono"><?= e($mailDriver) ?></span><?= $mailDriver === 'log' ? ' (testing - nothing is actually sent)' : '' ?> · set in <span class="font-mono">.env</span></p>
@@ -154,4 +235,5 @@ require APP_ROOT . '/app/layout/header.php';
   </div>
   </div>
 </div>
+<?php require APP_ROOT . '/app/layout/crop_modal.php'; ?>
 <?php require APP_ROOT . '/app/layout/footer.php';

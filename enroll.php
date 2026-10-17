@@ -171,7 +171,7 @@ require APP_ROOT . '/app/layout/public_header.php';
 
   <section class="card">
     <h2 class="card-title flex items-center gap-2 mb-1"><span class="w-6 h-6 rounded-lg bg-sky-600 text-white text-xs font-bold flex items-center justify-center">1</span> Institution</h2>
-    <p class="card-subtitle mb-5">Choose your district, then your institution. Institutions already enrolled or with a pending request cannot be selected.</p>
+    <p class="card-subtitle mb-5">Choose your district, optionally narrow the list by type and category, then select your institution. Institutions already enrolled or with a pending request cannot be selected.</p>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
       <div>
         <label class="label" for="district">District <span class="req">*</span></label>
@@ -182,12 +182,26 @@ require APP_ROOT . '/app/layout/public_header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="md:col-span-2">
+      <div>
+        <label class="label" for="filter-type">Institution Type</label>
+        <select class="input" id="filter-type" aria-controls="institution">
+          <option value="">All types</option>
+          <?php foreach (lookup('institution_types') as $t): ?><option value="<?= (int) $t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="filter-category">Institution Category</label>
+        <select class="input" id="filter-category" aria-controls="institution">
+          <option value="">All categories</option>
+          <?php foreach (lookup('institution_categories') as $c): ?><option value="<?= (int) $c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?>
+        </select>
+      </div>
+      <div class="md:col-span-3">
         <label class="label" for="institution">Institution <span class="req">*</span></label>
         <select class="input" id="institution" name="institution_id" required disabled>
           <option value="">Select a district first</option>
         </select>
-        <span class="hint" id="institution-hint">Not listed? Ask your district office to add the institution to the portal.</span>
+        <span class="hint" id="institution-hint">Type and Category narrow down the list. Not listed? Ask your district office to add the institution to the portal.</span>
       </div>
     </div>
   </section>
