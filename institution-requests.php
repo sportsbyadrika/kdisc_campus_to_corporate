@@ -15,7 +15,7 @@ if (is_post()) {
     if ($action === 'create' && $isDistrict) {
         $d = [
             'name'          => mb_substr((string) input('name'), 0, 255),
-            'code'          => nullable(input('code')),
+            'code'          => nullable(mb_substr((string) input('code'), 0, 40)),
             'email'         => nullable(input('email')),
             'address'       => nullable(input('address')),
             'university_id' => int_input('university_id'),
@@ -23,8 +23,13 @@ if (is_post()) {
             'type_id'       => valid_type_id(int_input('type_id')),
             'remarks'       => nullable(mb_substr((string) input('remarks'), 0, 1000)),
         ];
-        if ($d['name'] === '' || ($d['email'] && !filter_var($d['email'], FILTER_VALIDATE_EMAIL))) {
-            flash('error', $d['name'] === '' ? 'Institution name is required.' : 'Enter a valid email.');
+        $errors = [];
+        if ($d['name'] === '') $errors[] = 'Institution name is required.';
+        if ($d['email'] && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'Enter a valid email.';
+        $errors = array_merge($errors, institution_required_errors($d));
+        if ($errors) {
+            foreach ($errors as $err) flash('error', $err);
+            $_SESSION['_old'] = $_POST;
             redirect('institution-requests', ['new' => 1]);
         }
         db()->prepare('INSERT INTO institution_requests (district_id, name, code, email, address, university_id, category_id, type_id, remarks, requested_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
@@ -102,33 +107,36 @@ require APP_ROOT . '/app/layout/header.php';
   </div>
 </div>
 
-<?php if ($isDistrict && isset($_GET['new'])): ?>
+<?php if ($isDistrict && isset($_GET['new'])):
+    $old = $_SESSION['_old'] ?? [];
+    unset($_SESSION['_old']);
+    $o = fn(string $k) => (string) ($old[$k] ?? ''); ?>
 <form method="post" class="card mb-6">
   <?= csrf_field() ?><input type="hidden" name="action" value="create">
   <h2 class="card-title mb-1">Request a new institution — <?= e(district_name((int) $user['district_id'])) ?></h2>
   <p class="card-subtitle mb-5">The State office reviews the request and adds the institution to the portal.</p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-    <div class="md:col-span-2"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" required></div>
-    <div><label class="label">Affiliation Code</label><input class="input" name="code"></div>
+    <div class="md:col-span-2"><label class="label">Institution Full Legal Name <span class="req">*</span></label><input class="input" name="name" required value="<?= e($o('name')) ?>"></div>
+    <div><label class="label">Affiliation Code <span class="req">*</span></label><input class="input" name="code" maxlength="40" required value="<?= e($o('code')) ?>"></div>
     <div>
-      <label class="label">Affiliated University</label>
-      <select class="input" name="university_id"><option value="">Select University</option>
-        <?php foreach (lookup('universities') as $u): ?><option value="<?= $u['id'] ?>"><?= e($u['name']) ?></option><?php endforeach; ?>
+      <label class="label">Affiliated University <span class="req">*</span></label>
+      <select class="input" name="university_id" required><option value="">Select University</option>
+        <?php foreach (lookup('universities') as $u): ?><option value="<?= $u['id'] ?>" <?= $o('university_id') === (string) $u['id'] ? 'selected' : '' ?>><?= e($u['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
     <div>
-      <label class="label">Institution Category</label>
-      <select class="input" name="category_id"><option value="">Select Category</option>
-        <?php foreach (lookup('institution_categories') as $c): ?><option value="<?= $c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?>
+      <label class="label">Institution Category <span class="req">*</span></label>
+      <select class="input" name="category_id" required><option value="">Select Category</option>
+        <?php foreach (lookup('institution_categories') as $c): ?><option value="<?= $c['id'] ?>" <?= $o('category_id') === (string) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
       </select>
     </div>
     <div>
-      <label class="label">Institution Type</label>
-      <select class="input" name="type_id"><?= institution_type_options(null) ?></select>
+      <label class="label">Institution Type <span class="req">*</span></label>
+      <select class="input" name="type_id" required><?= institution_type_options($o('type_id') !== '' ? (int) $o('type_id') : null) ?></select>
     </div>
-    <div><label class="label">Official Email</label><input class="input" type="email" name="email"></div>
-    <div class="md:col-span-2"><label class="label">Address</label><input class="input" name="address"></div>
-    <div class="md:col-span-3"><label class="label">Justification / Remarks</label><textarea class="input min-h-20" name="remarks" placeholder="Why should this institution be included in the programme?"></textarea></div>
+    <div><label class="label">Official Email</label><input class="input" type="email" name="email" value="<?= e($o('email')) ?>"></div>
+    <div class="md:col-span-2"><label class="label">Address</label><input class="input" name="address" value="<?= e($o('address')) ?>"></div>
+    <div class="md:col-span-3"><label class="label">Justification / Remarks</label><textarea class="input min-h-20" name="remarks" placeholder="Why should this institution be included in the programme?"><?= e($o('remarks')) ?></textarea></div>
   </div>
   <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end gap-2">
     <a href="<?= e(url('institution-requests')) ?>" class="btn-secondary">Cancel</a>

@@ -612,3 +612,34 @@ function store_cropped_image(string $dataField, string $fileField, string $folde
     }
     return store_image_data_url('data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($f['tmp_name'])), $folder, $size, $format);
 }
+
+/**
+ * Required institution classification fields (Add/Edit Institution, district requests):
+ * affiliation code, affiliated university, category and type - each must exist in its master.
+ */
+function institution_required_errors(array $d): array
+{
+    $errors = [];
+    if (($d['code'] ?? '') === '' || $d['code'] === null) {
+        $errors[] = 'Affiliation Code is required.';
+    } elseif (mb_strlen($d['code']) > 40) {
+        $errors[] = 'Affiliation Code must be at most 40 characters.';
+    }
+    foreach ([
+        'university_id' => ['universities', 'Select the Affiliated University.'],
+        'category_id'   => ['institution_categories', 'Select the Institution Category.'],
+        'type_id'       => ['institution_types', 'Select the Institution Type.'],
+    ] as $field => [$table, $message]) {
+        $id = (int) ($d[$field] ?? 0);
+        $ok = false;
+        if ($id > 0) {
+            $st = db()->prepare("SELECT 1 FROM {$table} WHERE id = ?");
+            $st->execute([$id]);
+            $ok = (bool) $st->fetchColumn();
+        }
+        if (!$ok) {
+            $errors[] = $message;
+        }
+    }
+    return $errors;
+}
