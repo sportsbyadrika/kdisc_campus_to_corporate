@@ -163,6 +163,19 @@
     sync();
   }
 
+  // ---- Group scope checklists: "All …" clears the specific choices and vice versa ----
+  document.querySelectorAll('[data-scope-group]').forEach((group) => {
+    const all = group.querySelector('[data-scope-all]');
+    const items = [...group.querySelectorAll('input[type=checkbox]:not([data-scope-all])')];
+    const syncAll = () => { all.checked = !items.some((i) => i.checked); };
+    all.addEventListener('change', () => {
+      if (all.checked) items.forEach((i) => { i.checked = false; });
+      else syncAll();
+    });
+    items.forEach((i) => i.addEventListener('change', syncAll));
+    syncAll();
+  });
+
 })();
 
 /* Tooltips inside <label>: keep a tap/click on the info icon from focusing the input instead. */

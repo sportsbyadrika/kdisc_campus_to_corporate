@@ -8,7 +8,7 @@ declare(strict_types=1);
  * is behind SCHEMA_VERSION. Every step checks the current structure first, so it is safe
  * to run against a fresh install (where schema.sql already has the change) or to re-run.
  */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function ensure_schema(): void
 {
@@ -87,8 +87,27 @@ function schema_migrations(): array
                 db()->exec('ALTER TABLE institution_officers ADD COLUMN photo VARCHAR(255) NULL AFTER alt_phone');
             }
         },
+        // v4: State-level / District-level Entity roles with a group scope; user designation and institution name
+        4 => function (): void {
+            db()->exec("ALTER TABLE users MODIFY role ENUM('superadmin','admin','state','district','institution','state_entity','district_entity') NOT NULL");
+            if (!column_exists('users', 'designation')) {
+                db()->exec('ALTER TABLE users ADD COLUMN designation VARCHAR(160) NULL AFTER phone');
+            }
+            if (!column_exists('users', 'institution_name')) {
+                db()->exec("ALTER TABLE users ADD COLUMN institution_name VARCHAR(200) NULL COMMENT 'Organisation / institution the user belongs to' AFTER designation");
+            }
+            db()->exec(USER_SCOPES_DDL);
+        },
     ];
 }
+
+const USER_SCOPES_DDL = "CREATE TABLE IF NOT EXISTS user_scopes (
+  user_id    INT UNSIGNED NOT NULL,
+  dimension  ENUM('district','university','type','category') NOT NULL,
+  ref_id     INT UNSIGNED NOT NULL,
+  PRIMARY KEY (user_id, dimension, ref_id),
+  CONSTRAINT fk_scope_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Group institution access of entity users; no rows for a dimension = all'";
 
 const VENDOR_COUNTS_DDL = "CREATE TABLE IF NOT EXISTS assessment_vendor_counts (
   institution_id      INT UNSIGNED NOT NULL,

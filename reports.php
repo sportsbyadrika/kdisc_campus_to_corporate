@@ -7,10 +7,18 @@
 require __DIR__ . '/app/bootstrap.php';
 $user = require_login();
 $ay = academic_year();
-$canExport = has_role('admin', 'state', 'district');
+$isEntity = is_entity();
+$canExport = has_role('admin', 'state', 'district') || $isEntity;
+// Entities see only the institutions of their group scope
+$scope = $isEntity ? user_scope() : null;
 
 $districtId = int_input('district');
 if ($districtId && !in_array($districtId, array_map('intval', array_column(districts(), 'id')), true)) {
+    $districtId = null;
+}
+if ($scope && $scope['district'] && count($scope['district']) === 1) {
+    $districtId = $scope['district'][0];   // a single-district scope always opens its district
+} elseif ($scope && $scope['district'] && $districtId && !in_array($districtId, $scope['district'], true)) {
     $districtId = null;
 }
 $level = (string) input('level', 'state');
@@ -25,15 +33,15 @@ $filters = [
     'category'   => int_input('category'),
     'type'       => int_input('type'),
 ];
-$where = ['1=1'];
-$params = [];
+[$where0, $params] = $isEntity ? institution_scope('i') : ['1=1', []];
+$where = [$where0];
 if ($districtId) { $where[] = 'i.district_id = ?'; $params[] = $districtId; }
 if ($filters['university']) { $where[] = 'i.university_id = ?'; $params[] = $filters['university']; }
 if ($filters['category']) { $where[] = 'i.category_id = ?'; $params[] = $filters['category']; }
 if ($filters['type']) { $where[] = 'i.type_id = ?'; $params[] = $filters['type']; }
 $rows = institution_metrics(implode(' AND ', $where), $params, $ay);
 $total = aggregate_metrics($rows);
-$districtRows = $level === 'districts' ? district_rollup($rows) : [];
+$districtRows = $level === 'districts' ? district_rollup($rows, $scope['district'] ?? []) : [];
 $districtName = $districtId ? district_name($districtId) : null;
 
 // ---- CSV export of the current level --------------------------------------
@@ -75,9 +83,10 @@ require APP_ROOT . '/app/layout/header.php';
       <?php if ($districtName): ?><?= icon('chevron-right', 'w-3 h-3') ?><span class="text-slate-700 font-medium"><?= e($districtName) ?></span><?php endif; ?>
     </nav>
     <h1 class="text-xl font-bold text-slate-900">
-      <?= $level === 'state' ? 'State-wise Statistics' : ($level === 'districts' ? 'District-wise Statistics' : e($districtName) . ' — Institution-wise Statistics') ?>
+      <?= $level === 'state' ? ($isEntity ? 'Statistics' : 'State-wise Statistics') : ($level === 'districts' ? 'District-wise Statistics' : e($districtName) . ' — Institution-wise Statistics') ?>
     </h1>
-    <p class="text-sm text-slate-500">Academic year <?= e($ay) ?> · <?= $level === 'district' ? ($user['role'] === 'institution' || $user['role'] === 'district' ? 'view only · institutions you manage open their dashboard' : 'click an institution to open its dashboard') : 'click to drill down' ?></p>
+    <p class="text-sm text-slate-500">Academic year <?= e($ay) ?> · <?= $level === 'district' ? (in_array($user['role'], ['institution', 'district'], true) ? 'view only · institutions you manage open their dashboard' : 'click an institution to open its dashboard') : 'click to drill down' ?></p>
+    <?php if ($isEntity): ?><p class="text-xs text-sky-700 mt-1 flex items-center gap-1.5"><?= icon('info', 'w-3.5 h-3.5') ?> Your access: <?= e(scope_summary($scope)) ?></p><?php endif; ?>
   </div>
   <form method="get" class="flex flex-wrap items-center gap-2 no-print">
     <?php if ($level === 'districts'): ?><input type="hidden" name="level" value="districts"><?php endif; ?>
@@ -103,7 +112,7 @@ require APP_ROOT . '/app/layout/header.php';
         <div>
           <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">State</span>
           <h2 class="text-3xl font-black mt-2">Kerala</h2>
-          <p class="text-sm text-slate-300 mt-1">14 districts · <?= num($total['institutions']) ?> institutions · <?= num($total['final_year']) ?> final-year students</p>
+          <p class="text-sm text-slate-300 mt-1"><?= ($scope['district'] ?? []) ? count($scope['district']) : 14 ?> districts · <?= num($total['institutions']) ?> institutions · <?= num($total['final_year']) ?> final-year students</p>
           <span class="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold text-sky-200 group-hover:text-white">View district-wise statistics <?= icon('arrow-right') ?></span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4">

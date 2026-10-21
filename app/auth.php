@@ -8,6 +8,10 @@ declare(strict_types=1);
  *  state       - Kerala state: all institutions, drill-down reports, add institutions, global masters
  *  district    - one of the 14 districts: its institutions, institution users, data updates
  *  institution - assigned institution(s): profile, officers, students, cohorts, services, dashboard
+ *  state_entity    - view-only body (e.g. a university) scoped by a group filter:
+ *                    districts (or all), universities, institution types, management types
+ *  district_entity - the same, limited to one district
+ *  Entities only see the Dashboard, Reports and their own account.
  */
 const ROLES = [
     'superadmin'  => 'Super Admin',
@@ -15,6 +19,19 @@ const ROLES = [
     'state'       => 'State User',
     'district'    => 'District User',
     'institution' => 'Institution User',
+    'state_entity'    => 'State-level Entity',
+    'district_entity' => 'District-level Entity',
+];
+
+/** Roles whose institution access is a group filter (user_scopes) instead of individual institutions. */
+const ENTITY_ROLES = ['state_entity', 'district_entity'];
+
+/** Dimensions of an entity's group scope => institutions column. */
+const SCOPE_DIMENSIONS = [
+    'district'   => 'district_id',
+    'university' => 'university_id',
+    'type'       => 'type_id',
+    'category'   => 'category_id',
 ];
 
 function current_user(): ?array
@@ -54,6 +71,12 @@ function has_role(string ...$roles): bool
 function is_state_level(): bool
 {
     return has_role('admin', 'state');
+}
+
+/** Group-scoped, view-only entity users (State-level / District-level Entities). */
+function is_entity(?string $role = null): bool
+{
+    return in_array($role ?? user_role(), ENTITY_ROLES, true);
 }
 
 function require_login(): array
@@ -124,6 +147,67 @@ function assigned_institution_ids(?int $userId = null): array
 }
 
 /**
+ * Group scope of an entity user: {district:int[], university:int[], type:int[], category:int[]}.
+ * An empty list means "all". A District-level Entity is always held to its own district.
+ */
+function user_scope(?array $user = null): array
+{
+    static $cache = [];
+    $user ??= current_user();
+    $id = (int) ($user['id'] ?? 0);
+    if (!isset($cache[$id])) {
+        $scope = array_fill_keys(array_keys(SCOPE_DIMENSIONS), []);
+        $st = db()->prepare('SELECT dimension, ref_id FROM user_scopes WHERE user_id = ? ORDER BY ref_id');
+        $st->execute([$id]);
+        foreach ($st->fetchAll() as $r) {
+            $scope[$r['dimension']][] = (int) $r['ref_id'];
+        }
+        $cache[$id] = $scope;
+    }
+    $scope = $cache[$id];
+    if (($user['role'] ?? '') === 'district_entity') {
+        $scope['district'] = [(int) $user['district_id']];
+    }
+    return $scope;
+}
+
+/** Does an institution row (district_id, university_id, type_id, category_id) fall inside a group scope? */
+function in_user_scope(array $inst, array $scope): bool
+{
+    foreach (SCOPE_DIMENSIONS as $dim => $col) {
+        if ($scope[$dim] && !in_array((int) ($inst[$col] ?? 0), $scope[$dim], true)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** Human-readable description of a group scope, e.g. "KU · All districts · All institution types · All management types". */
+function scope_summary(array $scope): string
+{
+    return implode(' · ', scope_parts($scope));
+}
+
+/** Group scope as {university, district, type, category} => readable list ("All …" when unrestricted). */
+function scope_parts(array $scope): array
+{
+    $names = [
+        'district'   => array_column(districts(), 'name', 'id'),
+        'university' => array_map(fn($u) => $u['short_name'] ?: $u['name'], array_column(lookup('universities', false), null, 'id')),
+        'type'       => array_column(lookup('institution_types', false), 'name', 'id'),
+        'category'   => array_column(lookup('institution_categories', false), 'name', 'id'),
+    ];
+    $all = ['district' => 'All districts', 'university' => 'All universities', 'type' => 'All institution types', 'category' => 'All management types'];
+    $parts = [];
+    foreach (['university', 'district', 'type', 'category'] as $dim) {
+        $parts[$dim] = $scope[$dim]
+            ? implode(', ', array_map(fn($id) => $names[$dim][$id] ?? "#{$id}", $scope[$dim]))
+            : $all[$dim];
+    }
+    return $parts;
+}
+
+/**
  * SQL fragment + params restricting an `institutions` alias to what the current user may see.
  * @return array{0:string,1:array}
  */
@@ -135,6 +219,17 @@ function institution_scope(string $alias = 'i'): array
     }
     if ($user['role'] === 'district') {
         return ["{$alias}.district_id = ?", [(int) $user['district_id']]];
+    }
+    if (is_entity($user['role'])) {
+        $parts = [];
+        $params = [];
+        foreach (user_scope($user) as $dim => $ids) {
+            if ($ids) {
+                $parts[] = "{$alias}." . SCOPE_DIMENSIONS[$dim] . ' IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
+                array_push($params, ...$ids);
+            }
+        }
+        return [$parts ? implode(' AND ', $parts) : '1=1', $params];
     }
     $ids = assigned_institution_ids();
     if (!$ids) {
@@ -154,6 +249,9 @@ function can_view_institution(array $inst): bool
     }
     if ($user['role'] === 'district') {
         return (int) $inst['district_id'] === (int) $user['district_id'];
+    }
+    if (is_entity($user['role'])) {
+        return in_user_scope($inst, user_scope($user));
     }
     return in_array((int) $inst['id'], assigned_institution_ids(), true);
 }
@@ -224,8 +322,8 @@ function can_manage_user(array $target): bool
 function creatable_roles(): array
 {
     return match (user_role()) {
-        'superadmin' => ['superadmin', 'admin', 'state', 'district', 'institution'],
-        'admin'      => ['admin', 'state', 'district', 'institution'],
+        'superadmin' => ['superadmin', 'admin', 'state', 'district', 'institution', 'state_entity', 'district_entity'],
+        'admin'      => ['admin', 'state', 'district', 'institution', 'state_entity', 'district_entity'],
         'district'   => ['institution'],
         default      => [],
     };
@@ -234,10 +332,14 @@ function creatable_roles(): array
 /**
  * Resolve the institution for a workspace page from ?id= (institution users with a
  * single assignment may omit it). Returns [institution, metrics, canEdit].
+ * Entities may only open the (read-only) institution dashboard: $dashboard = true.
  */
-function institution_context(): array
+function institution_context(bool $dashboard = false): array
 {
     require_login();
+    if (is_entity() && !$dashboard) {
+        forbidden('Your account can view institution dashboards and reports only.');
+    }
     $id = int_input('id');
     if (!$id) {
         $ids = user_role() === 'institution' ? assigned_institution_ids() : [];

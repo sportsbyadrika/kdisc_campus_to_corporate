@@ -13,6 +13,10 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
 | **State user** (Kerala) | All institutions; State → District → Institution drill-down reports; adds new institutions (directly or by approving district requests); global masters (universities, categories, courses, assessment tests, DWMS services, district support team). |
 | **District user** (×14) | Institutions of their district and its district-wise / institution-wise statistics; updates institution data; requests new institutions from the State; creates institution users and assigns each one to one or more institutions. |
 | **Institution user** | Assigned institution(s) only: profile, placement officers, student strength, cohorts & assessments, DWMS services and the institution dashboard. A user mapped to several institutions gets a switcher. |
+| **State-level Entity** | View-only: Dashboard, Reports and My Account. Sees a *group* of institutions defined by filters instead of individual institutions — districts (or all), universities, institution types and management types; an institution must match every restricted group. Example: a university = all districts, all types, all management types, with that university ticked. Can open the dashboard of an in-scope institution and export report CSVs. |
+| **District-level Entity** | Same as a State-level Entity, but always limited to one district. |
+
+Every user also has optional **Designation** and **Name of Institution** fields (users form and My Account). Entity users are created by the Administrator under Users.
 
 ## Features
 

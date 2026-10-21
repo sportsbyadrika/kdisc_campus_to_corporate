@@ -32,7 +32,8 @@ if (user_role() === 'institution') {
 ?>
 <div class="mb-6 no-print">
   <nav class="text-xs text-slate-500 mb-3 flex items-center gap-1.5 flex-wrap">
-    <a class="link" href="<?= e(url('institutions')) ?>">Institutions</a>
+    <?php if (is_entity()): ?><a class="link" href="<?= e(url('dashboard')) ?>">Dashboard</a>
+    <?php else: ?><a class="link" href="<?= e(url('institutions')) ?>">Institutions</a><?php endif; ?>
     <?php if (user_role() !== 'institution'): ?>
       <?= icon('chevron-right', 'w-3 h-3') ?>
       <a class="link" href="<?= e(url('reports', ['district' => $inst['district_id']])) ?>"><?= e($inst['district_name']) ?></a>
@@ -68,6 +69,7 @@ if (user_role() === 'institution') {
       </div>
     </div>
 
+    <?php if (!is_entity()): // entities only open the dashboard tab ?>
     <ol class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
       <?php foreach ($steps as $n => [$href, $label, $section]):
           $isActive = $n === $current;
@@ -85,6 +87,7 @@ if (user_role() === 'institution') {
         </li>
       <?php endforeach; ?>
     </ol>
+    <?php endif; ?>
   </div>
 </div>
 <?php if (!can_edit_institution($inst) && $activeTab !== 'institution-dashboard'): ?>

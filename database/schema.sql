@@ -290,9 +290,11 @@ CREATE TABLE IF NOT EXISTS users (
   username       VARCHAR(60)  NOT NULL,
   email          VARCHAR(160) NULL,
   phone          VARCHAR(20)  NULL,
+  designation    VARCHAR(160) NULL,
+  institution_name VARCHAR(200) NULL COMMENT 'Organisation / institution the user belongs to',
   password_hash  VARCHAR(255) NOT NULL,
-  role           ENUM('superadmin','admin','state','district','institution') NOT NULL,
-  district_id    TINYINT UNSIGNED NULL COMMENT 'District users, and owning district of institution users',
+  role           ENUM('superadmin','admin','state','district','institution','state_entity','district_entity') NOT NULL,
+  district_id    TINYINT UNSIGNED NULL COMMENT 'District users, District-level Entities, and owning district of institution users',
   is_active      TINYINT(1) NOT NULL DEFAULT 1,
   last_login_at  DATETIME NULL,
   created_by     INT UNSIGNED NULL,
@@ -314,6 +316,15 @@ CREATE TABLE IF NOT EXISTS user_institutions (
   CONSTRAINT fk_ui_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
   CONSTRAINT fk_ui_inst FOREIGN KEY (institution_id) REFERENCES institutions (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Group institution access of State-level / District-level Entity users; no rows for a dimension = all
+CREATE TABLE IF NOT EXISTS user_scopes (
+  user_id    INT UNSIGNED NOT NULL,
+  dimension  ENUM('district','university','type','category') NOT NULL,
+  ref_id     INT UNSIGNED NOT NULL,
+  PRIMARY KEY (user_id, dimension, ref_id),
+  CONSTRAINT fk_scope_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Group institution access of entity users; no rows for a dimension = all';
 
 CREATE TABLE IF NOT EXISTS login_attempts (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
