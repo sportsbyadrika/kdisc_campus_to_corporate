@@ -328,7 +328,7 @@ require APP_ROOT . '/app/layout/institution_nav.php';
   <div class="card">
     <div class="flex items-center justify-between mb-3">
       <h3 class="card-title">Recent changes</h3>
-      <?php if (has_role('admin', 'state', 'district')): ?><a class="text-xs link" href="<?= e(url('activity', ['institution' => $instId])) ?>">View all</a><?php endif; ?>
+      <?php if (has_role('admin', 'state', 'district')): ?><a class="text-xs link" href="<?= e(url('activity-log', ['institution' => $instId])) ?>">View all</a><?php endif; ?>
     </div>
     <ul class="divide-y divide-slate-100 text-xs">
       <?php foreach ($activity as $a): ?>

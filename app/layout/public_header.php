@@ -1,5 +1,8 @@
 <?php
-/** Layout for public (signed-out) pages. Expects $pageTitle. Sends a strict CSP: no inline scripts. */
+/**
+ * Layout for public (signed-out) pages. Expects $pageTitle. Sends a strict CSP: no inline scripts.
+ * Optional $headerRight (HTML) replaces the "Sign in" link, e.g. on the online exam pages.
+ */
 send_public_csp();
 header('Cache-Control: no-store');
 $appName = setting('app_name', 'Campus to Corporate');
@@ -27,7 +30,8 @@ $appName = setting('app_name', 'Campus to Corporate');
         <p class="text-xs text-slate-500 hidden sm:block"><?= e(setting('app_tagline')) ?></p>
       </div>
     </a>
-    <a href="<?= e(url('login')) ?>" class="text-sm font-medium text-sky-700 hover:underline">Sign in</a>
+    <?php if (isset($headerRight)): ?><?= $headerRight ?>
+    <?php else: ?><a href="<?= e(url('login')) ?>" class="text-sm font-medium text-sky-700 hover:underline">Sign in</a><?php endif; ?>
   </div>
 </header>
 <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">

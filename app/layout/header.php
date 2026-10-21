@@ -30,11 +30,11 @@ if ($user && !is_entity($user['role'])) {   // entities: Dashboard and Reports o
     if (has_role('admin', 'state')) {
         $nav[] = ['masters', 'Masters', 'database', ['masters', 'districts']];
     }
-    if (has_role('admin', 'state', 'district')) {
-        $nav[] = ['activity', 'Activity', 'clock', ['activity']];
+    if (has_activity_access()) {   // administrators, and co-admins of an online exam
+        $nav[] = ['activity', 'Activity', 'bolt', ['activity', 'exams', 'exam-settings', 'exam-questions', 'exam-series', 'exam-admins', 'exam-participants', 'exam-results', 'exam-sheet']];
     }
     if (has_role('admin')) {
-        $nav[] = ['settings', 'Settings', 'cog', ['settings']];
+        $nav[] = ['settings', 'Settings', 'cog', ['settings', 'activity-log']];
     }
 }
 $roleLabel = $user ? ROLES[$user['role']] . (in_array($user['role'], ['district', 'district_entity'], true) ? ' · ' . district_name((int) $user['district_id']) : '') : '';
