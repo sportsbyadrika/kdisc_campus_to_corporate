@@ -21,7 +21,7 @@ function institution_metrics(string $where = '1=1', array $params = [], ?string 
     $ay ??= academic_year();
     $sql = "SELECT i.id, i.name, i.code, i.dwms_id, i.district_id, d.name AS district_name, i.logo, i.is_active,
                    i.university_id, u.short_name AS university_short, u.name AS university_name,
-                   c.name AS category_name, i.type_id, it.name AS type_name, i.address, i.latitude, i.longitude, i.updated_at,
+                   i.category_id, c.name AS category_name, i.type_id, it.name AS type_name, i.address, i.latitude, i.longitude, i.updated_at,
                    COALESCE(dep.dept_count, 0)  AS dept_count,
                    COALESCE(dep.final_sum, 0)   AS dept_final_year,
                    COALESCE(dep.total_sum, 0)   AS dept_total_students,
@@ -136,7 +136,8 @@ function aggregate_metrics(array $rows): array
 }
 
 /** Aggregate metric rows per district, returning one entry for each of the 14 districts. */
-function district_rollup(array $rows): array
+/** Per-district aggregates; $onlyDistricts limits the list (e.g. to an entity's districts). */
+function district_rollup(array $rows, array $onlyDistricts = []): array
 {
     $by = [];
     foreach ($rows as $r) {
@@ -144,6 +145,9 @@ function district_rollup(array $rows): array
     }
     $out = [];
     foreach (districts() as $d) {
+        if ($onlyDistricts && !in_array((int) $d['id'], $onlyDistricts, true)) {
+            continue;
+        }
         $out[] = ['district' => $d] + aggregate_metrics($by[(int) $d['id']] ?? []);
     }
     return $out;

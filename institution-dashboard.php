@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/app/bootstrap.php';
-[$inst, $m, $canEdit] = institution_context();
+[$inst, $m, $canEdit] = institution_context(true);
 $activeTab = 'institution-dashboard';
 $instId = (int) $inst['id'];
 $ay = academic_year();

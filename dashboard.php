@@ -33,6 +33,9 @@ if (has_role('admin', 'state', 'district')) {
     $activity = $st->fetchAll();
 }
 
+$isEntity = is_entity();
+$scope = $isEntity ? user_scope() : null;
+
 $pageTitle = 'Dashboard';
 require APP_ROOT . '/app/layout/header.php';
 $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good afternoon' : 'Good evening');
@@ -41,13 +44,16 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
   <div>
     <h1 class="text-xl font-bold text-slate-900"><?= e($hello) ?>, <?= e(strtok($user['name'], ' ')) ?></h1>
     <p class="text-sm text-slate-500">
-      <?php if ($user['role'] === 'district'): ?><?= e(district_name((int) $user['district_id'])) ?> district overview
+      <?php if ($isEntity): ?><?= e($user['institution_name'] ?: ROLES[$user['role']]) ?> overview
+      <?php elseif ($user['role'] === 'district'): ?><?= e(district_name((int) $user['district_id'])) ?> district overview
       <?php elseif ($user['role'] === 'institution'): ?>Your institutions
       <?php else: ?>Kerala state overview<?php endif; ?> · Academic year <?= e($ay) ?>
     </p>
   </div>
   <div class="flex gap-2 flex-wrap">
-    <?php if ($user['role'] === 'district'): ?>
+    <?php if ($isEntity): ?>
+      <a href="<?= e(url('reports')) ?>" class="btn-primary"><?= icon('chart') ?> Reports</a>
+    <?php elseif ($user['role'] === 'district'): ?>
       <a href="<?= e(url('reports', ['district' => $user['district_id']])) ?>" class="btn-primary"><?= icon('chart') ?> District report</a>
       <a href="<?= e(url('users', ['new' => 1])) ?>" class="btn-secondary"><?= icon('plus') ?> Institution user</a>
     <?php elseif (has_role('admin', 'state')): ?>
@@ -96,12 +102,12 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
     <div class="card lg:col-span-2">
-      <?php if ($user['role'] === 'district'):
+      <?php if ($user['role'] === 'district' || ($isEntity && count($scope['district']) === 1)):
           $attention = array_filter($rows, fn($r) => $r['status'] !== 'Onboarded' && $r['is_active']);
           usort($attention, fn($a, $b) => $a['profile_pct'] <=> $b['profile_pct']); ?>
         <div class="flex items-center justify-between mb-4">
           <div><h3 class="card-title">Institutions needing attention</h3><p class="card-subtitle">Lowest onboarding completion first</p></div>
-          <a href="<?= e(url('institutions')) ?>" class="text-xs link">All institutions</a>
+          <a href="<?= e(url($isEntity ? 'reports' : 'institutions')) ?>" class="text-xs link">All institutions</a>
         </div>
         <div class="overflow-x-auto">
           <table class="table">
@@ -115,12 +121,12 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
                   <td class="text-right font-bold"><?= $r['score'] ?></td>
                 </tr>
               <?php endforeach; ?>
-              <?php if (!$attention): ?><tr><td colspan="4" class="text-center text-slate-400 py-8"><?= $rows ? 'All institutions are fully onboarded. 🎉' : 'No institutions in your district yet.' ?></td></tr><?php endif; ?>
+              <?php if (!$attention): ?><tr><td colspan="4" class="text-center text-slate-400 py-8"><?= $rows ? 'All institutions are fully onboarded. 🎉' : ($isEntity ? 'No institutions in your access scope yet.' : 'No institutions in your district yet.') ?></td></tr><?php endif; ?>
             </tbody>
           </table>
         </div>
       <?php else:
-          $byDistrict = district_rollup($rows); ?>
+          $byDistrict = district_rollup($rows, $scope['district'] ?? []); ?>
         <div class="flex items-center justify-between mb-4">
           <div><h3 class="card-title">Onboarding by district</h3><p class="card-subtitle">Share of institutions fully onboarded</p></div>
           <a href="<?= e(url('reports', ['level' => 'districts'])) ?>" class="text-xs link">District report</a>
@@ -139,6 +145,18 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
       <?php endif; ?>
     </div>
 
+    <?php if ($isEntity): ?>
+    <div class="card">
+      <h3 class="card-title mb-3">Your access scope</h3>
+      <dl class="space-y-3 text-sm">
+        <?php foreach (scope_parts($scope) as $dim => $txt): ?>
+          <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"><?= e(['university' => 'Universities', 'district' => 'Districts', 'type' => 'Institution types', 'category' => 'Management types'][$dim]) ?></dt><dd class="text-slate-800"><?= e($txt) ?></dd></div>
+        <?php endforeach; ?>
+        <div><dt class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Institutions</dt><dd class="text-slate-800 font-semibold"><?= num(count($rows)) ?></dd></div>
+      </dl>
+      <p class="text-xs text-slate-400 mt-4">View-only access. Contact the administrator to change your scope.</p>
+    </div>
+    <?php else: ?>
     <div class="card">
       <div class="flex items-center justify-between mb-3">
         <h3 class="card-title">Recent activity</h3>
@@ -154,6 +172,7 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
         <?php if (!$activity): ?><li class="py-2 text-slate-400 italic">No activity yet.</li><?php endif; ?>
       </ul>
     </div>
+    <?php endif; ?>
   </div>
 <?php endif; ?>
 <?php require APP_ROOT . '/app/layout/footer.php';

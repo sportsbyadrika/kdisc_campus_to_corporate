@@ -1,5 +1,5 @@
 /* "Assigned institutions" picker on the user form: server-side filtered search (District,
-   Institution Type, Management Type, name) instead of loading every institution with the page.
+   University, Institution Type, Management Type, name) instead of loading every institution with the page.
    Selected institutions are kept as chips holding hidden institutions[] inputs. */
 (function () {
   'use strict';
@@ -8,6 +8,7 @@
 
   const $ = (id) => document.getElementById(id);
   const district = $('pick-district');         // absent for district users (fixed to their district)
+  const university = $('pick-university');
   const type = $('pick-type');
   const category = $('pick-category');
   const q = $('pick-q');
@@ -54,6 +55,7 @@
   const search = async () => {
     const params = new URLSearchParams();
     if (district && district.value) params.set('district', district.value);
+    if (university.value) params.set('university', university.value);
     if (type.value) params.set('type', type.value);
     if (category.value) params.set('category', category.value);
     if (q.value.trim()) params.set('q', q.value.trim());
@@ -69,7 +71,7 @@
         <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-white text-sm cursor-pointer">
           <input type="checkbox" value="${esc(it.id)}" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600" ${sel.has(String(it.id)) ? 'checked' : ''}
                  data-name="${esc(it.name)}" data-district="${esc(it.district)}">
-          <span>${esc(it.name)}<span class="block text-[11px] text-slate-400">${[district ? it.district : '', it.type, it.category].filter(Boolean).map(esc).join(' · ')}</span></span>
+          <span>${esc(it.name)}<span class="block text-[11px] text-slate-400">${[district ? it.district : '', it.university, it.type, it.category].filter(Boolean).map(esc).join(' · ')}</span></span>
         </label>`).join('');
       hint.textContent = data.hint
         || (items.length ? `${data.total > items.length ? `Showing the first ${items.length} of ${data.total} - narrow the filters to see more. ` : `${items.length} institution(s) found. `}Tick to assign.`
@@ -86,7 +88,7 @@
     if (cb.checked) addChip({ id: cb.value, name: cb.dataset.name, district: cb.dataset.district });
     else removeChip(cb.value);
   });
-  [district, type, category].forEach((el) => el && el.addEventListener('change', search));
+  [district, university, type, category].forEach((el) => el && el.addEventListener('change', search));
   q.addEventListener('input', later);
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } });
 

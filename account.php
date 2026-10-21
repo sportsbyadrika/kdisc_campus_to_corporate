@@ -9,12 +9,14 @@ if (is_post()) {
         $name = (string) input('name');
         $email = nullable(input('email'));
         $phone = nullable(input('phone'));
+        $designation = nullable(mb_substr((string) input('designation'), 0, 160));
+        $instName = nullable(mb_substr((string) input('institution_name'), 0, 200));
         if ($name === '') {
             flash('error', 'Name is required.');
         } elseif ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             flash('error', 'Please enter a valid email address.');
         } else {
-            db()->prepare('UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?')->execute([$name, $email, $phone, $user['id']]);
+            db()->prepare('UPDATE users SET name = ?, email = ?, phone = ?, designation = ?, institution_name = ? WHERE id = ?')->execute([$name, $email, $phone, $designation, $instName, $user['id']]);
             log_activity('update', 'user', (int) $user['id'], 'Updated own profile');
             flash('success', 'Profile updated.');
         }
@@ -44,6 +46,7 @@ require APP_ROOT . '/app/layout/header.php';
 <div class="mb-6">
   <h1 class="text-xl font-bold text-slate-900">My Account</h1>
   <p class="text-sm text-slate-500"><?= e(ROLES[$user['role']]) ?> · signed in as <span class="font-mono"><?= e($user['username']) ?></span></p>
+  <?php if (is_entity($user['role'])): ?><p class="text-xs text-sky-700 mt-1">View-only access: <?= e(scope_summary(user_scope($user))) ?></p><?php endif; ?>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
   <form method="post" class="card space-y-5">
@@ -52,6 +55,8 @@ require APP_ROOT . '/app/layout/header.php';
     <div><label class="label">Full name <span class="req">*</span></label><input class="input" name="name" value="<?= e($user['name']) ?>" required></div>
     <div><label class="label">Email</label><input class="input" type="email" name="email" value="<?= e($user['email']) ?>"></div>
     <div><label class="label">Mobile</label><input class="input" name="phone" value="<?= e($user['phone']) ?>"></div>
+    <div><label class="label">Designation</label><input class="input" name="designation" value="<?= e($user['designation'] ?? '') ?>" maxlength="160"></div>
+    <div><label class="label">Name of Institution</label><input class="input" name="institution_name" value="<?= e($user['institution_name'] ?? '') ?>" maxlength="200"></div>
     <div class="pt-4 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save profile</button></div>
   </form>
   <form method="post" class="card space-y-5">

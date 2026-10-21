@@ -1,6 +1,9 @@
 <?php
 require __DIR__ . '/app/bootstrap.php';
 $user = require_login();
+if (is_entity()) {
+    forbidden('Your account can view the dashboard and reports only.');
+}
 $canManage = has_role('admin', 'state'); // add institutions / edit registry record
 
 /** Validate the registry fields of an institution form. */

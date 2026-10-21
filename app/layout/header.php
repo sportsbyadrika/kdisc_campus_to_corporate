@@ -8,6 +8,8 @@ $nav = [];
 if ($user) {
     $nav[] = ['dashboard', 'Dashboard', 'home', ['dashboard', 'institution-dashboard']];
     $nav[] = ['reports', 'Reports', 'chart', ['reports']];
+}
+if ($user && !is_entity($user['role'])) {   // entities: Dashboard and Reports only
     $nav[] = ['institutions', $user['role'] === 'institution' ? 'My Institutions' : 'Institutions', 'building',
         ['institutions', 'institution-profile', 'institution-officers', 'institution-students', 'institution-cohorts', 'institution-services']];
     if (has_role('admin', 'state', 'district')) {
@@ -35,7 +37,7 @@ if ($user) {
         $nav[] = ['settings', 'Settings', 'cog', ['settings']];
     }
 }
-$roleLabel = $user ? ROLES[$user['role']] . ($user['role'] === 'district' ? ' · ' . district_name((int) $user['district_id']) : '') : '';
+$roleLabel = $user ? ROLES[$user['role']] . (in_array($user['role'], ['district', 'district_entity'], true) ? ' · ' . district_name((int) $user['district_id']) : '') : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
