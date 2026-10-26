@@ -326,6 +326,127 @@ CREATE TABLE IF NOT EXISTS user_scopes (
   CONSTRAINT fk_scope_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Group institution access of entity users; no rows for a dimension = all';
 
+-- ---------------------------------------------------------------------------
+-- Online Exam module (Activity menu)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS exams (
+  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title                 VARCHAR(200) NOT NULL,
+  instructions          TEXT NULL,
+  start_at              DATETIME NOT NULL COMMENT 'Participants can start from',
+  end_at                DATETIME NOT NULL COMMENT 'Cut-off: no attempt runs past this',
+  duration_minutes      SMALLINT UNSIGNED NOT NULL DEFAULT 60,
+  status                ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
+  shuffle_questions     TINYINT(1) NOT NULL DEFAULT 1,
+  shuffle_options       TINYINT(1) NOT NULL DEFAULT 1,
+  results_published_at  DATETIME NULL,
+  created_by            INT UNSIGNED NOT NULL,
+  created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_exam_owner (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS exam_admins (
+  exam_id   INT UNSIGNED NOT NULL,
+  user_id   INT UNSIGNED NOT NULL,
+  added_by  INT UNSIGNED NULL,
+  added_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (exam_id, user_id),
+  KEY idx_exam_admin_user (user_id),
+  CONSTRAINT fk_exadm_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE,
+  CONSTRAINT fk_exadm_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Co-admins who can view and modify an exam';
+
+CREATE TABLE IF NOT EXISTS exam_questions (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  exam_id     INT UNSIGNED NOT NULL,
+  qtype       ENUM('single','multi','descriptive') NOT NULL,
+  question    TEXT NOT NULL,
+  marks       DECIMAL(6,2) NOT NULL DEFAULT 1.00,
+  sort_order  INT NOT NULL DEFAULT 0,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_exq_exam (exam_id, sort_order),
+  CONSTRAINT fk_exq_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Master question bank';
+
+CREATE TABLE IF NOT EXISTS exam_options (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  question_id  INT UNSIGNED NOT NULL,
+  option_text  TEXT NOT NULL,
+  is_correct   TINYINT(1) NOT NULL DEFAULT 0,
+  sort_order   SMALLINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_exo_question (question_id, sort_order),
+  CONSTRAINT fk_exo_question FOREIGN KEY (question_id) REFERENCES exam_questions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS exam_series (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  exam_id     INT UNSIGNED NOT NULL,
+  name        VARCHAR(120) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_exs_exam (exam_id),
+  CONSTRAINT fk_exs_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Question series drawn from the master question bank';
+
+CREATE TABLE IF NOT EXISTS exam_series_questions (
+  series_id    INT UNSIGNED NOT NULL,
+  question_id  INT UNSIGNED NOT NULL,
+  sort_order   INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (series_id, question_id),
+  KEY idx_exsq_question (question_id),
+  CONSTRAINT fk_exsq_series FOREIGN KEY (series_id) REFERENCES exam_series (id) ON DELETE CASCADE,
+  CONSTRAINT fk_exsq_question FOREIGN KEY (question_id) REFERENCES exam_questions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS exam_participants (
+  id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  exam_id              INT UNSIGNED NOT NULL,
+  name                 VARCHAR(160) NOT NULL,
+  email                VARCHAR(160) NOT NULL,
+  phone                VARCHAR(20)  NULL,
+  details              VARCHAR(500) NULL,
+  password_hash        VARCHAR(255) NULL COMMENT 'Exam password; the password itself is only ever emailed',
+  password_expires_at  DATETIME NULL,
+  invited_at           DATETIME NULL,
+  series_id            INT UNSIGNED NULL,
+  question_order       TEXT NULL COMMENT 'JSON list of question ids served to this participant',
+  current_index        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  started_at           DATETIME NULL,
+  deadline_at          DATETIME NULL,
+  finished_at          DATETIME NULL,
+  finish_reason        ENUM('completed','timeout','logout') NULL,
+  focus_lost           SMALLINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Times the exam tab lost focus',
+  session_token        CHAR(64) NULL COMMENT 'SHA-256 of the latest login session; older sessions are signed out',
+  score                DECIMAL(8,2) NULL,
+  max_score            DECIMAL(8,2) NULL,
+  last_ip              VARCHAR(45) NULL,
+  created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_exp_email (exam_id, email),
+  KEY idx_exp_email (email),
+  CONSTRAINT fk_exp_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE,
+  CONSTRAINT fk_exp_series FOREIGN KEY (series_id) REFERENCES exam_series (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS exam_answers (
+  participant_id  INT UNSIGNED NOT NULL,
+  question_id     INT UNSIGNED NOT NULL,
+  selected        VARCHAR(500) NULL COMMENT 'JSON list of chosen option ids',
+  answer_text     MEDIUMTEXT NULL,
+  is_correct      TINYINT(1) NULL,
+  marks_awarded   DECIMAL(6,2) NULL COMMENT 'NULL = descriptive answer not graded yet',
+  grader_note     VARCHAR(500) NULL,
+  answered_at     DATETIME NOT NULL,
+  PRIMARY KEY (participant_id, question_id),
+  KEY idx_exa_question (question_id),
+  CONSTRAINT fk_exa_participant FOREIGN KEY (participant_id) REFERENCES exam_participants (id) ON DELETE CASCADE,
+  CONSTRAINT fk_exa_question FOREIGN KEY (question_id) REFERENCES exam_questions (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS login_attempts (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   username    VARCHAR(60) NOT NULL,

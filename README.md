@@ -8,7 +8,7 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
 
 | Role | Access |
 |---|---|
-| **Super Admin** | Full access. Hidden from every other user (not shown in user lists, and shown as "System" in activity logs). Created only by the installer. |
+| **Super Admin** | Full access. Hidden from every other user (not shown in user lists, and shown as "System" in activity logs). Created only by the installer. Only the Super Admin can **permanently delete an institution** (bin icon next to Deactivate on *Institutions*), meant for the initial data clean-up. This removes its profile, officers, student strength, cohorts, assessments, services, vendor counts, enrollment requests, uploaded images, and institution logins assigned to no other institution. |
 | **Administrator** | Settings, all masters, user management (all roles except super admin), all reports, all institutions. |
 | **State user** (Kerala) | All institutions; State → District → Institution drill-down reports; adds new institutions (directly or by approving district requests); global masters (universities, categories, courses, assessment tests, DWMS services, district support team). |
 | **District user** (×14) | Institutions of their district and its district-wise / institution-wise statistics; updates institution data; requests new institutions from the State; creates institution users and assigns each one to one or more institutions. |
@@ -31,7 +31,7 @@ Every user also has optional **Designation** and **Name of Institution** fields 
 - **Campus-placed students**: recorded on the Cohorts & Tests page for the current academic year and the previous one, with the change shown alongside and in reports.
 - **DWMS Institution ID**: a unique ID per institution, set by the Administrator / State (Institutions) or the District office (profile). It is used to match vendor uploads.
 - **Vendor test counts** (*Test Upload*, Admin and District users): download a CSV template listing institutions by DWMS Institution ID with one column per assessment test, fill in the tests-conducted counts from the test vendor's dashboard and upload it. The figures appear read-only as *Tests Conducted (Vendor)* next to each test on the Cohorts & Tests page, compared with the institution's own field figure.
-- **Change tracking**: every change is written to `activity_log` with old and new values. Cohort figures are also saved as snapshots, which feed the trend charts.
+- **Change tracking**: every change is written to `activity_log` with old and new values, viewable under **Settings → Activity log** (District and State users open it from *View all* on their dashboard). Cohort figures are also saved as snapshots, which feed the trend charts.
 - **Readiness score** = 30% DWMS coverage + 50% gateway-assessment coverage of job seekers + 20% onboarding completion.
 - **Security**: CSRF tokens, prepared statements, `password_hash`, session regeneration, login throttling, role- and district-scoped access checks on every page. Uploaded images are re-encoded through GD, and script execution is blocked in `uploads/`.
 
@@ -137,6 +137,18 @@ Emails are sent with [PHPMailer](https://github.com/PHPMailer/PHPMailer) 6.12. I
 | `C2C_SMTP_HOST`, `C2C_SMTP_PORT`, `C2C_SMTP_SECURE`, `C2C_SMTP_USER`, `C2C_SMTP_PASS` | SMTP details from cPanel → Email Accounts → Connect Devices (usually port 465 with `ssl`) |
 
 Every email is recorded in the `mail_log` table. Administrators can see recent deliveries and any errors under **Settings → Recent emails**. For good deliverability, make sure SPF and DKIM are enabled for the domain (cPanel → Email Deliverability).
+
+## Online Exams (Activity menu)
+
+The **Activity** menu holds programme activity modules (more can be added as cards on `activity.php`). It is shown to Administrators and to anyone made a co-admin of an exam.
+
+- **Privacy.** An exam is visible only to the Administrator who created it, the co-admins they add (*Co-admins* tab, any active Administrator, State, District or Institution user) and the Super Admin. Only the creator manages co-admins or deletes the exam.
+- **Exam settings.** Name, starting and ending period (the cut-off), duration in minutes, status (Draft / Active / Closed), shuffling of questions and options, and instructions.
+- **Master question bank.** Objective single selection, objective multiple selection and descriptive questions with marks, options and correct answers. Add one at a time or bulk-paste (`*` correct option, `-` other option, `marks: 2`, blank line between questions).
+- **Question series.** Sets of questions taken only from the master bank, picked by hand, by "pick N at random", or generated in bulk (N series × questions per type). Each participant starting the exam gets the least-used series, so papers are spread evenly. Without series, everyone gets the whole bank. The bank and series lock once anyone has started.
+- **Participants.** Name, email, mobile and details, added one by one or pasted from Excel/CSV. *Send exam passwords* emails each ticked participant a new random password with the expiry you choose; only its hash is stored.
+- **Taking the exam** (`/exam-login`, then `/exam-portal`). The participant reads the instructions and presses *Start exam*. The deadline is the duration, capped at the cut-off, and it is enforced on the server; the on-screen clock auto-submits at zero. Questions come one at a time; the server accepts only the answer to the current question, so there is no going back (even with the browser Back button). Copy, cut, paste, drag and the context menu are blocked, and switching tabs is counted. *Sign out* ends the attempt. A dropped connection or closed browser does not: signing in again resumes the same question until the deadline. Signing in on another device signs out the first one.
+- **Results.** Objective answers are marked automatically (a multiple-selection answer must match the correct set exactly). Descriptive answers are marked on each participant's answer sheet. Participants who never started before the cut-off are **Absent**. Everyone else is **Completed** with a remark: normal completion, time out or logged out. Results can be published (optionally emailing each score) once every participant is Completed or Absent and all answers are marked. Participants then see their score when they sign in. CSV export is available.
 
 ## Database upgrades
 

@@ -132,6 +132,7 @@ require APP_ROOT . '/app/layout/header.php';
   <h1 class="text-xl font-bold text-slate-900">Settings</h1>
   <p class="text-sm text-slate-500">Portal-wide configuration for the Campus to Corporate programme.</p>
 </div>
+<?php $settingsTab = 'settings'; require APP_ROOT . '/app/layout/settings_tabs.php'; ?>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <form method="post" class="card lg:col-span-2 space-y-5">
     <?= csrf_field() ?>

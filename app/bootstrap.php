@@ -22,6 +22,7 @@ require __DIR__ . '/charts.php';
 require __DIR__ . '/migrations.php';
 require __DIR__ . '/security.php';
 require __DIR__ . '/mailer.php';
+require __DIR__ . '/exams.php';
 
 function config(string $key, mixed $default = null): mixed
 {

@@ -160,7 +160,7 @@ $hello = (int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good a
     <div class="card">
       <div class="flex items-center justify-between mb-3">
         <h3 class="card-title">Recent activity</h3>
-        <a href="<?= e(url('activity')) ?>" class="text-xs link">View all</a>
+        <a href="<?= e(url('activity-log')) ?>" class="text-xs link">View all</a>
       </div>
       <ul class="divide-y divide-slate-100 text-xs">
         <?php foreach ($activity as $a): ?>

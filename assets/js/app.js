@@ -163,6 +163,12 @@
     sync();
   }
 
+  // ---- Tick-all checkbox for tables: <input data-check-all> + <input data-check-item> ------
+  document.querySelectorAll('[data-check-all]').forEach((all) => {
+    const scope = all.closest('table') || document;
+    all.addEventListener('change', () => scope.querySelectorAll('[data-check-item]').forEach((c) => { c.checked = all.checked; }));
+  });
+
   // ---- Group scope checklists: "All …" clears the specific choices and vice versa ----
   document.querySelectorAll('[data-scope-group]').forEach((group) => {
     const all = group.querySelector('[data-scope-all]');

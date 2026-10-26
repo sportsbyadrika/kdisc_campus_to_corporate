@@ -345,6 +345,13 @@ function status_badge(string $status): string
         'pending'     => 'bg-amber-100 text-amber-800',
         'approved'    => 'bg-emerald-100 text-emerald-700',
         'rejected'    => 'bg-rose-100 text-rose-700',
+        'Draft'       => 'bg-slate-100 text-slate-600',
+        'Closed'      => 'bg-slate-200 text-slate-700',
+        'Absent'      => 'bg-rose-100 text-rose-700',
+        'Invited'     => 'bg-sky-100 text-sky-700',
+        'Expired'     => 'bg-amber-100 text-amber-800',
+        'Not Invited' => 'bg-slate-100 text-slate-600',
+        'Published'   => 'bg-indigo-100 text-indigo-700',
     ];
     $cls = $map[$status] ?? 'bg-slate-100 text-slate-600';
     return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ' . $cls . '">' . e(ucfirst($status)) . '</span>';
