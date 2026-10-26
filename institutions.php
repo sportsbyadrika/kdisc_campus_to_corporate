@@ -5,6 +5,52 @@ if (is_entity()) {
     forbidden('Your account can view the dashboard and reports only.');
 }
 $canManage = has_role('admin', 'state'); // add institutions / edit registry record
+$canDelete = user_role() === 'superadmin'; // permanent deletion: super admin only (initial data clean-up)
+
+/**
+ * Permanently delete an institution with everything recorded for it: profile, officers, student
+ * strength, cohorts and snapshots, assessments, services, vendor counts, enrollment requests and
+ * institution assignments (database cascades), institution logins assigned to no other
+ * institution, and its uploaded logo / photos. Returns counts for the confirmation message.
+ */
+function delete_institution(array $inst): array
+{
+    $id = (int) $inst['id'];
+    $count = function (string $table) use ($id): int {
+        $st = db()->prepare("SELECT COUNT(*) FROM {$table} WHERE institution_id = ?");
+        $st->execute([$id]);
+        return (int) $st->fetchColumn();
+    };
+    $counts = [
+        'officers'            => $count('institution_officers'),
+        'departments'         => $count('institution_departments'),
+        'cohorts'             => $count('institution_cohorts'),
+        'enrollment requests' => $count('enrollment_requests'),
+    ];
+    $st = db()->prepare('SELECT photo FROM institution_officers WHERE institution_id = ? AND photo IS NOT NULL');
+    $st->execute([$id]);
+    $files = array_merge([$inst['logo'], $inst['photo']], $st->fetchAll(PDO::FETCH_COLUMN));
+
+    db()->beginTransaction();
+    // Institution logins that would be left without any institution
+    $st = db()->prepare("SELECT u.id FROM users u JOIN user_institutions ui ON ui.user_id = u.id
+                         WHERE ui.institution_id = ? AND u.role = 'institution'
+                           AND NOT EXISTS (SELECT 1 FROM user_institutions o WHERE o.user_id = u.id AND o.institution_id <> ?)");
+    $st->execute([$id, $id]);
+    $userIds = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    if ($userIds) {
+        db()->prepare('DELETE FROM users WHERE id IN (' . implode(',', array_fill(0, count($userIds), '?')) . ')')->execute($userIds);
+    }
+    $counts['logins'] = count($userIds);
+    db()->prepare('UPDATE institution_requests SET institution_id = NULL WHERE institution_id = ?')->execute([$id]);
+    db()->prepare('DELETE FROM institutions WHERE id = ?')->execute([$id]);
+    db()->commit();
+
+    foreach (array_filter($files) as $f) {
+        delete_upload($f);
+    }
+    return $counts;
+}
 
 /** Validate the registry fields of an institution form. */
 function institution_registry_input(): array
@@ -36,6 +82,18 @@ if (is_post()) {
     }
     $action = input('action');
     $id = int_input('id');
+
+    if ($action === 'delete' && $id) {
+        if (!$canDelete) {
+            forbidden('Only the super admin can delete institutions.');
+        }
+        $inst = load_institution($id);
+        $counts = delete_institution($inst);
+        $summary = implode(', ', array_map(fn($k, $n) => "{$n} {$k}", array_keys($counts), $counts));
+        log_activity('delete', 'institution', $id, 'Deleted institution ' . $inst['name'] . ' and all its data', ['Deleted' => [$inst['name'], $summary]], null, (int) $inst['district_id']);
+        flash('success', "{$inst['name']} and all its data were deleted ({$summary}).");
+        redirect('institutions');
+    }
 
     if ($action === 'toggle' && $id) {
         $inst = load_institution($id);
@@ -215,6 +273,12 @@ require APP_ROOT . '/app/layout/header.php';
                 <?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= $r['id'] ?>">
                 <button class="p-1.5 rounded-lg align-middle <?= $r['is_active'] ? 'text-rose-500 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50' ?>" title="<?= $r['is_active'] ? 'Deactivate' : 'Activate' ?>"><?= icon($r['is_active'] ? 'x' : 'check') ?></button>
               </form>
+              <?php if ($canDelete): ?>
+                <form method="post" class="inline" data-confirm="PERMANENTLY DELETE <?= e($r['name']) ?>?&#10;&#10;This removes the institution and all its data: profile, placement officers, student strength, cohorts, assessments, DWMS services, vendor test counts, enrollment requests, and institution logins assigned only to it. This cannot be undone.">
+                  <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $r['id'] ?>">
+                  <button class="p-1.5 rounded-lg align-middle text-rose-600 hover:bg-rose-50" title="Delete permanently (super admin)"><?= icon('trash') ?></button>
+                </form>
+              <?php endif; ?>
             <?php endif; ?>
           </td>
         </tr>

@@ -8,7 +8,7 @@ Page URLs have no `.php` extension (`/dashboard`, `/reports?district=7`, `/insti
 
 | Role | Access |
 |---|---|
-| **Super Admin** | Full access. Hidden from every other user (not shown in user lists, and shown as "System" in activity logs). Created only by the installer. |
+| **Super Admin** | Full access. Hidden from every other user (not shown in user lists, and shown as "System" in activity logs). Created only by the installer. Only the Super Admin can **permanently delete an institution** (bin icon next to Deactivate on *Institutions*), meant for the initial data clean-up. This removes its profile, officers, student strength, cohorts, assessments, services, vendor counts, enrollment requests, uploaded images, and institution logins assigned to no other institution. |
 | **Administrator** | Settings, all masters, user management (all roles except super admin), all reports, all institutions. |
 | **State user** (Kerala) | All institutions; State → District → Institution drill-down reports; adds new institutions (directly or by approving district requests); global masters (universities, categories, courses, assessment tests, DWMS services, district support team). |
 | **District user** (×14) | Institutions of their district and its district-wise / institution-wise statistics; updates institution data; requests new institutions from the State; creates institution users and assigns each one to one or more institutions. |
