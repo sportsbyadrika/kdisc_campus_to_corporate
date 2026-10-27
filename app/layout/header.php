@@ -11,7 +11,7 @@ if ($user) {
 }
 if ($user && !is_entity($user['role'])) {   // entities: Dashboard and Reports only
     $nav[] = ['institutions', $user['role'] === 'institution' ? 'My Institutions' : 'Institutions', 'building',
-        ['institutions', 'institution-profile', 'institution-officers', 'institution-students', 'institution-cohorts', 'institution-services']];
+        ['institutions', 'institution-upload', 'institution-profile', 'institution-officers', 'institution-students', 'institution-cohorts', 'institution-services']];
     if (has_role('admin', 'state', 'district')) {
         $nav[] = ['institution-requests', 'Requests', 'inbox', ['institution-requests']];
     }

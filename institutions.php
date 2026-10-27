@@ -167,6 +167,7 @@ require APP_ROOT . '/app/layout/header.php';
     </p>
   </div>
   <div class="flex gap-2">
+    <?php if (has_role('admin') && !$showForm): ?><a href="<?= e(url('institution-upload')) ?>" class="btn-secondary"><?= icon('upload') ?> Bulk upload</a><?php endif; ?>
     <?php if ($canManage && !$showForm): ?><a href="<?= e(url('institutions', ['new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> Add institution</a><?php endif; ?>
     <?php if ($user['role'] === 'district'): ?><a href="<?= e(url('institution-requests', ['new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> Request new institution</a><?php endif; ?>
   </div>
