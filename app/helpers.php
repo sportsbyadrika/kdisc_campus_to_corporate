@@ -352,6 +352,9 @@ function status_badge(string $status): string
         'Expired'     => 'bg-amber-100 text-amber-800',
         'Not Invited' => 'bg-slate-100 text-slate-600',
         'Published'   => 'bg-indigo-100 text-indigo-700',
+        'Ready'       => 'bg-sky-100 text-sky-700',
+        'Imported'    => 'bg-emerald-100 text-emerald-700',
+        'Issue'       => 'bg-rose-100 text-rose-700',
     ];
     $cls = $map[$status] ?? 'bg-slate-100 text-slate-600';
     return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ' . $cls . '">' . e(ucfirst($status)) . '</span>';
@@ -386,6 +389,7 @@ function icon(string $name, string $class = 'w-4 h-4'): string
         'map'       => 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
         'printer'   => 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z',
         'download'  => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',
+        'upload'    => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
         'search'    => 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
         'menu'      => 'M4 6h16M4 12h16M4 18h16',
         'key'       => 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
