@@ -99,7 +99,7 @@ if (is_post()) {
     if (!filter_var($d['po_email'], FILTER_VALIDATE_EMAIL)) $errors[] = "Enter a valid email address for the Placement Officer.";
     if (!valid_mobile($d['po_phone'])) $errors[] = "Enter a valid 10-digit mobile number for the Placement Officer.";
     if ($d['head_email'] !== '' && $d['head_email'] === $d['po_email']) $errors[] = 'The Institution Head and the Placement Officer must have different email addresses.';
-    if (($_POST['confirm'] ?? '') === '') $errors[] = 'Please confirm that you are authorised to request enrollment for this institution.';
+    if (($_POST['confirm'] ?? '') === '') $errors[] = 'Please tick the declaration confirming the institution’s willingness to participate in the Campus to Corporate Programme.';
     if ($d['head_phone'] !== '' && $d['head_phone'] === $d['po_phone']) $errors[] = 'The Institution Head and the Placement Officer must have different contact numbers.';
     if (!$errors) {
         $st = db()->prepare('SELECT 1 FROM users WHERE email = ? LIMIT 1');
@@ -242,7 +242,7 @@ require APP_ROOT . '/app/layout/public_header.php';
     </div>
     <label class="flex items-start gap-2 text-sm text-slate-600 mt-5">
       <input type="checkbox" name="confirm" required class="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600">
-      I confirm that I am authorised to request enrollment for this institution and that the details above are correct.
+      I hereby confirm the institution’s willingness to participate in the Campus to Corporate Programme and undertake to provide the necessary institutional support and coordination for its effective implementation.
     </label>
   </section>
 
