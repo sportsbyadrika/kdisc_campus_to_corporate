@@ -43,7 +43,7 @@ $signedIn = current_user() !== null;
     </a>
     <nav class="hidden xl:flex items-center gap-4 2xl:gap-6 text-[13px] 2xl:text-[13.5px] font-medium text-c2c-ink whitespace-nowrap" aria-label="Main">
       <?php foreach ($siteNav as $k => [$label, $href]): ?>
-        <a href="<?= e($href) ?>" class="relative py-2 hover:text-c2c-teal <?= $k === $navActive ? 'text-c2c-teal after:absolute after:left-0 after:right-0 after:-bottom-1 after:h-0.5 after:rounded after:bg-c2c-teal' : '' ?>"><?= e($label) ?></a>
+        <a href="<?= e($href) ?>" data-nav="<?= $k ?>" <?= $k === $navActive ? 'data-active aria-current="page"' : '' ?> class="site-nav-link relative py-2 hover:text-c2c-teal"><?= e($label) ?></a>
       <?php endforeach; ?>
     </nav>
     <div class="flex items-center gap-2">
@@ -54,7 +54,7 @@ $signedIn = current_user() !== null;
         <summary class="list-none p-2.5 rounded-lg text-c2c-navy hover:bg-slate-100 cursor-pointer" aria-label="Menu"><?= icon('menu', 'w-5 h-5') ?></summary>
         <nav class="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-lg py-2" aria-label="Main">
           <?php foreach ($siteNav as $k => [$label, $href]): ?>
-            <a href="<?= e($href) ?>" class="block px-4 py-2 text-sm <?= $k === $navActive ? 'text-c2c-teal font-semibold' : 'text-c2c-ink' ?> hover:bg-c2c-wash"><?= e($label) ?></a>
+            <a href="<?= e($href) ?>" data-nav="<?= $k ?>" <?= $k === $navActive ? 'data-active' : '' ?> class="site-nav-item block px-4 py-2 text-sm text-c2c-ink hover:bg-c2c-wash"><?= e($label) ?></a>
           <?php endforeach; ?>
         </nav>
       </details>

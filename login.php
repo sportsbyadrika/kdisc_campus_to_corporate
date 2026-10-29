@@ -64,16 +64,19 @@ send_public_csp();
   <?= favicon_tag() ?>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
-  <main class="grow flex items-center justify-center px-4 py-10">
+  <main class="grow flex flex-col items-center justify-center px-4 py-10">
+    <div class="w-full max-w-5xl mb-4">
+      <a href="<?= e(url('')) ?>" class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-sky-700 border border-transparent hover:border-slate-200"><?= icon('home') ?> Home</a>
+    </div>
     <div class="w-full max-w-5xl grid lg:grid-cols-2 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="relative bg-linear-to-br from-slate-900 via-sky-950 to-indigo-950 text-white p-8 sm:p-10 flex flex-col justify-between gap-10">
-        <div class="flex items-center gap-3">
+        <a href="<?= e(url('')) ?>" class="flex items-center gap-3" title="Home page">
           <?= app_logo_html('w-11 h-11', 'from-sky-500 to-indigo-500', 'bg-white p-0.5') ?>
           <div>
             <p class="text-lg font-bold tracking-tight"><?= e($appName) ?></p>
             <p class="text-xs text-slate-300"><?= e(setting('app_tagline')) ?></p>
           </div>
-        </div>
+        </a>
         <div class="space-y-4">
           <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">Academic Year <?= e(academic_year()) ?></span>
           <h1 class="text-3xl font-black leading-tight"><?= nl2br(e(setting('login_heading') ?: LOGIN_HEADING_DEFAULT)) ?></h1>
