@@ -447,6 +447,20 @@ CREATE TABLE IF NOT EXISTS exam_answers (
   CONSTRAINT fk_exa_question FOREIGN KEY (question_id) REFERENCES exam_questions (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Latest Updates & Resources on the public home page
+CREATE TABLE IF NOT EXISTS site_updates (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title         VARCHAR(200) NOT NULL,
+  published_on  DATE NOT NULL,
+  link_url      VARCHAR(500) NULL COMMENT 'External or portal link',
+  file          VARCHAR(255) NULL COMMENT 'Uploaded PDF under uploads/updates',
+  is_active     TINYINT(1) NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_update_date (is_active, published_on)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Latest Updates & Resources on the home page';
+
 CREATE TABLE IF NOT EXISTS login_attempts (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   username    VARCHAR(60) NOT NULL,

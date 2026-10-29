@@ -11,3 +11,5 @@
 !/uploads/officers/.gitkeep
 /uploads/branding/*
 !/uploads/branding/.gitkeep
+/uploads/updates/*
+!/uploads/updates/.gitkeep

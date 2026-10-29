@@ -3,7 +3,7 @@
 if (!has_role('admin')) {
     return;
 }
-$settingsTabs = ['settings' => ['General settings', 'cog'], 'activity-log' => ['Activity log', 'clock']];
+$settingsTabs = ['settings' => ['General settings', 'cog'], 'settings-home' => ['Home page', 'home'], 'activity-log' => ['Activity log', 'clock']];
 ?>
 <div class="flex gap-1 border-b border-slate-200 mb-6 overflow-x-auto no-print">
   <?php foreach ($settingsTabs as $href => [$label, $ico]): $on = ($settingsTab ?? '') === $href; ?>
