@@ -23,7 +23,7 @@ $appName = setting('app_name', 'Campus to Corporate');
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 <header class="bg-white border-b border-slate-200">
   <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-    <a href="<?= e(url('login')) ?>" class="flex items-center gap-3">
+    <a href="<?= e(url('')) ?>" class="flex items-center gap-3">
       <?= app_logo_html() ?>
       <div>
         <span class="text-lg font-bold tracking-tight text-slate-900"><?= e($appName) ?></span>
@@ -31,7 +31,7 @@ $appName = setting('app_name', 'Campus to Corporate');
       </div>
     </a>
     <?php if (isset($headerRight)): ?><?= $headerRight ?>
-    <?php else: ?><a href="<?= e(url('login')) ?>" class="text-sm font-medium text-sky-700 hover:underline">Sign in</a><?php endif; ?>
+    <?php else: ?><nav class="flex items-center gap-4 text-sm font-medium"><a href="<?= e(url('')) ?>" class="inline-flex items-center gap-1.5 text-slate-600 hover:text-sky-700"><?= icon('home') ?> Home</a><a href="<?= e(url('login')) ?>" class="text-sky-700 hover:underline">Sign in</a></nav><?php endif; ?>
   </div>
 </header>
 <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">
