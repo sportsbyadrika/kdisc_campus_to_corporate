@@ -93,3 +93,11 @@
   .print-only { display: block !important; }
   body { background: #fff; }
 }
+
+/* Public site menu: the selected item is teal and underlined (set by assets/js/site.js) */
+@layer components {
+  .site-nav-link[data-active] { @apply text-c2c-teal; }
+  .site-nav-link::after { content: ""; @apply absolute left-0 right-0 -bottom-1 h-0.5 rounded bg-c2c-teal scale-x-0 transition-transform duration-200; }
+  .site-nav-link[data-active]::after { @apply scale-x-100; }
+  .site-nav-item[data-active] { @apply text-c2c-teal font-semibold bg-c2c-wash; }
+}

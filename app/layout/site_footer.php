@@ -7,7 +7,7 @@ $socials = array_filter(['youtube' => home_text('social_youtube'), 'linkedin' =>
 $email = home_text('contact_email');
 ?>
 </main>
-<footer class="bg-c2c-deep text-white" id="contact">
+<footer class="bg-c2c-deep text-white" id="contact" data-spy="contact">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 lg:grid-flow-col lg:auto-cols-auto lg:grid-cols-[auto_1fr] gap-8 lg:gap-12 items-start">
     <div class="flex flex-wrap items-center gap-6">
       <?= home_logo('logo_gok', true) ?><?= home_logo('logo_kdisc', true) ?><?= home_logo('logo_kkem', true) ?>
@@ -45,5 +45,6 @@ $email = home_text('contact_email');
     </div>
   </div>
 </footer>
+<script src="<?= e(asset('assets/js/site.js')) ?>"></script>
 </body>
 </html>

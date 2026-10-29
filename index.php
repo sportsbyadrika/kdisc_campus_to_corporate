@@ -41,7 +41,7 @@ $navActive = 'home';
 require APP_ROOT . '/app/layout/site_header.php';
 ?>
 <!-- Hero -->
-<section class="relative overflow-hidden bg-c2c-navy text-white">
+<section class="relative overflow-hidden bg-c2c-navy text-white" data-spy="home">
   <?php if ($hero): ?>
     <img src="<?= e($hero) ?>" alt="" class="absolute inset-y-0 right-0 h-full w-full lg:w-[66%] object-cover object-[60%_20%]">
     <div class="absolute inset-0 bg-gradient-to-r from-c2c-navy from-30% lg:from-36% via-c2c-navy/80 via-50% to-transparent to-75% lg:to-68%"></div>
@@ -88,7 +88,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 </section>
 
 <!-- About + Why it matters -->
-<section id="about" class="bg-white scroll-mt-24">
+<section id="about" data-spy="about" class="bg-white scroll-mt-24">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-10 grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,8fr)] gap-10">
     <div>
       <h2 class="font-display text-[1.7rem] sm:text-3xl font-bold leading-tight text-c2c-ink">A Stronger Bridge Between<br><span class="text-c2c-teal">Education and Employment</span></h2>
@@ -111,7 +111,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 </section>
 
 <!-- The journey -->
-<section id="journey" class="bg-c2c-wash scroll-mt-24">
+<section id="journey" data-spy="how" class="bg-c2c-wash scroll-mt-24">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-8 items-center">
     <div>
       <h2 class="font-display text-[1.45rem] font-bold leading-tight text-c2c-ink">From Campus to Corporate<br><span class="text-c2c-teal">The Journey</span></h2>
@@ -131,7 +131,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 </section>
 
 <!-- Banners + updates -->
-<section id="updates" class="bg-white scroll-mt-24">
+<section id="updates" data-spy="resources" class="bg-white scroll-mt-24">
   <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,31fr)_minmax(0,40fr)_minmax(0,29fr)] items-stretch">
     <div class="relative min-h-[170px] lg:min-h-[180px] overflow-hidden <?= $bannerLeft ? '' : 'bg-gradient-to-br from-[#0f6e7a] via-[#127f6c] to-[#0b3a5c]' ?>">
       <?php if ($bannerLeft): ?><img src="<?= e($bannerLeft) ?>" alt="" class="absolute inset-0 w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-r from-black/35 to-transparent"></div><?php endif; ?>
@@ -178,7 +178,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 </section>
 
 <!-- FAQs -->
-<section id="faqs" class="bg-c2c-wash scroll-mt-24">
+<section id="faqs" data-spy="faqs" class="bg-c2c-wash scroll-mt-24">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-10 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
     <div>
       <h2 class="font-display text-2xl font-bold leading-tight text-c2c-ink">Frequently Asked<br><span class="text-c2c-teal">Questions</span></h2>
