@@ -6,6 +6,7 @@
 require __DIR__ . '/app/bootstrap.php';
 
 $hero = home_image('home_hero');
+$light = home_text('home_hero_theme') !== 'dark';
 $bannerLeft = home_image('home_banner_left');
 $bannerRight = home_image('home_banner_right');
 $updates = site_updates(3);
@@ -40,7 +41,51 @@ $pageTitle = '';
 $navActive = 'home';
 require APP_ROOT . '/app/layout/site_header.php';
 ?>
-<!-- Hero -->
+<!-- Hero: "light" = white background with dark labels (client design), "dark" = navy -->
+<?php if ($light): ?>
+<section class="relative overflow-hidden bg-white text-c2c-ink" data-spy="home">
+  <?php if ($hero): ?>
+    <img src="<?= e($hero) ?>" alt="" class="hidden lg:block absolute inset-y-0 right-0 h-full w-[62%] max-w-[1100px] object-cover object-[right_top]">
+    <div class="hidden lg:block absolute inset-y-0 right-0 w-[62%] max-w-[1100px] bg-gradient-to-r from-white via-white/0 via-25% to-transparent"></div>
+  <?php else: ?>
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_78%_40%,#d9f3f1_0%,#eef8fb_35%,#ffffff_70%)]"></div>
+    <?= $kerala('absolute right-[8%] top-4 h-[90%] w-auto text-c2c-teal opacity-10 rotate-[-14deg] pointer-events-none') ?>
+  <?php endif; ?>
+  <div class="relative max-w-[1440px] mx-auto px-4 sm:px-8 pt-8 pb-8 lg:pt-9 lg:pb-7 lg:min-h-[440px] grid grid-cols-1 lg:grid-cols-[minmax(0,540px)_1fr] gap-6">
+    <div>
+      <?php if (home_text('home_eyebrow') !== ''): ?><p class="font-display text-[13px] sm:text-sm font-semibold uppercase tracking-wide text-c2c-ink"><?= e(home_text('home_eyebrow')) ?></p><?php endif; ?>
+      <h1 class="font-display font-extrabold leading-[0.95] tracking-tight mt-2">
+        <span class="block text-5xl sm:text-6xl xl:text-[4.4rem] text-[#0d3778]">Campus to</span>
+        <span class="block text-5xl sm:text-6xl xl:text-[4.4rem] pb-1 bg-gradient-to-r from-[#0f9a8a] via-[#11a09a] to-[#1d7fb8] bg-clip-text text-transparent">Corporate</span>
+      </h1>
+      <p class="font-display text-xl sm:text-[1.45rem] font-semibold leading-tight mt-3 text-[#13428f]"><?= e(home_text('home_subtitle')) ?></p>
+      <p class="text-[15px] leading-relaxed text-c2c-ink/85 mt-3 max-w-md"><?= e(home_text('home_intro')) ?></p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 max-w-[530px]">
+        <div class="rounded-xl bg-gradient-to-r from-[#0f9a8a] to-[#17ab9f] text-white px-5 py-4 flex items-center gap-4 shadow-lg shadow-teal-900/15">
+          <?= icon('users', 'w-11 h-11 shrink-0') ?><span class="self-stretch w-px bg-white/40"></span>
+          <div><p class="font-display text-[2rem] font-bold leading-none"><?= e(home_text('home_stat1_value')) ?></p><p class="text-[13px] font-medium leading-snug mt-1"><?= e(home_text('home_stat1_label')) ?></p></div>
+        </div>
+        <div class="rounded-xl bg-[#e2f0fb] text-[#0d3778] px-5 py-4 flex items-center gap-4 shadow-lg shadow-sky-900/10">
+          <?= icon('briefcase', 'w-11 h-11 shrink-0') ?><span class="self-stretch w-px bg-[#0d3778]/25"></span>
+          <div><p class="font-display text-[2rem] font-bold leading-none"><?= e(home_text('home_stat2_value')) ?></p><p class="text-[13px] font-medium leading-snug mt-1"><?= e(home_text('home_stat2_label')) ?></p></div>
+        </div>
+      </div>
+      <?php if (home_text('home_stat_note') !== ''): ?><p class="text-xs text-slate-500 mt-3"><?= e(home_text('home_stat_note')) ?></p><?php endif; ?>
+    </div>
+
+    <?php if ($hero): ?><img src="<?= e($hero) ?>" alt="" class="lg:hidden w-full h-60 sm:h-80 object-cover object-[65%_top] rounded-2xl"><?php endif; ?>
+    <div class="relative flex flex-col justify-between items-center lg:items-end gap-6">
+      <?php if (home_text('home_tagline') !== ''): ?><p class="hidden lg:block font-script text-4xl xl:text-5xl leading-[1.05] text-right -rotate-6 mt-2 mr-2 text-[#0d3778] [text-shadow:0_1px_0_rgba(255,255,255,0.7)]"><?= nl2br(e(str_replace(', ', ",\n", home_text('home_tagline')))) ?></p><?php else: ?><span></span><?php endif; ?>
+      <div class="text-center">
+        <a href="<?= e(url('enroll')) ?>" class="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-[#1550a8] to-[#0d3778] border-2 border-white px-7 py-3.5 text-[15px] font-semibold text-white shadow-xl shadow-[#0d3778]/30 hover:from-[#0d3778]">
+          <?= icon('academic', 'w-6 h-6') ?> Enroll Your Institution <?= icon('arrow-right', 'w-4 h-4') ?>
+        </a>
+        <p class="text-xs mt-2 font-semibold text-[#0d3778] lg:[text-shadow:0_0_6px_#fff,0_0_2px_#fff]">Only for Higher Education Institutions</p>
+      </div>
+    </div>
+  </div>
+</section>
+<?php else: ?>
 <section class="relative overflow-hidden bg-c2c-navy text-white" data-spy="home">
   <?php if ($hero): ?>
     <img src="<?= e($hero) ?>" alt="" class="absolute inset-y-0 right-0 h-full w-full lg:w-[66%] object-cover object-[60%_20%]">
@@ -70,7 +115,7 @@ require APP_ROOT . '/app/layout/site_header.php';
           <div><p class="font-display text-[2rem] font-bold leading-none"><?= e(home_text('home_stat2_value')) ?></p><p class="text-[13px] leading-snug mt-1"><?= e(home_text('home_stat2_label')) ?></p></div>
         </div>
       </div>
-      <p class="text-xs text-white/85 mt-4"><?= e(home_text('home_stat_note')) ?></p>
+      <?php if (home_text('home_stat_note') !== ''): ?><p class="text-xs text-white/85 mt-4"><?= e(home_text('home_stat_note')) ?></p><?php endif; ?>
     </div>
 
     <div class="relative flex flex-col justify-between items-end gap-10">
@@ -86,6 +131,7 @@ require APP_ROOT . '/app/layout/site_header.php';
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <!-- About + Why it matters -->
 <section id="about" data-spy="about" class="bg-white scroll-mt-24">

@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 /** Image slots: key => [label, hint, max width in px]. Stored under uploads/branding. */
 const HOME_IMAGES = [
-    'home_hero'         => ['Hero photo', 'Wide photo with the people on the right half; at least 1600 × 800 px.', 2000],
+    'home_hero'         => ['Hero photo', 'People on the right, plain or white background on the left (light style); about 1500 × 820 px.', 2000],
     'home_banner_left'  => ['Left banner (Better Skills…)', 'Landscape photo, about 960 × 280 px.', 1200],
     'home_banner_right' => ['Right banner (Together for a…)', 'Landscape photo, about 840 × 260 px.', 1200],
     'logo_gok'          => ['Government of Kerala emblem', 'PNG with transparent background, about 200 px tall.', 600],
@@ -18,6 +18,7 @@ const HOME_IMAGES = [
 
 /** Editable texts: key => [label, default, input type]. */
 const HOME_TEXTS = [
+    'home_hero_theme'   => ['Hero style', 'light', 'select'],
     'home_eyebrow'      => ['Hero: small heading', 'A Statewide Employment Execution Mission', 'text'],
     'home_subtitle'     => ['Hero: subtitle', 'From Higher Education to Meaningful Employment', 'text'],
     'home_intro'        => ['Hero: introduction', "Connecting Kerala's final-year students with the skills, opportunities and industry connections they need to move confidently from campus to corporate life.", 'textarea'],
@@ -37,6 +38,12 @@ const HOME_TEXTS = [
     'terms_url'         => ['Terms of Use link', '', 'url'],
     'accessibility_url' => ['Accessibility link', '', 'url'],
 ];
+
+/** Hero styles: light = white background with dark labels (for a photo on white), dark = navy with white labels. */
+const HOME_HERO_THEMES = ['light' => 'Light: white background, dark labels', 'dark' => 'Dark: navy background, white labels'];
+
+/** Texts that may be left empty to hide them. */
+const HOME_OPTIONAL_TEXTS = ['home_eyebrow', 'home_stat_note', 'home_tagline'];
 
 function home_text(string $key): string
 {

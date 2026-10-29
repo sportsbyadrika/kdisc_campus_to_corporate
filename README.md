@@ -154,7 +154,8 @@ Every email is recorded in the `mail_log` table. Administrators can see recent d
 
 Administrators manage it under **Settings → Home page**:
 
-- **Texts and links:** hero wording, the two targets, the handwritten tagline and the About paragraph. Also the contact email and location, plus the social and policy links. Social icons and policy links show only when a link is set.
+- **Hero style:** *Light* (white background with dark navy and teal labels, for a photo on a white background; the default) or *Dark* (navy background with white labels).
+- **Texts and links:** hero wording, the two targets, the handwritten tagline and the About paragraph. The small heading, the targets note and the tagline are hidden when left empty. Also the contact email and location, plus the social and policy links. Social icons and policy links show only when a link is set.
 - **Images:**
     - the hero photo (people on the right half)
     - the two banner photos
