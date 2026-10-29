@@ -16,6 +16,17 @@
   --color-brand-900: #082f49;
   --color-accent-500: #f59e0b;
   --color-accent-600: #d97706;
+
+  /* Public home page (client design) */
+  --font-display: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-script: "Caveat", "Segoe Script", cursive;
+  --color-c2c-navy: #0b3a5c;
+  --color-c2c-deep: #072b46;
+  --color-c2c-ink: #0e3e66;
+  --color-c2c-teal: #0f9a92;
+  --color-c2c-aqua: #4fdcd2;
+  --color-c2c-mint: #e6f6f4;
+  --color-c2c-wash: #eef9f8;
 }
 
 @layer base {

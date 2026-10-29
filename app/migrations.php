@@ -8,7 +8,7 @@ declare(strict_types=1);
  * is behind SCHEMA_VERSION. Every step checks the current structure first, so it is safe
  * to run against a fresh install (where schema.sql already has the change) or to re-run.
  */
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 function ensure_schema(): void
 {
@@ -104,8 +104,25 @@ function schema_migrations(): array
                 db()->exec($ddl);
             }
         },
+        // v6: public home page - Latest Updates & Resources
+        6 => function (): void {
+            db()->exec(SITE_UPDATES_DDL);
+        },
     ];
 }
+
+const SITE_UPDATES_DDL = "CREATE TABLE IF NOT EXISTS site_updates (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  title         VARCHAR(200) NOT NULL,
+  published_on  DATE NOT NULL,
+  link_url      VARCHAR(500) NULL COMMENT 'External or portal link',
+  file          VARCHAR(255) NULL COMMENT 'Uploaded PDF under uploads/updates',
+  is_active     TINYINT(1) NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_update_date (is_active, published_on)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Latest Updates & Resources on the home page'";
 
 /** Online Exam module tables, in dependency order (also in database/schema.sql). */
 const EXAM_DDL = [

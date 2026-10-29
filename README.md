@@ -139,6 +139,30 @@ Emails are sent with [PHPMailer](https://github.com/PHPMailer/PHPMailer) 6.12. I
 
 Every email is recorded in the `mail_log` table. Administrators can see recent deliveries and any errors under **Settings → Recent emails**. For good deliverability, make sure SPF and DKIM are enabled for the domain (cPanel → Email Deliverability).
 
+## Public home page
+
+`/` is the public landing page, built to the client's design. It has these sections:
+
+- a hero with the targets and *Enroll Your Institution*
+- *A Stronger Bridge* / *Why It Matters?*
+- the seven-step *Journey*
+- two banners around *Latest Updates & Resources*
+- FAQs
+- a footer with quick links and contact details
+
+`/updates` lists every update. Signed-in users see *Go to Dashboard* instead of *Institution Login*.
+
+Administrators manage it under **Settings → Home page**:
+
+- **Texts and links:** hero wording, the two targets, the handwritten tagline and the About paragraph. Also the contact email and location, plus the social and policy links. Social icons and policy links show only when a link is set.
+- **Images:**
+    - the hero photo (people on the right half)
+    - the two banner photos
+    - the Government of Kerala, K-DISC and KKEM logos
+
+  Until each is uploaded, a drawn stand-in is shown. Images are stored in `uploads/branding`; deployment never overwrites them.
+- **Latest Updates & Resources:** a title, a date and either a link or a PDF (stored in `uploads/updates`). Each can be shown or hidden. The newest three appear on the home page.
+
 ## Online Exams (Activity menu)
 
 The **Activity** menu holds programme activity modules (more can be added as cards on `activity.php`). It is shown to Administrators and to anyone made a co-admin of an exam.

@@ -34,7 +34,7 @@ if ($user && !is_entity($user['role'])) {   // entities: Dashboard and Reports o
         $nav[] = ['activity', 'Activity', 'bolt', ['activity', 'exams', 'exam-settings', 'exam-questions', 'exam-series', 'exam-admins', 'exam-participants', 'exam-results', 'exam-sheet']];
     }
     if (has_role('admin')) {
-        $nav[] = ['settings', 'Settings', 'cog', ['settings', 'activity-log']];
+        $nav[] = ['settings', 'Settings', 'cog', ['settings', 'settings-home', 'activity-log']];
     }
 }
 $roleLabel = $user ? ROLES[$user['role']] . (in_array($user['role'], ['district', 'district_entity'], true) ? ' · ' . district_name((int) $user['district_id']) : '') : '';
