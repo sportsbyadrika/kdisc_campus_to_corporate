@@ -180,14 +180,8 @@ require APP_ROOT . '/app/layout/site_header.php';
 <section id="updates" data-spy="resources" class="bg-white scroll-mt-24">
   <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,31fr)_minmax(0,40fr)_minmax(0,29fr)] items-stretch">
     <div class="relative min-h-[170px] lg:min-h-[180px] overflow-hidden <?= $bannerLeft ? '' : 'bg-gradient-to-br from-[#0f6e7a] via-[#127f6c] to-[#0b3a5c]' ?>">
-      <?php if ($bannerLeft): // an uploaded banner carries its own message, so nothing is drawn over it ?>
-        <img src="<?= e($bannerLeft) ?>" alt="Better Skills. Brighter Opportunities. A Stronger Kerala." class="absolute inset-0 w-full h-full object-cover">
-      <?php else: ?>
-      <div class="relative h-full flex items-center justify-center p-6">
-        <p class="font-script text-white text-[2rem] sm:text-4xl leading-[1.05] -rotate-[8deg] drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]">Better Skills<br>&nbsp;&nbsp;Brighter Opportunities<br>&nbsp;&nbsp;&nbsp;&nbsp;A Stronger Kerala
-          <svg viewBox="0 0 200 16" class="block w-48 ml-10 mt-1" aria-hidden="true"><path d="M2 12C60 2 140 2 198 8" fill="none" stroke="#9ad43a" stroke-width="4" stroke-linecap="round"/></svg>
-        </p>
-      </div>
+      <?php if ($bannerLeft): // the banner image carries its own message ?>
+        <img src="<?= e($bannerLeft) ?>" alt="" class="absolute inset-0 w-full h-full object-cover">
       <?php endif; ?>
     </div>
 
