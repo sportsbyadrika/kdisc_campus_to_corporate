@@ -12,8 +12,8 @@ const HOME_IMAGES = [
     'home_banner_left'  => ['Left banner', 'Landscape image, about 1540 × 390 px, with its own message (the page draws no text on this banner).', 1600],
     'home_banner_right' => ['Right banner (Together for a…)', 'Landscape image, about 1000 × 390 px (the page draws no text over an uploaded banner).', 1600],
     'logo_gok'          => ['Government of Kerala emblem', 'PNG with transparent background, about 200 px tall.', 600],
-    'logo_kdisc'        => ['K-DISC logo', 'PNG with transparent background, the full logo with its name.', 800],
-    'logo_kkem'         => ['KKEM logo', 'PNG with transparent background, the full logo with its name.', 800],
+    'logo_kdisc'        => ['K-DISC logo', 'Best as a PNG with a transparent background (shown white in the footer); a logo on a solid background is shown on a white tile there.', 800],
+    'logo_kkem'         => ['KKEM logo', 'Best as a PNG with a transparent background (shown white in the footer); a logo on a solid background is shown on a white tile there.', 800],
 ];
 
 /** Editable texts: key => [label, default, input type]. */
@@ -97,6 +97,29 @@ function site_update_href(array $u): ?string
     return $u['file'] ? upload_url($u['file']) : ($u['link_url'] ?: null);
 }
 
+/** Whether an uploaded image's corners are transparent (a logo cut out from its background). Cached per file. */
+function image_has_transparent_edges(string $relative): bool
+{
+    static $cache = [];
+    if (isset($cache[$relative])) {
+        return $cache[$relative];
+    }
+    $path = APP_ROOT . '/uploads/' . $relative;
+    $img = is_file($path) && function_exists('imagecreatefromstring') ? @imagecreatefromstring((string) file_get_contents($path)) : false;
+    if (!$img) {
+        return $cache[$relative] = false;
+    }
+    if (!imageistruecolor($img)) imagepalettetotruecolor($img);
+    $w = imagesx($img) - 1;
+    $h = imagesy($img) - 1;
+    $clear = 0;
+    foreach ([[0, 0], [$w, 0], [0, $h], [$w, $h]] as [$x, $y]) {
+        if ((imagecolorat($img, $x, $y) >> 24 & 127) > 100) $clear++;   // alpha 127 = fully transparent
+    }
+    imagedestroy($img);
+    return $cache[$relative] = $clear >= 3;
+}
+
 /** Simplified outline of Kerala (viewBox 0 0 100 300), used as a decorative shape. */
 const KERALA_PATH = 'M20 0L40 6L46 30L54 62L64 98L72 132L80 166L88 200L96 236L98 262L92 284L82 300L72 292L62 266L50 234L40 200L30 166L20 132L12 98L4 62L0 30L6 8z';
 
@@ -113,7 +136,15 @@ function home_logo(string $key, bool $onDark = false): string
     ];
     [$name, $sub] = $names[$key];
     if ($src = home_image($key)) {
-        return '<img src="' . e($src) . '" alt="' . e($name) . '" class="' . ($key === 'logo_gok' ? 'h-14' : 'h-11') . ' w-auto object-contain' . ($onDark ? ' brightness-0 invert' : '') . '">';
+        $size = $key === 'logo_gok' ? 'h-14' : 'h-11';
+        if (!$onDark) {
+            return '<img src="' . e($src) . '" alt="' . e($name) . '" class="' . $size . ' w-auto object-contain">';
+        }
+        // Footer: a logo on a transparent background is shown white, like the design; one with a
+        // solid background would turn into a white box that way, so it keeps its colours on a white tile.
+        return image_has_transparent_edges(setting($key))
+            ? '<img src="' . e($src) . '" alt="' . e($name) . '" class="' . $size . ' w-auto object-contain brightness-0 invert">'
+            : '<span class="inline-flex items-center rounded-lg bg-white px-2.5 py-1.5"><img src="' . e($src) . '" alt="' . e($name) . '" class="h-9 w-auto object-contain"></span>';
     }
     $ink = $onDark ? 'text-white' : 'text-c2c-navy';
     $soft = $onDark ? 'text-white/75' : 'text-slate-500';
