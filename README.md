@@ -147,10 +147,9 @@ Every email is recorded in the `mail_log` table. Administrators can see recent d
 - *A Stronger Bridge* / *Why It Matters?*
 - the seven-step *Journey*
 - two banners around *Latest Updates & Resources*
-- FAQs
 - a footer with quick links and contact details
 
-`/updates` lists every update. Signed-in users see *Go to Dashboard* instead of *Institution Login*.
+`/updates` lists every update and `/faqs` holds the frequently asked questions (FAQs menu; edit them in `home_faqs()` in `app/home.php`). The menu: Home, About, How It Works, Updates, FAQs, Contact. Signed-in users see *Go to Dashboard* instead of *Institution Login*.
 
 Administrators manage it under **Settings → Home page**:
 
