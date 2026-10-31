@@ -19,7 +19,7 @@
   }));
   if (!document.querySelector('[data-spy="home"]')) return; // other pages: keep the server's choice
 
-  const map = { top: 'home', about: 'about', journey: 'how', updates: 'resources', faqs: 'faqs', contact: 'contact' };
+  const map = { top: 'home', about: 'about', journey: 'how', updates: 'updates', contact: 'contact' };
   if (map[location.hash.slice(1)]) setActive(map[location.hash.slice(1)]);
 
   // The section in view = the last one whose top has passed just below the sticky header

@@ -1,7 +1,7 @@
 <?php
 /** Footer of the public website (home page design). */
-$quick = ['Home' => url('') . '#top', 'About' => url('') . '#about', 'For Institutions' => url('enroll'), 'How It Works' => url('') . '#journey',
-    'Resources' => url('') . '#updates', 'Updates' => url('updates'), 'FAQs' => url('') . '#faqs', 'Contact' => '#contact'];
+$quick = ['Home' => url('') . '#top', 'About' => url('') . '#about', 'How It Works' => url('') . '#journey',
+    'Updates' => url('updates'), 'FAQs' => url('faqs'), 'Contact' => '#contact'];
 $policies = array_filter(['Privacy Policy' => home_text('privacy_url'), 'Terms of Use' => home_text('terms_url'), 'Accessibility' => home_text('accessibility_url')]);
 $socials = array_filter(['youtube' => home_text('social_youtube'), 'linkedin' => home_text('social_linkedin'), 'x' => home_text('social_x')]);
 $email = home_text('contact_email');

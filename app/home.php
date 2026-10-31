@@ -120,6 +120,19 @@ function image_has_transparent_edges(string $relative): bool
     return $cache[$relative] = $clear >= 3;
 }
 
+/** Frequently asked questions shown on the FAQs page: [question, answer]. */
+function home_faqs(): array
+{
+    return [
+        ['Which institutions can enroll?', 'Higher education institutions in Kerala listed on the portal. Choose “Enroll Your Institution”, select the district, institution type and category, pick your institution and enter the details of the Head of the Institution and the Placement Officer.'],
+        ['What happens after we submit the enrollment request?', 'The District office reviews the request. On approval, the Placement Officer receives an email to set a password and sign in; the Head of the Institution receives a confirmation email.'],
+        ['Can an institution send more than one request?', 'No. Only one request per institution is accepted. A new request is possible only if the earlier one was rejected.'],
+        ['What does the institution update on the portal?', 'The institution profile, placement officers, course-wise student strength, student cohorts and assessments, and the DWMS services availed. Progress is shown on the institution dashboard.'],
+        ['We forgot our password. What should we do?', 'Use “Forgot password?” on the Institution Login page. A reset link is sent to the registered email address.'],
+        ['Whom do we contact for help?', 'Write to ' . home_text('contact_email') . ', or contact your District office.'],
+    ];
+}
+
 /** Simplified outline of Kerala (viewBox 0 0 100 300), used as a decorative shape. */
 const KERALA_PATH = 'M20 0L40 6L46 30L54 62L64 98L72 132L80 166L88 200L96 236L98 262L92 284L82 300L72 292L62 266L50 234L40 200L30 166L20 132L12 98L4 62L0 30L6 8z';
 

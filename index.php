@@ -27,14 +27,6 @@ $journey = [
     ['users', 'Recruit', 'Placement drives & selection', 'bg-[#e5375b]'],
     ['check-circle', 'Verify Employment', 'Track joining & confirm employment', 'bg-[#3aa84a]'],
 ];
-$faqs = [
-    ['Which institutions can enroll?', 'Higher education institutions in Kerala listed on the portal. Choose “Enroll Your Institution”, select the district, institution type and category, pick your institution and enter the details of the Head of the Institution and the Placement Officer.'],
-    ['What happens after we submit the enrollment request?', 'The District office reviews the request. On approval, the Placement Officer receives an email to set a password and sign in; the Head of the Institution receives a confirmation email.'],
-    ['Can an institution send more than one request?', 'No. Only one request per institution is accepted. A new request is possible only if the earlier one was rejected.'],
-    ['What does the institution update on the portal?', 'The institution profile, placement officers, course-wise student strength, student cohorts and assessments, and the DWMS services availed. Progress is shown on the institution dashboard.'],
-    ['We forgot our password. What should we do?', 'Use “Forgot password?” on the Institution Login page. A reset link is sent to the registered email address.'],
-    ['Whom do we contact for help?', 'Write to ' . home_text('contact_email') . ', or contact your District office.'],
-];
 $kerala = fn(string $class) => '<svg viewBox="0 0 100 300" class="' . e($class) . '" aria-hidden="true"><path d="' . KERALA_PATH . '" fill="currentColor"/></svg>';
 
 $pageTitle = '';
@@ -177,7 +169,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 </section>
 
 <!-- Banners + updates -->
-<section id="updates" data-spy="resources" class="bg-white scroll-mt-24">
+<section id="updates" data-spy="updates" class="bg-white scroll-mt-24">
   <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,31fr)_minmax(0,40fr)_minmax(0,29fr)] items-stretch">
     <div class="relative min-h-[170px] lg:min-h-[180px] overflow-hidden <?= $bannerLeft ? '' : 'bg-gradient-to-br from-[#0f6e7a] via-[#127f6c] to-[#0b3a5c]' ?>">
       <?php if ($bannerLeft): // the banner image carries its own message ?>
@@ -223,23 +215,4 @@ require APP_ROOT . '/app/layout/site_header.php';
   </div>
 </section>
 
-<!-- FAQs -->
-<section id="faqs" data-spy="faqs" class="bg-c2c-wash scroll-mt-24">
-  <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-10 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
-    <div>
-      <h2 class="font-display text-2xl font-bold leading-tight text-c2c-ink">Frequently Asked<br><span class="text-c2c-teal">Questions</span></h2>
-      <p class="text-[15px] leading-relaxed text-c2c-ink/90 mt-3">For higher education institutions joining the programme.</p>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <?php foreach ($faqs as [$q, $a]): ?>
-        <details class="group bg-white rounded-xl border border-slate-200 px-5 py-4 open:shadow-sm">
-          <summary class="list-none cursor-pointer flex items-start justify-between gap-3 font-semibold text-[14px] text-c2c-ink">
-            <?= e($q) ?><span class="text-c2c-teal transition-transform group-open:rotate-90 shrink-0"><?= icon('chevron-right', 'w-4 h-4 mt-0.5') ?></span>
-          </summary>
-          <p class="text-[13.5px] leading-relaxed text-slate-600 mt-2"><?= e($a) ?></p>
-        </details>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
 <?php require APP_ROOT . '/app/layout/site_footer.php';

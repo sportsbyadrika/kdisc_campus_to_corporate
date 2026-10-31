@@ -11,11 +11,9 @@ $home = url('');
 $siteNav = [
     'home'         => ['Home', $home . '#top'],
     'about'        => ['About', $home . '#about'],
-    'institutions' => ['For Institutions', url('enroll')],
     'how'          => ['How It Works', $home . '#journey'],
-    'resources'    => ['Resources', $home . '#updates'],
     'updates'      => ['Updates', url('updates')],
-    'faqs'         => ['FAQs', $home . '#faqs'],
+    'faqs'         => ['FAQs', url('faqs')],
     'contact'      => ['Contact', '#contact'],
 ];
 $signedIn = current_user() !== null;
