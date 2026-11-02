@@ -8,7 +8,7 @@ declare(strict_types=1);
  * is behind SCHEMA_VERSION. Every step checks the current structure first, so it is safe
  * to run against a fresh install (where schema.sql already has the change) or to re-run.
  */
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 function ensure_schema(): void
 {
@@ -108,8 +108,62 @@ function schema_migrations(): array
         6 => function (): void {
             db()->exec(SITE_UPDATES_DDL);
         },
+        // v7: public FAQs and How It Works pages managed under Settings (seeded with the starting content)
+        7 => function (): void {
+            db()->exec(SITE_FAQS_DDL);
+            db()->exec(SITE_STAGES_DDL);
+            if (!(int) db()->query('SELECT COUNT(*) FROM site_faqs')->fetchColumn()) {
+                $ins = db()->prepare('INSERT INTO site_faqs (question, answer, sort_order) VALUES (?,?,?)');
+                foreach (SITE_FAQS_SEED as $i => [$q, $a]) $ins->execute([$q, $a, ($i + 1) * 10]);
+            }
+            if (!(int) db()->query('SELECT COUNT(*) FROM site_stages')->fetchColumn()) {
+                $ins = db()->prepare('INSERT INTO site_stages (stage_label, heading, content, sort_order) VALUES (?,?,?,?)');
+                foreach (SITE_STAGES_SEED as $i => [$l, $h, $c]) $ins->execute([$l, $h, $c, ($i + 1) * 10]);
+            }
+        },
     ];
 }
+
+const SITE_FAQS_DDL = "CREATE TABLE IF NOT EXISTS site_faqs (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  question    VARCHAR(300) NOT NULL,
+  answer      TEXT NOT NULL,
+  sort_order  INT NOT NULL DEFAULT 0,
+  is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_faq_order (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Public FAQs page'";
+
+const SITE_STAGES_DDL = "CREATE TABLE IF NOT EXISTS site_stages (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  stage_label VARCHAR(40)  NOT NULL COMMENT 'Shown as given, e.g. STAGE 01',
+  heading     VARCHAR(200) NOT NULL,
+  content     TEXT NOT NULL,
+  image       VARCHAR(255) NULL COMMENT 'Under uploads/branding',
+  sort_order  INT NOT NULL DEFAULT 0,
+  is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stage_order (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Public How It Works page'";
+
+/** Starting FAQs (then edited under Settings → FAQs). */
+const SITE_FAQS_SEED = [
+    ['Which institutions can enroll?', 'Higher education institutions in Kerala listed on the portal. Choose “Enroll Your Institution”, select the district, institution type and category, pick your institution and enter the details of the Head of the Institution and the Placement Officer.'],
+    ['What happens after we submit the enrollment request?', 'The District office reviews the request. On approval, the Placement Officer receives an email to set a password and sign in; the Head of the Institution receives a confirmation email.'],
+    ['Can an institution send more than one request?', 'No. Only one request per institution is accepted. A new request is possible only if the earlier one was rejected.'],
+    ['What does the institution update on the portal?', 'The institution profile, placement officers, course-wise student strength, student cohorts and assessments, and the DWMS services availed. Progress is shown on the institution dashboard.'],
+    ['We forgot our password. What should we do?', 'Use “Forgot password?” on the Institution Login page. A reset link is sent to the registered email address.'],
+    ['Whom do we contact for help?', 'Write to the email address shown on this page, or contact your District office.'],
+];
+
+/** Starting stages of the How It Works page (then edited under Settings → How It Works). */
+const SITE_STAGES_SEED = [
+    ['STAGE 01', 'Student Registration & Identification', 'Students register through the Digital Workforce Management System (DWMS), creating a common platform for their qualifications, skills and employment profiles.'],
+    ['STAGE 02', 'Diagnosis & Employability Assessment', 'Students undergo English language assessment, skill assessment and mock interviews to identify their strengths and employability gaps.'],
+    ['STAGE 03', 'Preparation for Recruitment', 'Resume workshops, confidence building and interview readiness interventions help students present themselves effectively to employers.'],
+];
 
 const SITE_UPDATES_DDL = "CREATE TABLE IF NOT EXISTS site_updates (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,

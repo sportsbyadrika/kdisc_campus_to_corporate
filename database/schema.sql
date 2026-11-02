@@ -461,6 +461,31 @@ CREATE TABLE IF NOT EXISTS site_updates (
   KEY idx_update_date (is_active, published_on)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Latest Updates & Resources on the home page';
 
+-- Public FAQs and How It Works pages (seeded by schema migration v7)
+CREATE TABLE IF NOT EXISTS site_faqs (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  question    VARCHAR(300) NOT NULL,
+  answer      TEXT NOT NULL,
+  sort_order  INT NOT NULL DEFAULT 0,
+  is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_faq_order (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Public FAQs page';
+
+CREATE TABLE IF NOT EXISTS site_stages (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  stage_label VARCHAR(40)  NOT NULL COMMENT 'Shown as given, e.g. STAGE 01',
+  heading     VARCHAR(200) NOT NULL,
+  content     TEXT NOT NULL,
+  image       VARCHAR(255) NULL COMMENT 'Under uploads/branding',
+  sort_order  INT NOT NULL DEFAULT 0,
+  is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stage_order (is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Public How It Works page';
+
 CREATE TABLE IF NOT EXISTS login_attempts (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   username    VARCHAR(60) NOT NULL,

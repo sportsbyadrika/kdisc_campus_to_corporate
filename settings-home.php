@@ -12,20 +12,8 @@ if (is_post()) {
     $action = input('action');
 
     if ($action === 'texts') {
-        $errors = [];
-        $changes = [];
-        foreach (HOME_TEXTS as $key => [$label, $default, $type]) {
-            $value = trim((string) input($key));
-            $value = mb_substr($value, 0, $type === 'textarea' ? 1000 : 300);
-            if ($type === 'url' && $value !== '' && !preg_match('#^https?://#i', $value)) { $errors[] = "{$label} must start with http:// or https://"; continue; }
-            if ($key === 'contact_email' && $value !== '' && !filter_var($value, FILTER_VALIDATE_EMAIL)) { $errors[] = 'Enter a valid contact email.'; continue; }
-            if ($type === 'select' && !isset(HOME_HERO_THEMES[$value])) $value = $default;
-            if ($value === '' && $default !== '' && $type !== 'url' && !in_array($key, HOME_OPTIONAL_TEXTS, true)) $value = $default;   // never leave the page blank
-            if ($value !== home_text($key)) $changes[$label] = [home_text($key), $value];
-            $saveSetting($key, $value);
-        }
+        $errors = home_save_texts(home_text_keys('home'), 'home page texts');
         foreach ($errors as $err) flash('error', $err);
-        if ($changes) log_activity('update', 'settings', null, 'Updated home page texts', $changes);
         if (!$errors) flash('success', 'Home page texts saved.');
         redirect('settings-home');
     }
@@ -116,15 +104,7 @@ require APP_ROOT . '/app/layout/header.php';
     <h2 class="card-title mb-1">Texts and links</h2>
     <p class="card-subtitle mb-5">Clearing a text brings back its default, except the hero small heading, targets note and handwritten tagline, which are hidden when empty. Footer links and social icons appear only when a link is entered.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <?php foreach (HOME_TEXTS as $key => [$label, $default, $type]): ?>
-        <div class="<?= $type === 'textarea' ? 'md:col-span-2' : '' ?>">
-          <label class="label" for="<?= $key ?>"><?= e($label) ?></label>
-          <?php if ($type === 'select'): ?><select class="input" id="<?= $key ?>" name="<?= $key ?>"><?php foreach (HOME_HERO_THEMES as $tk => $tl): ?><option value="<?= $tk ?>" <?= home_text($key) === $tk ? 'selected' : '' ?>><?= e($tl) ?></option><?php endforeach; ?></select>
-          <span class="hint">Use Light with a photo on a white background, Dark with a darker photo.</span>
-          <?php elseif ($type === 'textarea'): ?><textarea class="input" id="<?= $key ?>" name="<?= $key ?>" rows="3"><?= e(home_text($key)) ?></textarea>
-          <?php else: ?><input class="input" id="<?= $key ?>" name="<?= $key ?>" type="<?= $type === 'url' ? 'url' : 'text' ?>" value="<?= e(home_text($key)) ?>" <?= $type === 'url' ? 'placeholder="https://"' : '' ?>><?php endif; ?>
-        </div>
-      <?php endforeach; ?>
+      <?= home_text_fields(home_text_keys('home')) ?>
     </div>
     <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end"><button class="btn-primary">Save texts</button></div>
   </form>

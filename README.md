@@ -145,13 +145,17 @@ Every email is recorded in the `mail_log` table. Administrators can see recent d
 
 - a hero with the targets and *Enroll Your Institution*
 - *A Stronger Bridge* / *Why It Matters?*
-- the seven-step *Journey*
 - two banners around *Latest Updates & Resources*
 - a footer with quick links and contact details
 
-`/updates` lists every update and `/faqs` holds the frequently asked questions (FAQs menu; edit them in `home_faqs()` in `app/home.php`). The menu: Home, About, How It Works, Updates, FAQs, Contact. Signed-in users see *Go to Dashboard* instead of *Institution Login*.
+`/updates` lists every update, `/faqs` the frequently asked questions and `/how-it-works` the programme stages. The menu: Home, About, How It Works, Updates, FAQs, Contact. Signed-in users see *Go to Dashboard* instead of *Institution Login*.
 
-Administrators manage it under **Settings → Home page**:
+Administrators manage these pages under Settings:
+
+- **Settings → FAQs:** add, edit, hide and delete questions (with a display order), and set the help email shown on the FAQs page (empty = the contact email).
+- **Settings → How It Works:** add, edit, hide and delete stages, each with a stage label typed as it should appear (e.g. STAGE 01), a heading, content and an image. Also the page's heading, title and introduction.
+
+**Settings → Home page** covers:
 
 - **Hero style:** *Light* (white background with dark navy and teal labels, for a photo on a white background; the default) or *Dark* (navy background with white labels).
 - **Texts and links:** hero wording, the two targets, the handwritten tagline and the About paragraph. The small heading, the targets note and the tagline are hidden when left empty. Also the contact email and location, plus the social and policy links. Social icons and policy links show only when a link is set.

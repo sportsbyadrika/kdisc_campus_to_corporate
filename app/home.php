@@ -29,6 +29,10 @@ const HOME_TEXTS = [
     'home_stat_note'    => ['Targets: note', 'Targets as stated in the programme concept note; not achieved results.', 'text'],
     'home_tagline'      => ['Hero: handwritten tagline', 'Skilled Youth, Stronger Kerala', 'text'],
     'home_about'        => ['About the programme', 'Campus to Corporate is a statewide employment mission by K-DISC, under the Kerala Knowledge Economy Mission (KKEM), designed to ensure that every final-year student is assessed, prepared and connected to real employment opportunities.', 'textarea'],
+    'faq_email'         => ['FAQs page: help email', '', 'email'],
+    'hiw_eyebrow'       => ['How It Works: small heading', 'How It Works', 'text'],
+    'hiw_title'         => ['How It Works: title', 'From Student Registration to Verified Employment', 'text'],
+    'hiw_intro'         => ['How It Works: introduction', 'Campus to Corporate follows an integrated, multi-stage process to transform final-year students into employment-ready candidates and facilitate their transition into corporate careers.', 'textarea'],
     'contact_email'     => ['Contact email', 'campustocorporate@kdisc.kerala.gov.in', 'text'],
     'contact_location'  => ['Contact location', 'Thiruvananthapuram, Kerala', 'text'],
     'social_youtube'    => ['YouTube link', '', 'url'],
@@ -44,6 +48,59 @@ const HOME_HERO_THEMES = ['light' => 'Light: white background, dark labels', 'da
 
 /** Texts that may be left empty to hide them. */
 const HOME_OPTIONAL_TEXTS = ['home_eyebrow', 'home_stat_note', 'home_tagline'];
+
+/** Keys of HOME_TEXTS edited on a settings tab: 'faq', 'hiw' or 'home' (everything else). */
+function home_text_keys(string $group): array
+{
+    $prefix = ['faq' => 'faq_', 'hiw' => 'hiw_'][$group] ?? null;
+    return array_values(array_filter(array_keys(HOME_TEXTS), fn($k) => $prefix ? str_starts_with($k, $prefix) : !preg_match('/^(faq|hiw)_/', $k)));
+}
+
+/**
+ * Save posted values for the given HOME_TEXTS keys (and only those). Returns the error messages;
+ * changed values are written to the activity log under $what.
+ */
+function home_save_texts(array $keys, string $what): array
+{
+    $errors = [];
+    $changes = [];
+    $st = db()->prepare('INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)');
+    foreach ($keys as $key) {
+        [$label, $default, $type] = HOME_TEXTS[$key];
+        $value = mb_substr(trim((string) input($key)), 0, $type === 'textarea' ? 1000 : 300);
+        if ($type === 'url' && $value !== '' && !preg_match('#^https?://#i', $value)) { $errors[] = "{$label} must start with http:// or https://"; continue; }
+        if (($type === 'email' || $key === 'contact_email') && $value !== '' && !filter_var($value, FILTER_VALIDATE_EMAIL)) { $errors[] = "Enter a valid email for {$label}."; continue; }
+        if ($type === 'select' && !isset(HOME_HERO_THEMES[$value])) $value = $default;
+        if ($value === '' && $default !== '' && $type !== 'url' && !in_array($key, HOME_OPTIONAL_TEXTS, true)) $value = $default;   // never leave the page blank
+        if ($value !== home_text($key)) $changes[$label] = [home_text($key), $value];
+        $st->execute([$key, $value]);
+    }
+    if ($changes) log_activity('update', 'settings', null, "Updated {$what}", $changes);
+    return $errors;
+}
+
+/** Form fields for the given HOME_TEXTS keys (used by the Settings tabs). */
+function home_text_fields(array $keys): string
+{
+    $out = '';
+    foreach ($keys as $key) {
+        [$label, $default, $type] = HOME_TEXTS[$key];
+        $value = home_text($key);
+        $out .= '<div class="' . ($type === 'textarea' ? 'md:col-span-2' : '') . '"><label class="label" for="' . $key . '">' . e($label) . '</label>';
+        if ($type === 'select') {
+            $out .= '<select class="input" id="' . $key . '" name="' . $key . '">';
+            foreach (HOME_HERO_THEMES as $tk => $tl) $out .= '<option value="' . $tk . '"' . ($value === $tk ? ' selected' : '') . '>' . e($tl) . '</option>';
+            $out .= '</select><span class="hint">Use Light with a photo on a white background, Dark with a darker photo.</span>';
+        } elseif ($type === 'textarea') {
+            $out .= '<textarea class="input" id="' . $key . '" name="' . $key . '" rows="3">' . e($value) . '</textarea>';
+        } else {
+            $out .= '<input class="input" id="' . $key . '" name="' . $key . '" type="' . (in_array($type, ['url', 'email'], true) ? $type : 'text') . '" value="' . e($value) . '"' . ($type === 'url' ? ' placeholder="https://"' : '') . '>';
+            if ($key === 'faq_email') $out .= '<span class="hint">Leave empty to use the contact email (' . e(home_text('contact_email')) . ').</span>';
+        }
+        $out .= '</div>';
+    }
+    return $out;
+}
 
 function home_text(string $key): string
 {
@@ -120,17 +177,16 @@ function image_has_transparent_edges(string $relative): bool
     return $cache[$relative] = $clear >= 3;
 }
 
-/** Frequently asked questions shown on the FAQs page: [question, answer]. */
+/** Active FAQs for the FAQs page, in display order. */
 function home_faqs(): array
 {
-    return [
-        ['Which institutions can enroll?', 'Higher education institutions in Kerala listed on the portal. Choose “Enroll Your Institution”, select the district, institution type and category, pick your institution and enter the details of the Head of the Institution and the Placement Officer.'],
-        ['What happens after we submit the enrollment request?', 'The District office reviews the request. On approval, the Placement Officer receives an email to set a password and sign in; the Head of the Institution receives a confirmation email.'],
-        ['Can an institution send more than one request?', 'No. Only one request per institution is accepted. A new request is possible only if the earlier one was rejected.'],
-        ['What does the institution update on the portal?', 'The institution profile, placement officers, course-wise student strength, student cohorts and assessments, and the DWMS services availed. Progress is shown on the institution dashboard.'],
-        ['We forgot our password. What should we do?', 'Use “Forgot password?” on the Institution Login page. A reset link is sent to the registered email address.'],
-        ['Whom do we contact for help?', 'Write to ' . home_text('contact_email') . ', or contact your District office.'],
-    ];
+    return db()->query('SELECT * FROM site_faqs WHERE is_active = 1 ORDER BY sort_order, id')->fetchAll();
+}
+
+/** Active stages for the How It Works page, in display order. */
+function home_stages(): array
+{
+    return db()->query('SELECT * FROM site_stages WHERE is_active = 1 ORDER BY sort_order, id')->fetchAll();
 }
 
 /** Simplified outline of Kerala (viewBox 0 0 100 300), used as a decorative shape. */
