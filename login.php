@@ -49,25 +49,12 @@ if (is_post()) {
     }
 }
 $appName = setting('app_name', 'Campus to Corporate');
-send_public_csp();
+$pageTitle = 'Sign in';
+$navActive = '';          // no menu item is underlined on the sign-in page
+$keepFlashes = true;      // messages are shown inside the sign-in card
+require APP_ROOT . '/app/layout/site_header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in · <?= e($appName) ?></title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= e(asset('assets/css/app.css')) ?>">
-  <?= favicon_tag() ?>
-</head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
-  <main class="grow flex flex-col items-center justify-center px-4 py-10">
-    <div class="w-full max-w-5xl mb-4">
-      <a href="<?= e(url('')) ?>" class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-sky-700 border border-transparent hover:border-slate-200"><?= icon('home') ?> Home</a>
-    </div>
+  <div class="bg-slate-50 flex items-center justify-center px-4 py-10 min-h-[calc(100vh-76px-136px)]">
     <div class="w-full max-w-5xl grid lg:grid-cols-2 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="relative bg-linear-to-br from-slate-900 via-sky-950 to-indigo-950 text-white p-8 sm:p-10 flex flex-col justify-between gap-10">
         <a href="<?= e(url('')) ?>" class="flex items-center gap-3" title="Home page">
@@ -80,12 +67,7 @@ send_public_csp();
         <div class="space-y-4">
           <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">Academic Year <?= e(academic_year()) ?></span>
           <h1 class="text-3xl font-black leading-tight"><?= nl2br(e(setting('login_heading') ?: LOGIN_HEADING_DEFAULT)) ?></h1>
-          <p class="text-sm text-slate-300 max-w-md"><?= nl2br(e(setting('login_text') ?: LOGIN_TEXT_DEFAULT)) ?></p>
-        </div>
-        <div class="grid grid-cols-3 gap-3 text-center">
-          <div class="bg-white/10 border border-white/15 rounded-xl p-3"><p class="text-xl font-extrabold text-amber-400">14</p><p class="text-[10px] uppercase tracking-wider text-sky-200">Districts</p></div>
-          <div class="bg-white/10 border border-white/15 rounded-xl p-3"><p class="text-xl font-extrabold">6</p><p class="text-[10px] uppercase tracking-wider text-sky-200">Onboarding steps</p></div>
-          <div class="bg-white/10 border border-white/15 rounded-xl p-3"><p class="text-xl font-extrabold text-emerald-300">DWMS</p><p class="text-[10px] uppercase tracking-wider text-sky-200">Integrated</p></div>
+          <p class="text-sm leading-relaxed text-slate-300 max-w-md text-justify hyphens-auto"><?= nl2br(e(setting('login_text') ?: LOGIN_TEXT_DEFAULT)) ?></p>
         </div>
       </div>
 
@@ -119,7 +101,5 @@ send_public_csp();
         </div>
       </div>
     </div>
-  </main>
-  <footer class="py-6 text-center text-xs text-slate-400"><?= e(setting('footer_right')) ?></footer>
-</body>
-</html>
+  </div>
+<?php require APP_ROOT . '/app/layout/site_footer.php';
