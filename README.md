@@ -167,7 +167,7 @@ Administrators manage these pages under Settings:
   Until each is uploaded, a drawn stand-in is shown. Images are stored in `uploads/branding`; deployment never overwrites them.
 - **Latest Updates & Resources:** a title, a date and either a link or a PDF (stored in `uploads/updates`). Each can be shown or hidden. The newest three appear on the home page.
 
-## Online Exams (Activity menu)
+## Online Assessment (Activity menu)
 
 The **Activity** menu holds programme activity modules (more can be added as cards on `activity.php`). It is shown to Administrators and to anyone made a co-admin of an exam.
 

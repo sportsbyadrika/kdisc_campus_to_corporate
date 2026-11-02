@@ -49,7 +49,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
 ?>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <div class="card p-0 overflow-hidden lg:col-span-2">
-    <div class="p-5 pb-3"><h2 class="card-title">Co-admins</h2><p class="card-subtitle">Besides <?= e($exam['owner_name'] ?? 'the creator') ?> (creator), these users can view and modify this exam. They find it under Activity → Online Exams.</p></div>
+    <div class="p-5 pb-3"><h2 class="card-title">Co-admins</h2><p class="card-subtitle">Besides <?= e($exam['owner_name'] ?? 'the creator') ?> (creator), these users can view and modify this exam. They find it under Activity → Online Assessment.</p></div>
     <div class="overflow-x-auto">
       <table class="table">
         <thead><tr><th>User</th><th>Role</th><th>Added</th><?php if ($isOwner): ?><th></th><?php endif; ?></tr></thead>

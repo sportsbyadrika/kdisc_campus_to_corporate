@@ -298,7 +298,7 @@ function exam_invite(array $p, array $exam, string $expiresAt): bool
         ->execute([password_hash($password, PASSWORD_DEFAULT), $expiresAt, now_sql(), $p['id']]);
     $fmt = fn(string $d) => date('d M Y, h:i A', strtotime($d));
     $body = '<p>Dear ' . e($p['name']) . ',</p>'
-        . '<p>You are registered for the online exam <strong>' . e($exam['title']) . '</strong>.</p>'
+        . '<p>You are registered for the online assessment <strong>' . e($exam['title']) . '</strong>.</p>'
         . '<table cellpadding="6" style="border-collapse:collapse;font-size:14px;margin:12px 0">'
         . '<tr><td style="color:#64748b">Exam window</td><td><strong>' . e($fmt($exam['start_at'])) . '</strong> to <strong>' . e($fmt($exam['end_at'])) . '</strong></td></tr>'
         . '<tr><td style="color:#64748b">Duration</td><td><strong>' . (int) $exam['duration_minutes'] . ' minutes</strong></td></tr>'
@@ -310,7 +310,7 @@ function exam_invite(array $p, array $exam, string $expiresAt): bool
         . '<p>Please note: questions are shown one at a time and you cannot go back to a previous question. '
         . 'Copying and pasting is disabled. Signing out ends your exam. If your connection drops, sign in again to continue before the time runs out.</p>'
         . '<p>Do not share this password with anyone.</p>';
-    return send_mail($p['email'], 'Online exam: ' . $exam['title'] . ' - your exam password', email_layout('Your exam password', $body), 'exam_invite');
+    return send_mail($p['email'], 'Online assessment: ' . $exam['title'] . ' - your exam password', email_layout('Your exam password', $body), 'exam_invite');
 }
 
 function exam_mail_result(array $p, array $exam): bool

@@ -40,13 +40,13 @@ $showForm = isset($_GET['new']) && can_create_exams();
 $old = $_SESSION['_old'] ?? [];
 unset($_SESSION['_old']);
 
-$pageTitle = 'Online Exams';
+$pageTitle = 'Online Assessment';
 require APP_ROOT . '/app/layout/header.php';
 ?>
-<nav class="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><a class="link" href="<?= e(url('activity')) ?>">Activity</a><?= icon('chevron-right', 'w-3 h-3') ?><span class="text-slate-700 font-medium">Online Exams</span></nav>
+<nav class="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><a class="link" href="<?= e(url('activity')) ?>">Activity</a><?= icon('chevron-right', 'w-3 h-3') ?><span class="text-slate-700 font-medium">Online Assessment</span></nav>
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
   <div>
-    <h1 class="text-xl font-bold text-slate-900">Online Exams</h1>
+    <h1 class="text-xl font-bold text-slate-900">Online Assessment</h1>
     <p class="text-sm text-slate-500">Each exam is visible only to the administrator who created it and the co-admins they add.</p>
   </div>
   <?php if (can_create_exams() && !$showForm): ?><a href="<?= e(url('exams', ['new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> New exam</a><?php endif; ?>
@@ -55,7 +55,7 @@ require APP_ROOT . '/app/layout/header.php';
 <?php if ($showForm): ?>
 <form method="post" class="card mb-6">
   <?= csrf_field() ?><input type="hidden" name="action" value="create">
-  <h2 class="card-title mb-5">Create an online exam</h2>
+  <h2 class="card-title mb-5">Create an online assessment</h2>
   <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
     <div class="md:col-span-4"><label class="label">Name of exam <span class="req">*</span></label><input class="input" name="title" value="<?= e($old['title'] ?? '') ?>" maxlength="200" required></div>
     <div><label class="label">Starting period <span class="req">*</span></label><input class="input" type="datetime-local" name="start_at" value="<?= e($old['start_at'] ?? '') ?>" required></div>

@@ -42,7 +42,7 @@ if (is_post()) {
 
 $oldEmail = $_SESSION['_old_email'] ?? '';
 unset($_SESSION['_old_email']);
-$pageTitle = 'Online exam sign in';
+$pageTitle = 'Online assessment sign in';
 $headerRight = '';
 require APP_ROOT . '/app/layout/public_header.php';
 ?>
@@ -50,7 +50,7 @@ require APP_ROOT . '/app/layout/public_header.php';
   <div class="card">
     <div class="text-center mb-6">
       <div class="mx-auto w-12 h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3"><?= icon('academic', 'w-6 h-6') ?></div>
-      <h1 class="text-xl font-bold text-slate-900">Online exam</h1>
+      <h1 class="text-xl font-bold text-slate-900">Online Assessment</h1>
       <p class="text-sm text-slate-500 mt-1">Sign in with your registered email and the exam password sent to you.</p>
     </div>
     <form method="post" class="space-y-4" autocomplete="off">

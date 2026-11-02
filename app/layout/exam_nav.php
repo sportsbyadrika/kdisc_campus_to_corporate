@@ -15,7 +15,7 @@ $fmtDt = fn(string $d) => date('d M Y, h:i A', strtotime($d));
 <div class="mb-6 no-print">
   <nav class="text-xs text-slate-500 mb-3 flex items-center gap-1.5 flex-wrap">
     <a class="link" href="<?= e(url('activity')) ?>">Activity</a><?= icon('chevron-right', 'w-3 h-3') ?>
-    <a class="link" href="<?= e(url('exams')) ?>">Online Exams</a><?= icon('chevron-right', 'w-3 h-3') ?>
+    <a class="link" href="<?= e(url('exams')) ?>">Online Assessment</a><?= icon('chevron-right', 'w-3 h-3') ?>
     <span class="text-slate-700 font-medium truncate max-w-xs"><?= e($exam['title']) ?></span>
   </nav>
   <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200">
