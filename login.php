@@ -56,7 +56,7 @@ require APP_ROOT . '/app/layout/site_header.php';
 ?>
   <div class="bg-slate-50 flex items-center justify-center px-4 py-10 min-h-[calc(100vh-76px-136px)]">
     <div class="w-full max-w-5xl grid lg:grid-cols-2 bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-      <div class="relative bg-linear-to-br from-slate-900 via-sky-950 to-indigo-950 text-white p-8 sm:p-10 flex flex-col justify-between gap-10">
+      <div class="relative bg-linear-to-br from-slate-900 via-sky-950 to-indigo-950 text-white p-8 sm:p-10 flex flex-col justify-center gap-8">
         <a href="<?= e(url('')) ?>" class="flex items-center gap-3" title="Home page">
           <?= app_logo_html('w-11 h-11', 'from-sky-500 to-indigo-500', 'bg-white p-0.5') ?>
           <div>
