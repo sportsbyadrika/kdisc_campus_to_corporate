@@ -18,15 +18,6 @@ $why = [
     ['kerala', "Supports Kerala's economic growth and innovation"],
     ['target', 'Focuses on verified employment outcomes'],
 ];
-$journey = [
-    ['user', 'Identify', 'Onboard eligible students through institutions', 'bg-[#2fa660]'],
-    ['search', 'Assess', 'English, skill & mock interview assessments', 'bg-[#1d7fd8]'],
-    ['document', 'Prepare', 'Resume, interview & confidence building', 'bg-[#6a3dc8]'],
-    ['trending', 'Upskill', 'Targeted training based on needs', 'bg-[#0d8a95]'],
-    ['handshake', 'Connect with Industry', 'Share talent with employers', 'bg-[#f28a1d]'],
-    ['users', 'Recruit', 'Placement drives & selection', 'bg-[#e5375b]'],
-    ['check-circle', 'Verify Employment', 'Track joining & confirm employment', 'bg-[#3aa84a]'],
-];
 $kerala = fn(string $class) => '<svg viewBox="0 0 100 300" class="' . e($class) . '" aria-hidden="true"><path d="' . KERALA_PATH . '" fill="currentColor"/></svg>';
 
 $pageTitle = '';
@@ -145,26 +136,6 @@ require APP_ROOT . '/app/layout/site_header.php';
         <?php endforeach; ?>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- The journey -->
-<section id="journey" data-spy="how" class="bg-c2c-wash scroll-mt-24">
-  <div class="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-8 items-center">
-    <div>
-      <h2 class="font-display text-[1.45rem] font-bold leading-tight text-c2c-ink">From Campus to Corporate<br><span class="text-c2c-teal">The Journey</span></h2>
-      <p class="text-[15px] leading-relaxed text-c2c-ink/90 mt-3">A structured pathway that takes students from identification to verified employment.</p>
-    </div>
-    <ol class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-y-6">
-      <?php foreach ($journey as $i => [$ico, $title, $text, $bg]): ?>
-        <li class="relative flex flex-col items-center text-center px-2">
-          <?php if ($i): ?><span class="hidden lg:block absolute -left-3 top-7 -translate-y-1/2 text-c2c-teal/70" aria-hidden="true"><?= icon('arrow-right', 'w-6 h-6') ?></span><?php endif; ?>
-          <span class="w-14 h-14 rounded-full <?= $bg ?> text-white flex items-center justify-center shadow-md shadow-black/10"><?= icon($ico, 'w-7 h-7') ?></span>
-          <p class="font-display text-[15px] font-bold leading-tight text-c2c-ink mt-2.5"><?= e($title) ?></p>
-          <p class="text-xs leading-snug text-c2c-teal mt-1 max-w-[9.5rem]"><?= e($text) ?></p>
-        </li>
-      <?php endforeach; ?>
-    </ol>
   </div>
 </section>
 
