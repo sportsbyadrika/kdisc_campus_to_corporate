@@ -82,7 +82,7 @@ function exam_parse_bulk(string $raw): array
 if (is_post()) {
     verify_csrf();
     if ($locked) {
-        flash('error', 'The question bank is locked because participants have started the exam.');
+        flash('error', 'The question bank is locked because participants have started the assessment.');
         redirect('exam-questions', ['id' => $id]);
     }
     $action = input('action');
@@ -160,7 +160,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
   <?php endif; ?>
 </div>
 <?php if ($locked): ?>
-  <div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2"><?= icon('info') ?> Locked: participants have started this exam, so questions can no longer be changed.</div>
+  <div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2"><?= icon('info') ?> Locked: participants have started this assessment, so questions can no longer be changed.</div>
 <?php endif; ?>
 
 <?php if ($showForm): ?>
@@ -199,7 +199,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
       </div>
     </template>
   </div>
-  <p class="hint mt-3 hidden" id="q-descriptive-hint">Descriptive answers are marked by the exam admins on the Results tab.</p>
+  <p class="hint mt-3 hidden" id="q-descriptive-hint">Descriptive answers are marked by the assessment admins on the Results tab.</p>
   <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end gap-2">
     <a href="<?= e(url('exam-questions', ['id' => $id])) ?>" class="btn-secondary">Close</a>
     <button class="btn-primary"><?= $editing ? 'Save question' : 'Add question' ?></button>

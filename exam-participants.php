@@ -46,7 +46,7 @@ if (is_post()) {
         if (!$expires || strtotime($expires) <= time()) {
             flash('error', 'Set a password expiry date and time in the future.');
         } elseif (!$pids) {
-            flash('error', input('scope') === 'uninvited' ? 'Everyone has already been sent a password.' : 'Tick the participants to send the exam password to.');
+            flash('error', input('scope') === 'uninvited' ? 'Everyone has already been sent a password.' : 'Tick the participants to send the assessment password to.');
         } else {
             set_time_limit(0);
             $sent = $failed = $skipped = 0;
@@ -55,7 +55,7 @@ if (is_post()) {
                 if (!$p || $p['finished_at']) { $skipped++; continue; }
                 exam_invite($p, $exam, $expires) ? $sent++ : $failed++;
             }
-            flash($failed ? 'error' : 'success', "Exam password emailed to {$sent} participant(s)"
+            flash($failed ? 'error' : 'success', "Assessment password emailed to {$sent} participant(s)"
                 . ($failed ? ", {$failed} failed (see Settings → Recent emails)" : '') . ($skipped ? ", {$skipped} skipped (already completed)" : '') . '.');
         }
         redirect('exam-participants', ['id' => $id]);
@@ -67,7 +67,7 @@ if (is_post()) {
             db()->prepare('DELETE FROM exam_participants WHERE id = ?')->execute([$p['id']]);
             flash('success', "{$p['name']} removed.");
         } else {
-            flash('error', 'A participant who has started the exam cannot be removed.');
+            flash('error', 'A participant who has started the assessment cannot be removed.');
         }
         redirect('exam-participants', ['id' => $id]);
     }
@@ -97,7 +97,7 @@ if (is_post()) {
         db()->beginTransaction();
         foreach ($new as $d) $ins->execute([$id, $d['name'], $d['email'], $d['phone'], $d['details']]);
         db()->commit();
-        flash('success', count($new) . ' participant(s) added. Send them their exam passwords when ready.');
+        flash('success', count($new) . ' participant(s) added. Send them their assessment passwords when ready.');
         redirect('exam-participants', ['id' => $id]);
     }
 
@@ -106,7 +106,7 @@ if (is_post()) {
     $p = $pid ? $loadP($pid) : null;
     if ($pid && !$p) forbidden('Participant not found.');
     [$d, $errors] = exam_participant_input((string) input('name'), (string) input('email'), (string) input('phone'), (string) input('details'));
-    if (!$errors && $emailTaken($d['email'], $pid)) $errors[] = 'This email is already a participant of this exam.';
+    if (!$errors && $emailTaken($d['email'], $pid)) $errors[] = 'This email is already a participant of this assessment.';
     if ($p && $p['started_at'] && $d['email'] !== $p['email']) $errors[] = 'The email cannot be changed after the participant has started.';
     if ($errors) {
         foreach ($errors as $err) flash('error', $err);
@@ -188,12 +188,12 @@ Rahul Menon, rahul@example.com"><?= e($old['bulk'] ?? '') ?></textarea>
   <?= csrf_field() ?><input type="hidden" name="action" value="invite">
   <div class="card p-4 mb-4 flex flex-col lg:flex-row lg:items-end gap-3">
     <div class="grow">
-      <p class="text-sm font-semibold text-slate-800">Send exam passwords by email</p>
+      <p class="text-sm font-semibold text-slate-800">Send assessment passwords by email</p>
       <p class="text-xs text-slate-500">Each participant gets a new password (any earlier one stops working), valid until the expiry you set. Sign-in page: <span class="font-mono"><?= e(absolute_url('exam-login')) ?></span></p>
     </div>
     <div><label class="label">Password valid till <span class="req">*</span></label><input class="input input-sm" type="datetime-local" name="expires_at" value="<?= e(datetime_local($exam['end_at'])) ?>" required></div>
-    <button class="btn-secondary btn-xs" name="scope" value="selected" data-confirm="Email a new exam password to the ticked participants?"><?= icon('key', 'w-3.5 h-3.5') ?> Send to ticked</button>
-    <button class="btn-primary btn-xs" name="scope" value="uninvited" data-confirm="Email exam passwords to everyone not invited yet?"><?= icon('key', 'w-3.5 h-3.5') ?> Send to all not invited</button>
+    <button class="btn-secondary btn-xs" name="scope" value="selected" data-confirm="Email a new assessment password to the ticked participants?"><?= icon('key', 'w-3.5 h-3.5') ?> Send to ticked</button>
+    <button class="btn-primary btn-xs" name="scope" value="uninvited" data-confirm="Email assessment passwords to everyone not invited yet?"><?= icon('key', 'w-3.5 h-3.5') ?> Send to all not invited</button>
   </div>
 
   <div class="card p-0 overflow-hidden">
@@ -221,6 +221,6 @@ Rahul Menon, rahul@example.com"><?= e($old['bulk'] ?? '') ?></textarea>
   </div>
 </form>
 <?php foreach ($participants as $p): if ($p['started_at']) continue; ?>
-  <form method="post" id="del-<?= $p['id'] ?>" class="hidden" data-confirm="Remove <?= e($p['name']) ?> from this exam?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="pid" value="<?= $p['id'] ?>"></form>
+  <form method="post" id="del-<?= $p['id'] ?>" class="hidden" data-confirm="Remove <?= e($p['name']) ?> from this assessment?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="pid" value="<?= $p['id'] ?>"></form>
 <?php endforeach; ?>
 <?php require APP_ROOT . '/app/layout/footer.php';

@@ -8,7 +8,7 @@ $st = db()->prepare('SELECT p.*, s.name AS series_name FROM exam_participants p 
 $st->execute([(int) int_input('pid', 0), $id]);
 $p = $st->fetch();
 if (!$p || !$p['started_at']) {
-    forbidden('This participant has not taken the exam.');
+    forbidden('This participant has not taken the assessment.');
 }
 $pid = (int) $p['id'];
 $order = json_decode((string) $p['question_order'], true) ?: [];

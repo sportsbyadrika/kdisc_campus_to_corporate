@@ -3,7 +3,7 @@
  * Online exam workspace header + tabs. Expects $exam and $examTab.
  */
 $examTabs = [
-    'exam-settings'     => ['Exam settings', 'cog'],
+    'exam-settings'     => ['Assessment settings', 'cog'],
     'exam-questions'    => ['Question bank', 'clipboard'],
     'exam-series'       => ['Question series', 'database'],
     'exam-admins'       => ['Co-admins', 'key'],

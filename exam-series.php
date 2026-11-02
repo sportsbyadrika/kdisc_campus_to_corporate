@@ -30,7 +30,7 @@ function exam_series_save(int $examId, ?int $sid, string $name, array $qids): in
 if (is_post()) {
     verify_csrf();
     if ($locked) {
-        flash('error', 'Question series are locked because participants have started the exam.');
+        flash('error', 'Question series are locked because participants have started the assessment.');
         redirect('exam-series', ['id' => $id]);
     }
     $action = input('action');
@@ -137,7 +137,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
   <?php endif; ?>
 </div>
 <?php if ($locked): ?>
-  <div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2"><?= icon('info') ?> Locked: participants have started this exam, so the series can no longer be changed.</div>
+  <div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2"><?= icon('info') ?> Locked: participants have started this assessment, so the series can no longer be changed.</div>
 <?php endif; ?>
 <?php if (!$questions): ?>
   <div class="card text-center py-10"><p class="text-slate-500">Add questions to the <a class="link" href="<?= e(url('exam-questions', ['id' => $id])) ?>">question bank</a> first.</p></div>
