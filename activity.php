@@ -19,8 +19,8 @@ if ($examIds) {
 
 $modules = [
     [
-        'href' => 'exams', 'icon' => 'academic', 'color' => 'bg-sky-100 text-sky-700', 'title' => 'Online Exams',
-        'text' => 'Question banks, question series, participants, timed online exams with emailed passwords, results and publishing.',
+        'href' => 'exams', 'icon' => 'academic', 'color' => 'bg-sky-100 text-sky-700', 'title' => 'Online Assessment',
+        'text' => 'Question banks, question series, participants, timed online assessments with emailed passwords, results and publishing.',
         'meta' => num($examStats['total']) . ' exam' . ($examStats['total'] === 1 ? '' : 's') . ' · ' . num($examStats['active']) . ' active',
     ],
 ];
