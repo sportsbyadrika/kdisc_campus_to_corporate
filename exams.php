@@ -20,7 +20,7 @@ if (is_post() && input('action') === 'create') {
     db()->prepare('INSERT INTO exams (title, instructions, start_at, end_at, duration_minutes, created_by) VALUES (?,?,?,?,?,?)')
         ->execute([$d['title'], $d['instructions'], $d['start_at'], $d['end_at'], $d['duration_minutes'], $me['id']]);
     $id = (int) db()->lastInsertId();
-    flash('success', 'Exam created as a draft. Add questions to the question bank next.');
+    flash('success', 'Assessment created as a draft. Add questions to the question bank next.');
     redirect('exam-questions', ['id' => $id]);
 }
 
@@ -47,9 +47,9 @@ require APP_ROOT . '/app/layout/header.php';
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
   <div>
     <h1 class="text-xl font-bold text-slate-900">Online Assessment</h1>
-    <p class="text-sm text-slate-500">Each exam is visible only to the administrator who created it and the co-admins they add.</p>
+    <p class="text-sm text-slate-500">Each assessment is visible only to the administrator who created it and the co-admins they add.</p>
   </div>
-  <?php if (can_create_exams() && !$showForm): ?><a href="<?= e(url('exams', ['new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> New exam</a><?php endif; ?>
+  <?php if (can_create_exams() && !$showForm): ?><a href="<?= e(url('exams', ['new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> New assessment</a><?php endif; ?>
 </div>
 
 <?php if ($showForm): ?>
@@ -57,7 +57,7 @@ require APP_ROOT . '/app/layout/header.php';
   <?= csrf_field() ?><input type="hidden" name="action" value="create">
   <h2 class="card-title mb-5">Create an online assessment</h2>
   <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-    <div class="md:col-span-4"><label class="label">Name of exam <span class="req">*</span></label><input class="input" name="title" value="<?= e($old['title'] ?? '') ?>" maxlength="200" required></div>
+    <div class="md:col-span-4"><label class="label">Name of assessment <span class="req">*</span></label><input class="input" name="title" value="<?= e($old['title'] ?? '') ?>" maxlength="200" required></div>
     <div><label class="label">Starting period <span class="req">*</span></label><input class="input" type="datetime-local" name="start_at" value="<?= e($old['start_at'] ?? '') ?>" required></div>
     <div><label class="label">Ending period (cut-off) <span class="req">*</span></label><input class="input" type="datetime-local" name="end_at" value="<?= e($old['end_at'] ?? '') ?>" required></div>
     <div><label class="label">Duration (minutes) <span class="req">*</span></label><input class="input" type="number" min="1" max="1440" name="duration_minutes" value="<?= e($old['duration_minutes'] ?? '60') ?>" required></div>
@@ -65,7 +65,7 @@ require APP_ROOT . '/app/layout/header.php';
   </div>
   <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end gap-2">
     <a href="<?= e(url('exams')) ?>" class="btn-secondary">Cancel</a>
-    <button class="btn-primary">Create exam</button>
+    <button class="btn-primary">Create assessment</button>
   </div>
 </form>
 <?php endif; ?>
@@ -73,7 +73,7 @@ require APP_ROOT . '/app/layout/header.php';
 <div class="card p-0 overflow-hidden">
   <div class="overflow-x-auto">
     <table class="table">
-      <thead><tr><th>Exam</th><th>Window</th><th class="text-right">Questions</th><th class="text-right">Participants</th><th>Status</th><th>Access</th></tr></thead>
+      <thead><tr><th>Assessment</th><th>Window</th><th class="text-right">Questions</th><th class="text-right">Participants</th><th>Status</th><th>Access</th></tr></thead>
       <tbody>
       <?php foreach ($exams as $x): $href = url('exam-results', ['id' => $x['id']]); ?>
         <tr data-href="<?= e($href) ?>">
@@ -85,7 +85,7 @@ require APP_ROOT . '/app/layout/header.php';
           <td class="text-xs"><?= is_exam_owner($x) ? 'Owner' : 'Co-admin' ?></td>
         </tr>
       <?php endforeach; ?>
-      <?php if (!$exams): ?><tr><td colspan="6" class="text-center text-slate-400 py-10">No exams yet.<?= can_create_exams() ? ' Create one with “New exam”.' : '' ?></td></tr><?php endif; ?>
+      <?php if (!$exams): ?><tr><td colspan="6" class="text-center text-slate-400 py-10">No assessments yet.<?= can_create_exams() ? ' Create one with “New assessment”.' : '' ?></td></tr><?php endif; ?>
       </tbody>
     </table>
   </div>

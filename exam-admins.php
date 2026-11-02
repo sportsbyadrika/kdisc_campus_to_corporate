@@ -8,7 +8,7 @@ const EXAM_ADMIN_ROLES = ['admin', 'state', 'district', 'institution'];
 
 if (is_post()) {
     verify_csrf();
-    if (!$isOwner) forbidden('Only the creator of the exam can change its co-admins.');
+    if (!$isOwner) forbidden('Only the creator of the assessment can change its co-admins.');
     $uid = (int) int_input('user_id', 0);
     if (input('action') === 'remove') {
         db()->prepare('DELETE FROM exam_admins WHERE exam_id = ? AND user_id = ?')->execute([$id, $uid]);
@@ -21,7 +21,7 @@ if (is_post()) {
             flash('error', 'Choose a valid user.');
         } else {
             db()->prepare('INSERT IGNORE INTO exam_admins (exam_id, user_id, added_by) VALUES (?,?,?)')->execute([$id, $uid, current_user()['id']]);
-            flash('success', "{$u['name']} can now view and modify this exam.");
+            flash('success', "{$u['name']} can now view and modify this assessment.");
         }
     }
     redirect('exam-admins', ['id' => $id]);
@@ -49,7 +49,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
 ?>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <div class="card p-0 overflow-hidden lg:col-span-2">
-    <div class="p-5 pb-3"><h2 class="card-title">Co-admins</h2><p class="card-subtitle">Besides <?= e($exam['owner_name'] ?? 'the creator') ?> (creator), these users can view and modify this exam. They find it under Activity → Online Assessment.</p></div>
+    <div class="p-5 pb-3"><h2 class="card-title">Co-admins</h2><p class="card-subtitle">Besides <?= e($exam['owner_name'] ?? 'the creator') ?> (creator), these users can view and modify this assessment. They find it under Activity → Online Assessment.</p></div>
     <div class="overflow-x-auto">
       <table class="table">
         <thead><tr><th>User</th><th>Role</th><th>Added</th><?php if ($isOwner): ?><th></th><?php endif; ?></tr></thead>
@@ -79,7 +79,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
         <option value="">Select user</option>
         <?php foreach ($candidates as $c): ?><option value="<?= $c['id'] ?>"><?= e($c['name']) ?> (<?= e(ROLES[$c['role']] . ($c['district_name'] ? ' · ' . $c['district_name'] : '')) ?>)</option><?php endforeach; ?>
       </select>
-      <span class="hint">Co-admins can change the settings, question bank, series and participants, send exam passwords, mark answers and publish results.</span>
+      <span class="hint">Co-admins can change the settings, question bank, series and participants, send assessment passwords, mark answers and publish results.</span>
     </div>
     <button class="btn-primary w-full justify-center"><?= icon('plus') ?> Add co-admin</button>
   </form>

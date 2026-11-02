@@ -25,9 +25,9 @@ if (is_post()) {
         }
     }
     $error = match (true) {
-        !$match => 'The email or exam password is incorrect.',
-        strtotime((string) $match['password_expires_at']) < time() => 'This exam password has expired. Please contact the exam coordinator.',
-        $match['exam_status'] === 'draft' => 'This exam is not open yet.',
+        !$match => 'The email or assessment password is incorrect.',
+        strtotime((string) $match['password_expires_at']) < time() => 'This assessment password has expired. Please contact the assessment coordinator.',
+        $match['exam_status'] === 'draft' => 'This assessment is not open yet.',
         default => null,
     };
     if ($error) {
@@ -51,15 +51,15 @@ require APP_ROOT . '/app/layout/public_header.php';
     <div class="text-center mb-6">
       <div class="mx-auto w-12 h-12 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3"><?= icon('academic', 'w-6 h-6') ?></div>
       <h1 class="text-xl font-bold text-slate-900">Online Assessment</h1>
-      <p class="text-sm text-slate-500 mt-1">Sign in with your registered email and the exam password sent to you.</p>
+      <p class="text-sm text-slate-500 mt-1">Sign in with your registered email and the assessment password sent to you.</p>
     </div>
     <form method="post" class="space-y-4" autocomplete="off">
       <?= csrf_field() ?>
       <div><label class="label" for="email">Registered email</label><input class="input" type="email" id="email" name="email" value="<?= e($oldEmail) ?>" required autofocus></div>
-      <div><label class="label" for="password">Exam password</label><input class="input font-mono tracking-widest uppercase" type="password" id="password" name="password" required autocomplete="off"></div>
-      <button class="btn-primary w-full justify-center">Sign in to exam</button>
+      <div><label class="label" for="password">Assessment password</label><input class="input font-mono tracking-widest uppercase" type="password" id="password" name="password" required autocomplete="off"></div>
+      <button class="btn-primary w-full justify-center">Sign in to assessment</button>
     </form>
   </div>
-  <p class="text-xs text-slate-500 text-center mt-4">Lost your connection during the exam? Sign in again to continue before your time runs out.</p>
+  <p class="text-xs text-slate-500 text-center mt-4">Lost your connection during the assessment? Sign in again to continue before your time runs out.</p>
 </div>
 <?php require APP_ROOT . '/app/layout/public_footer.php';

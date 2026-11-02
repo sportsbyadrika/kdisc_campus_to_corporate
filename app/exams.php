@@ -85,10 +85,10 @@ function load_exam(?int $id = null): array
     $exam = $st->fetch();
     if (!$exam) {
         http_response_code(404);
-        forbidden('Exam not found.');
+        forbidden('Assessment not found.');
     }
     if (!in_array((int) $exam['id'], exam_accessible_ids(), true)) {
-        forbidden('This exam is visible only to its creator and co-admins.');
+        forbidden('This assessment is visible only to its creator and co-admins.');
     }
     return $exam;
 }
@@ -175,7 +175,7 @@ function participant_state(array $p, array $exam): array
         $expired = $p['password_expires_at'] && strtotime($p['password_expires_at']) < time();
         return ['status' => $expired ? 'Expired' : 'Invited', 'remark' => ($expired ? 'Password expired ' : 'Password valid till ') . date('d M, h:i A', strtotime($p['password_expires_at']))];
     }
-    return ['status' => 'Not Invited', 'remark' => 'Exam password not sent yet'];
+    return ['status' => 'Not Invited', 'remark' => 'Assessment password not sent yet'];
 }
 
 /** Close attempts whose deadline has passed (participant never came back): time-out at the deadline. */
@@ -300,17 +300,17 @@ function exam_invite(array $p, array $exam, string $expiresAt): bool
     $body = '<p>Dear ' . e($p['name']) . ',</p>'
         . '<p>You are registered for the online assessment <strong>' . e($exam['title']) . '</strong>.</p>'
         . '<table cellpadding="6" style="border-collapse:collapse;font-size:14px;margin:12px 0">'
-        . '<tr><td style="color:#64748b">Exam window</td><td><strong>' . e($fmt($exam['start_at'])) . '</strong> to <strong>' . e($fmt($exam['end_at'])) . '</strong></td></tr>'
+        . '<tr><td style="color:#64748b">Assessment window</td><td><strong>' . e($fmt($exam['start_at'])) . '</strong> to <strong>' . e($fmt($exam['end_at'])) . '</strong></td></tr>'
         . '<tr><td style="color:#64748b">Duration</td><td><strong>' . (int) $exam['duration_minutes'] . ' minutes</strong></td></tr>'
         . '<tr><td style="color:#64748b">Sign-in email</td><td><strong>' . e($p['email']) . '</strong></td></tr>'
-        . '<tr><td style="color:#64748b">Exam password</td><td><strong style="font-family:monospace;font-size:18px;letter-spacing:2px">' . e($password) . '</strong></td></tr>'
+        . '<tr><td style="color:#64748b">Assessment password</td><td><strong style="font-family:monospace;font-size:18px;letter-spacing:2px">' . e($password) . '</strong></td></tr>'
         . '<tr><td style="color:#64748b">Password valid till</td><td><strong>' . e($fmt($expiresAt)) . '</strong></td></tr>'
         . '</table>'
-        . email_button(absolute_url('exam-login'), 'Open the exam')
+        . email_button(absolute_url('exam-login'), 'Open the assessment')
         . '<p>Please note: questions are shown one at a time and you cannot go back to a previous question. '
-        . 'Copying and pasting is disabled. Signing out ends your exam. If your connection drops, sign in again to continue before the time runs out.</p>'
+        . 'Copying and pasting is disabled. Signing out ends your assessment. If your connection drops, sign in again to continue before the time runs out.</p>'
         . '<p>Do not share this password with anyone.</p>';
-    return send_mail($p['email'], 'Online assessment: ' . $exam['title'] . ' - your exam password', email_layout('Your exam password', $body), 'exam_invite');
+    return send_mail($p['email'], 'Online assessment: ' . $exam['title'] . ' - your assessment password', email_layout('Your assessment password', $body), 'exam_invite');
 }
 
 function exam_mail_result(array $p, array $exam): bool
@@ -319,7 +319,7 @@ function exam_mail_result(array $p, array $exam): bool
     $body = '<p>Dear ' . e($p['name']) . ',</p>'
         . '<p>The results of <strong>' . e($exam['title']) . '</strong> have been published.</p>'
         . '<p style="font-size:16px">Your score: <strong>' . e(exam_num($p['score'])) . ' / ' . e(exam_num($p['max_score'])) . '</strong> (' . $pct . '%)</p>';
-    return send_mail($p['email'], 'Result: ' . $exam['title'], email_layout('Exam result', $body), 'exam_result');
+    return send_mail($p['email'], 'Result: ' . $exam['title'], email_layout('Assessment result', $body), 'exam_result');
 }
 
 /** 12.50 -> "12.5", 3.00 -> "3" */
@@ -339,7 +339,7 @@ function exam_settings_input(): array
         'duration_minutes' => (int) int_input('duration_minutes', 0),
     ];
     $errors = [];
-    if ($d['title'] === '') $errors[] = 'Exam name is required.';
+    if ($d['title'] === '') $errors[] = 'Assessment name is required.';
     if (!$d['start_at'] || !$d['end_at']) $errors[] = 'Enter the starting and ending date and time.';
     elseif (strtotime($d['end_at']) <= strtotime($d['start_at'])) $errors[] = 'The ending time must be after the starting time.';
     if ($d['duration_minutes'] < 1 || $d['duration_minutes'] > 1440) $errors[] = 'Duration must be between 1 and 1440 minutes.';
@@ -390,7 +390,7 @@ function current_participant(): ?array
     $p = $st->fetch();
     if (!$p || !hash_equals((string) $p['session_token'], hash('sha256', (string) ($_SESSION['exam_token'] ?? '')))) {
         exam_logout_participant();
-        flash('error', $p ? 'You were signed out because this exam was opened in another browser or device.' : 'Please sign in.');
+        flash('error', $p ? 'You were signed out because this assessment was opened in another browser or device.' : 'Please sign in.');
         return null;
     }
     return $p;

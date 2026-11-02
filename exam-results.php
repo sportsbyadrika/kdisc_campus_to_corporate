@@ -33,7 +33,7 @@ if (is_post()) {
         flash('success', 'Results unpublished. Participants no longer see their scores.');
     } elseif (input('action') === 'publish') {
         if (!$canPublish) {
-            flash('error', $pending ? count($pending) . ' participant(s) have not completed yet (in progress, or the exam window is still open).' : "{$ungraded} descriptive answer(s) still need marks.");
+            flash('error', $pending ? count($pending) . ' participant(s) have not completed yet (in progress, or the assessment window is still open).' : "{$ungraded} descriptive answer(s) still need marks.");
         } else {
             db()->prepare('UPDATE exams SET results_published_at = ? WHERE id = ?')->execute([now_sql(), $id]);
             $mailed = 0;
@@ -43,7 +43,7 @@ if (is_post()) {
                     if ($p['state']['status'] === 'Completed' && exam_mail_result($p, $exam)) $mailed++;
                 }
             }
-            flash('success', 'Results published. Participants see their score when they sign in to the exam page' . ($mailed ? "; {$mailed} result email(s) sent." : '.'));
+            flash('success', 'Results published. Participants see their score when they sign in to the assessment page' . ($mailed ? "; {$mailed} result email(s) sent." : '.'));
         }
     }
     redirect('exam-results', ['id' => $id]);
@@ -96,7 +96,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
       <?php if ($canPublish): ?><p class="flex items-center gap-2"><?= icon('check-circle', 'w-5 h-5 text-emerald-600') ?> All participants have completed or are absent, and every answer is marked. Results can be published.</p>
       <?php elseif (!$participants): ?><p>No participants yet.</p>
       <?php else: ?>
-        <p class="flex items-center gap-2"><?= icon('info', 'w-5 h-5 text-amber-600') ?> Results can be published after every participant completes the exam (or is absent after the cut-off) and all descriptive answers are marked.</p>
+        <p class="flex items-center gap-2"><?= icon('info', 'w-5 h-5 text-amber-600') ?> Results can be published after every participant completes the assessment (or is absent after the cut-off) and all descriptive answers are marked.</p>
         <p class="text-xs text-slate-500 mt-1 ml-7"><?= num(count($pending)) ?> still to complete · <?= num($ungraded) ?> answer(s) to mark</p>
       <?php endif; ?>
     </div>
@@ -115,7 +115,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
   </div>
   <div class="overflow-x-auto">
     <table class="table">
-      <thead><tr><th>Participant</th><th>Series</th><th>Status</th><th>Started / time taken</th><th class="text-right" title="Times the exam tab lost focus">Tab switches</th><th class="text-right">Score</th><th></th></tr></thead>
+      <thead><tr><th>Participant</th><th>Series</th><th>Status</th><th>Started / time taken</th><th class="text-right" title="Times the assessment tab lost focus">Tab switches</th><th class="text-right">Score</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($participants as $p): $done = $p['state']['status'] === 'Completed';
           $href = $p['started_at'] ? url('exam-sheet', ['id' => $id, 'pid' => $p['id']]) : null; ?>

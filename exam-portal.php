@@ -50,18 +50,18 @@ if (is_post()) {
             exam_finish($pid, 'logout');
         }
         exam_logout_participant();
-        flash('success', $inProgress($p) ? 'You have signed out. Your exam has been submitted.' : 'You have signed out.');
+        flash('success', $inProgress($p) ? 'You have signed out. Your assessment has been submitted.' : 'You have signed out.');
         redirect('exam-login');
     }
 
     if ($action === 'start' && !$p['started_at']) {
         if ($exam['status'] !== 'active' || exam_window($exam) !== 'open') {
-            flash('error', 'The exam is not open right now.');
+            flash('error', 'The assessment is not open right now.');
             redirect('exam-portal');
         }
         [$seriesId, $order] = exam_assign_questions($exam);
         if (!$order) {
-            flash('error', 'This exam has no questions yet. Please contact the exam coordinator.');
+            flash('error', 'This assessment has no questions yet. Please contact the assessment coordinator.');
             redirect('exam-portal');
         }
         $deadline = min(time() + (int) $exam['duration_minutes'] * 60, strtotime($exam['end_at']));
@@ -136,7 +136,7 @@ $answered = (int) $st->fetchColumn();
 
 $pageTitle = $exam['title'];
 $publicScripts = ['assets/js/exam-portal.js'];
-$headerRight = '<form method="post" action="' . e(url('exam-portal')) . '" class="flex items-center gap-3"' . ($inProgress($p) ? ' data-exam-confirm="Signing out ends your exam and submits your answers. You cannot continue afterwards. Sign out?"' : '') . '>'
+$headerRight = '<form method="post" action="' . e(url('exam-portal')) . '" class="flex items-center gap-3"' . ($inProgress($p) ? ' data-exam-confirm="Signing out ends your assessment and submits your answers. You cannot continue afterwards. Sign out?"' : '') . '>'
     . csrf_field() . '<input type="hidden" name="action" value="logout">'
     . '<span class="hidden sm:block text-right leading-tight"><span class="block text-sm font-semibold text-slate-800">' . e($p['name']) . '</span><span class="block text-[11px] text-slate-500">' . e($p['email']) . '</span></span>'
     . '<button class="btn-secondary btn-xs">' . icon('logout', 'w-3.5 h-3.5') . ' Sign out</button></form>';
@@ -145,7 +145,7 @@ require APP_ROOT . '/app/layout/public_header.php';
 <?php if ($p['finished_at']): ?>
   <div class="card max-w-2xl mx-auto text-center py-10">
     <div class="mx-auto w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4"><?= icon('check-circle', 'w-6 h-6') ?></div>
-    <h1 class="text-xl font-bold text-slate-900">Your exam has been submitted</h1>
+    <h1 class="text-xl font-bold text-slate-900">Your assessment has been submitted</h1>
     <p class="text-sm text-slate-500 mt-1"><?= e($exam['title']) ?> · <?= e(EXAM_FINISH_REMARKS[$p['finish_reason']] ?? '') ?> · <?= e($fmt($p['finished_at'])) ?></p>
     <p class="text-sm text-slate-600 mt-4">You answered <?= num($answered) ?> of <?= num(count($order)) ?> question(s).</p>
     <?php if ($exam['results_published_at']): $pct = (float) $p['max_score'] > 0 ? round((float) $p['score'] / (float) $p['max_score'] * 100, 1) : 0; ?>
@@ -162,28 +162,28 @@ require APP_ROOT . '/app/layout/public_header.php';
 <?php elseif (!$p['started_at']): ?>
   <div class="card max-w-3xl mx-auto">
     <h1 class="text-xl font-bold text-slate-900"><?= e($exam['title']) ?></h1>
-    <p class="text-sm text-slate-500 mt-1">Exam window: <?= e($fmt($exam['start_at'])) ?> – <?= e($fmt($exam['end_at'])) ?> · Duration: <?= (int) $exam['duration_minutes'] ?> minutes</p>
+    <p class="text-sm text-slate-500 mt-1">Assessment window: <?= e($fmt($exam['start_at'])) ?> – <?= e($fmt($exam['end_at'])) ?> · Duration: <?= (int) $exam['duration_minutes'] ?> minutes</p>
     <?php if (trim((string) $exam['instructions']) !== ''): ?>
       <div class="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-line"><?= e($exam['instructions']) ?></div>
     <?php endif; ?>
     <h2 class="text-sm font-bold text-slate-800 mt-6 mb-2">Please read before you start</h2>
     <ul class="text-sm text-slate-600 space-y-1.5 list-disc pl-5">
-      <li>The clock starts when you press <strong>Start exam</strong> and runs for <?= (int) $exam['duration_minutes'] ?> minutes<?= $exam['end_at'] ? ' (and never past ' . e($fmt($exam['end_at'])) . ')' : '' ?>. When time is up, your answers are submitted automatically.</li>
+      <li>The clock starts when you press <strong>Start assessment</strong> and runs for <?= (int) $exam['duration_minutes'] ?> minutes<?= $exam['end_at'] ? ' (and never past ' . e($fmt($exam['end_at'])) . ')' : '' ?>. When time is up, your answers are submitted automatically.</li>
       <li>Questions are shown one at a time. After you press <strong>Next</strong> you <strong>cannot go back</strong> to a previous question.</li>
       <li>Copying, cutting and pasting are disabled. Switching to other tabs or windows is recorded.</li>
-      <li>Pressing <strong>Sign out</strong> ends the exam and submits your answers.</li>
+      <li>Pressing <strong>Sign out</strong> ends the assessment and submits your answers.</li>
       <li>If your connection drops or the browser closes, sign in again with the same password to continue — the clock keeps running.</li>
     </ul>
     <div class="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <?php if ($exam['status'] !== 'active' || $window === 'over'): ?>
-        <p class="text-sm text-rose-600 font-medium">The exam window has closed.</p>
+        <p class="text-sm text-rose-600 font-medium">The assessment window has closed.</p>
       <?php elseif ($window === 'upcoming'): ?>
-        <p class="text-sm text-amber-700 font-medium">The exam opens at <?= e($fmt($exam['start_at'])) ?>. Please refresh this page then.</p>
+        <p class="text-sm text-amber-700 font-medium">The assessment opens at <?= e($fmt($exam['start_at'])) ?>. Please refresh this page then.</p>
       <?php else: ?>
         <p class="text-xs text-slate-500">By starting, you agree to follow the rules above.</p>
-        <form method="post" data-exam-confirm="Start the exam now? The clock starts immediately.">
+        <form method="post" data-exam-confirm="Start the assessment now? The clock starts immediately.">
           <?= csrf_field() ?><input type="hidden" name="action" value="start">
-          <button class="btn-primary"><?= icon('clock') ?> Start exam</button>
+          <button class="btn-primary"><?= icon('clock') ?> Start assessment</button>
         </form>
       <?php endif; ?>
     </div>
@@ -226,7 +226,7 @@ require APP_ROOT . '/app/layout/public_header.php';
       <?php endif; ?>
       <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
         <p class="text-xs text-slate-500">You cannot return to this question after moving on.</p>
-        <button class="btn-primary" data-exam-next><?= $last ? 'Submit exam' : 'Save &amp; next' ?> <?= icon('arrow-right') ?></button>
+        <button class="btn-primary" data-exam-next><?= $last ? 'Submit assessment' : 'Save &amp; next' ?> <?= icon('arrow-right') ?></button>
       </div>
     </form>
   </div>
