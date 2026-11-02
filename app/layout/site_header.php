@@ -59,7 +59,7 @@ $signedIn = current_user() !== null;
     </div>
   </div>
 </header>
-<?php foreach (take_flashes() as $flashMsg): $isErr = $flashMsg['type'] === 'error'; ?>
+<?php if (empty($keepFlashes)) foreach (take_flashes() as $flashMsg): $isErr = $flashMsg['type'] === 'error'; ?>
   <div class="max-w-[1440px] mx-auto w-full px-4 sm:px-8 mt-4"><div class="p-4 rounded-2xl border text-sm <?= $isErr ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900' ?>"><?= e($flashMsg['message']) ?></div></div>
 <?php endforeach; ?>
 <main class="grow">
