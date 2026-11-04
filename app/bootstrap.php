@@ -24,6 +24,7 @@ require __DIR__ . '/security.php';
 require __DIR__ . '/mailer.php';
 require __DIR__ . '/exams.php';
 require __DIR__ . '/home.php';
+require __DIR__ . '/xlsx.php';
 
 function config(string $key, mixed $default = null): mixed
 {

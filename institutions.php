@@ -147,6 +147,76 @@ if ($f['status'] !== '') {
     $rows = array_values(array_filter($rows, fn($r) => $r['status'] === $f['status']));
 }
 
+// ---- Excel download: the institutions listed (search and filters applied), their portal users,
+//      head of the institution and placement officers. Admin, State and District users.
+$canExport = has_role('admin', 'state', 'district');
+if (input('export') === 'xlsx' && $canExport) {
+    $ids = array_map(fn($r) => (int) $r['id'], $rows);
+    $in = $ids ? implode(',', array_fill(0, count($ids), '?')) : '0';
+    $byId = [];
+    if ($ids) {
+        $st = db()->prepare("SELECT id, email, phone, website, address, pincode, established_year, head_name, head_designation, head_email, head_phone, created_at
+                             FROM institutions WHERE id IN ($in)");
+        $st->execute($ids);
+        $byId = array_column($st->fetchAll(), null, 'id');
+    }
+    $officers = $users = [];
+    if ($ids) {
+        $st = db()->prepare("SELECT * FROM institution_officers WHERE institution_id IN ($in) ORDER BY institution_id, is_primary DESC, name");
+        $st->execute($ids);
+        foreach ($st->fetchAll() as $o) $officers[(int) $o['institution_id']][] = $o;
+        $st = db()->prepare("SELECT ui.institution_id, u.name, u.username, u.email, u.phone, u.designation, u.institution_name, u.is_active, u.last_login_at, u.created_at
+                             FROM user_institutions ui JOIN users u ON u.id = ui.user_id
+                             WHERE ui.institution_id IN ($in) AND u.role = 'institution' ORDER BY ui.institution_id, u.name");
+        $st->execute($ids);
+        foreach ($st->fetchAll() as $u) $users[(int) $u['institution_id']][] = $u;
+    }
+    $dt = fn(?string $d) => $d ? date('d-m-Y H:i', strtotime($d)) : '';
+    $instRows = $officerRows = $userRows = [];
+    foreach ($rows as $r) {
+        $id = (int) $r['id'];
+        $x = $byId[$id] ?? [];
+        $po = ($officers[$id] ?? [])[0] ?? null;   // primary placement officer first
+        $instRows[] = [
+            $r['name'], $r['code'], $r['dwms_id'], $r['district_name'], $r['university_name'] ?: $r['university_short'], $r['category_name'], $r['type_name'],
+            $x['email'] ?? '', $x['phone'] ?? '', $x['website'] ?? '', $x['address'] ?? '', $x['pincode'] ?? '',
+            isset($x['established_year']) ? (int) $x['established_year'] : '',
+            $x['head_name'] ?? '', $x['head_designation'] ?? '', $x['head_email'] ?? '', $x['head_phone'] ?? '',
+            $po['name'] ?? '', $po['designation'] ?? '', $po['email'] ?? '', $po['phone'] ?? '',
+            count($officers[$id] ?? []), count($users[$id] ?? []),
+            $r['status'], (int) $r['profile_pct'], $r['is_active'] ? 'Active' : 'Inactive', $dt($x['created_at'] ?? null),
+        ];
+        foreach ($officers[$id] ?? [] as $o) {
+            $officerRows[] = [$r['name'], $r['district_name'], $r['code'], $o['name'], $o['designation'], $o['email'], $o['phone'], $o['alt_phone'], $o['is_primary'] ? 'Yes' : ''];
+        }
+        foreach ($users[$id] ?? [] as $u) {
+            $userRows[] = [$r['name'], $r['district_name'], $r['code'], $u['name'], $u['designation'], $u['username'], $u['email'], $u['phone'], $u['is_active'] ? 'Active' : 'Inactive', $dt($u['last_login_at']), $dt($u['created_at'])];
+        }
+    }
+    log_activity('export', 'institution', null, 'Downloaded institution details (' . count($instRows) . ' institutions) as Excel');
+    xlsx_download('institutions-' . date('Y-m-d') . '.xlsx', [
+        'Institutions' => [
+            'header' => ['Institution', 'Affiliation Code', 'DWMS Institution ID', 'District', 'Affiliated University', 'Institution Category', 'Institution Type',
+                'Email', 'Phone', 'Website', 'Address', 'Pincode', 'Established Year',
+                'Head of Institution', 'Head Designation', 'Head Email', 'Head Mobile',
+                'Placement Officer (primary)', 'Placement Officer Designation', 'Placement Officer Email', 'Placement Officer Mobile',
+                'Placement Officers', 'Portal Users', 'Onboarding Status', 'Profile %', 'Active', 'Added On'],
+            'rows' => $instRows,
+            'widths' => [45, 16, 18, 18, 34, 18, 26, 28, 16, 26, 40, 10, 10, 26, 20, 28, 14, 26, 20, 28, 14, 10, 10, 16, 10, 10, 16],
+        ],
+        'Placement Officers' => [
+            'header' => ['Institution', 'District', 'Affiliation Code', 'Name', 'Designation', 'Email', 'Mobile', 'Alternate Phone', 'Primary'],
+            'rows' => $officerRows,
+            'widths' => [45, 18, 16, 26, 22, 30, 14, 16, 9],
+        ],
+        'Portal Users' => [
+            'header' => ['Institution', 'District', 'Affiliation Code', 'Name', 'Designation', 'Username', 'Email', 'Mobile', 'Status', 'Last Login', 'Created On'],
+            'rows' => $userRows,
+            'widths' => [45, 18, 16, 26, 22, 22, 30, 14, 10, 16, 16],
+        ],
+    ]);
+}
+
 $editId = int_input('edit');
 $showForm = $canManage && ($editId || isset($_GET['new']));
 $editing = $editId && $canManage ? load_institution($editId) : null;
@@ -241,6 +311,7 @@ require APP_ROOT . '/app/layout/header.php';
   </select>
   <button class="btn-secondary btn-xs" data-no-busy>Filter</button>
   <?php if (array_filter($f)): ?><a href="<?= e(url('institutions')) ?>" class="text-xs link">Clear</a><?php endif; ?>
+  <?php if ($canExport): ?><a href="<?= e(url('institutions', array_filter($f) + ['export' => 'xlsx'])) ?>" class="btn-secondary btn-xs ml-auto" title="Institutions as listed, with head of institution, placement officers and portal users"><?= icon('download', 'w-3.5 h-3.5') ?> Download Excel</a><?php endif; ?>
 </form>
 <?php endif; ?>
 
