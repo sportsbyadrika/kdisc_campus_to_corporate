@@ -28,7 +28,7 @@ Every user also has optional **Designation** and **Name of Institution** fields 
   5. *DWMS services*: each service has a status, the number of students who benefited, a date and remarks.
   6. *Dashboard*: identity banner, statewide rank and readiness score, the district support team (TCE / RPM / Regional Head), KPIs, a live milestone tracker, a list of next tasks, a cohort trend chart, a course breakdown, a map and recent changes.
 - **Drill-down reports**: Kerala → the 14 districts → the institutions of a district. Every signed-in user can view them read-only; an institution row opens its dashboard only for users who manage that institution. You can filter by university and category, print, and (Admin, State and District users) export to CSV.
-- **Excel download of institutions** (*Institutions → Download Excel*, Admin, State and District users). An .xlsx file of the institutions as listed, with the current search and filters, within the user's scope. It has three sheets:
+- **Excel download of institutions** (*Institutions → Download Excel*, Super Admin and Administrator). An .xlsx file of the institutions as listed, with the current search and filters, of all institutions. It has three sheets:
     - *Institutions:* registry details, Head of the Institution, the primary Placement Officer, counts and onboarding status.
     - *Placement Officers:* every officer.
     - *Portal Users:* the institution logins.

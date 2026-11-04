@@ -148,8 +148,8 @@ if ($f['status'] !== '') {
 }
 
 // ---- Excel download: the institutions listed (search and filters applied), their portal users,
-//      head of the institution and placement officers. Admin, State and District users.
-$canExport = has_role('admin', 'state', 'district');
+//      head of the institution and placement officers. Super admin and administrators only.
+$canExport = has_role('admin');
 if (input('export') === 'xlsx' && $canExport) {
     $ids = array_map(fn($r) => (int) $r['id'], $rows);
     $in = $ids ? implode(',', array_fill(0, count($ids), '?')) : '0';
