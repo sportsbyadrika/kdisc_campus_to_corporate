@@ -201,7 +201,7 @@ require APP_ROOT . '/app/layout/public_header.php';
         <select class="input" id="institution" name="institution_id" required disabled>
           <option value="">Select a district first</option>
         </select>
-        <span class="hint" id="institution-hint">Type and Category narrow down the list. Not listed? Ask your district office to add the institution to the portal.</span>
+        <span class="hint" id="institution-hint">Type part of the name to search; Type and Category narrow down the list. Not listed? Ask your district office to add the institution to the portal.</span>
       </div>
     </div>
   </section>
