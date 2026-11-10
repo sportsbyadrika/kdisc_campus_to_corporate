@@ -20,6 +20,15 @@ const EXAM_QTYPES = [
     'multi'       => 'Objective - multiple selection',
     'descriptive' => 'Descriptive',
 ];
+/** A case study: a formatted scenario with its own sub-questions of the types above. Its marks = their total. */
+const EXAM_CASE = 'case';
+const EXAM_CASE_LABEL = 'Case study';
+
+function exam_qtype_label(string $type): string
+{
+    return $type === EXAM_CASE ? EXAM_CASE_LABEL : (EXAM_QTYPES[$type] ?? $type);
+}
+
 const EXAM_STATUSES = ['draft' => 'Draft', 'active' => 'Active', 'closed' => 'Closed'];
 const EXAM_FINISH_REMARKS = [
     'completed' => 'Completed normally',
@@ -105,17 +114,87 @@ function exam_is_locked(int $examId): bool
  * Questions
  * ------------------------------------------------------------------------- */
 
-/** Question bank of an exam, each with an 'options' list. */
+/**
+ * Question bank of an exam: top-level questions in order, each with an 'options' list. A case
+ * study also carries 'subs' - its sub-questions, each with their own 'options'.
+ */
 function exam_questions(int $examId): array
 {
     $st = db()->prepare('SELECT * FROM exam_questions WHERE exam_id = ? ORDER BY sort_order, id');
     $st->execute([$examId]);
-    $questions = $st->fetchAll();
-    $options = exam_options_for(array_column($questions, 'id'));
-    foreach ($questions as &$q) {
+    $all = $st->fetchAll();
+    $options = exam_options_for(array_column($all, 'id'));
+    $subs = [];
+    $top = [];
+    foreach ($all as $q) {
         $q['options'] = $options[(int) $q['id']] ?? [];
+        if ($q['parent_id']) {
+            $subs[(int) $q['parent_id']][] = $q;
+        } else {
+            $top[] = $q;
+        }
     }
-    return $questions;
+    foreach ($top as &$q) {
+        $q['subs'] = $subs[(int) $q['id']] ?? [];
+    }
+    return $top;
+}
+
+/** Keep a case study's marks equal to the total of its sub-questions. */
+function exam_case_sync_marks(int $caseId): void
+{
+    db()->prepare('UPDATE exam_questions SET marks = (SELECT COALESCE(SUM(s.marks), 0) FROM (SELECT marks FROM exam_questions WHERE parent_id = ?) s) WHERE id = ?')
+        ->execute([$caseId, $caseId]);
+}
+
+/**
+ * Safe formatting for case study scenarios. The text is escaped first, then a small set of
+ * marks is turned into HTML: **bold**, *italic*, lines starting with "- " (bullets) or "1. "
+ * (numbering), and blank lines between paragraphs.
+ */
+function exam_rich_text(string $text): string
+{
+    $inline = function (string $line): string {
+        $h = e($line);
+        $h = preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', $h);
+        $h = preg_replace('/(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])/s', '<em>$1</em>', $h);
+        return preg_replace('/(?<![\w])_(?!\s)(.+?)(?<!\s)_(?![\w])/s', '<em>$1</em>', $h);
+    };
+    $out = '';
+    $list = null;   // 'ul' | 'ol'
+    $para = [];
+    $flushPara = function () use (&$para, &$out, $inline) {
+        if ($para) {
+            $out .= '<p>' . implode('<br>', array_map($inline, $para)) . '</p>';
+            $para = [];
+        }
+    };
+    $closeList = function () use (&$list, &$out) {
+        if ($list) {
+            $out .= "</{$list}>";
+            $list = null;
+        }
+    };
+    foreach (preg_split('/\R/', str_replace("\t", '    ', $text)) as $line) {
+        if (preg_match('/^\s*[-*•]\s+(.*)$/u', $line, $m)) {
+            $flushPara();
+            if ($list !== 'ul') { $closeList(); $out .= '<ul>'; $list = 'ul'; }
+            $out .= '<li>' . $inline($m[1]) . '</li>';
+        } elseif (preg_match('/^\s*\d+[.)]\s+(.*)$/', $line, $m)) {
+            $flushPara();
+            if ($list !== 'ol') { $closeList(); $out .= '<ol>'; $list = 'ol'; }
+            $out .= '<li>' . $inline($m[1]) . '</li>';
+        } elseif (trim($line) === '') {
+            $flushPara();
+            $closeList();
+        } else {
+            $closeList();
+            $para[] = $line;
+        }
+    }
+    $flushPara();
+    $closeList();
+    return $out;
 }
 
 /** @return array<int, array> question id => options */
@@ -262,7 +341,7 @@ function exam_assign_questions(array $exam): array
         $st = db()->prepare('SELECT question_id FROM exam_series_questions WHERE series_id = ? ORDER BY sort_order, question_id');
         $st->execute([$seriesId]);
     } else {
-        $st = db()->prepare('SELECT id FROM exam_questions WHERE exam_id = ? ORDER BY sort_order, id');
+        $st = db()->prepare('SELECT id FROM exam_questions WHERE exam_id = ? AND parent_id IS NULL ORDER BY sort_order, id');
         $st->execute([$exam['id']]);
     }
     $ids = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
@@ -272,7 +351,21 @@ function exam_assign_questions(array $exam): array
             [$ids[$i], $ids[$j]] = [$ids[$j], $ids[$i]];
         }
     }
-    return [$seriesId, $ids];
+    // A case study is answered through its sub-questions, which stay together and in their own order
+    $subs = [];
+    if ($ids) {
+        $st = db()->prepare('SELECT id, parent_id FROM exam_questions WHERE parent_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ') ORDER BY sort_order, id');
+        $st->execute($ids);
+        foreach ($st->fetchAll() as $r) $subs[(int) $r['parent_id']][] = (int) $r['id'];
+        $st = db()->prepare('SELECT id FROM exam_questions WHERE qtype = ? AND id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')');
+        $st->execute([EXAM_CASE, ...$ids]);
+        $cases = array_flip(array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN)));
+    }
+    $order = [];
+    foreach ($ids as $id) {
+        array_push($order, ...(isset($cases[$id]) ? ($subs[$id] ?? []) : [$id]));
+    }
+    return [$seriesId, $order];
 }
 
 /* ---------------------------------------------------------------------------

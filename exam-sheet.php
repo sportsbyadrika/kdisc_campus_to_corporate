@@ -46,6 +46,15 @@ if ($order) {
     $questions = array_column($st->fetchAll(), null, 'id');
 }
 $options = exam_options_for(array_keys($questions));
+// Scenarios of the case studies these questions belong to
+$cases = [];
+$parentIds = array_values(array_unique(array_filter(array_map(fn($q) => (int) $q['parent_id'], $questions))));
+if ($parentIds) {
+    $st = db()->prepare('SELECT id, question FROM exam_questions WHERE id IN (' . implode(',', array_fill(0, count($parentIds), '?')) . ')');
+    $st->execute($parentIds);
+    $cases = array_column($st->fetchAll(), 'question', 'id');
+}
+$lastCase = null;
 $st = db()->prepare('SELECT * FROM exam_answers WHERE participant_id = ?');
 $st->execute([$pid]);
 $answers = array_column($st->fetchAll(), null, 'question_id');
@@ -74,8 +83,15 @@ require APP_ROOT . '/app/layout/exam_nav.php';
     <?php foreach ($order as $n => $qid): $q = $questions[$qid] ?? null; if (!$q) continue;
         $a = $answers[$qid] ?? null;
         $picked = array_map('intval', json_decode((string) ($a['selected'] ?? ''), true) ?: []);
-        $seen = $n < (int) $p['current_index'] || $a; ?>
-      <div class="card p-4">
+        $seen = $n < (int) $p['current_index'] || $a;
+        $caseId = (int) $q['parent_id'];
+        if ($caseId && $caseId !== $lastCase && isset($cases[$caseId])): ?>
+      <div class="card p-4 border-indigo-200 bg-indigo-50/40">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 mb-1"><?= EXAM_CASE_LABEL ?></p>
+        <div class="rich text-sm text-slate-800"><?= exam_rich_text($cases[$caseId]) ?></div>
+      </div>
+    <?php endif; $lastCase = $caseId ?: null; ?>
+      <div class="card p-4 <?= $caseId ? 'ml-4 sm:ml-6' : '' ?>">
         <div class="flex items-start justify-between gap-3 mb-2">
           <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Q<?= $n + 1 ?> · <?= e(EXAM_QTYPES[$q['qtype']]) ?> · <?= exam_num($q['marks']) ?> marks</p>
           <?php if ($q['qtype'] !== 'descriptive'): ?>

@@ -23,7 +23,7 @@ if (is_post()) {
     $d['shuffle_questions'] = input('shuffle_questions') === '1' ? 1 : 0;
     $d['shuffle_options'] = input('shuffle_options') === '1' ? 1 : 0;
     if ($d['status'] === 'active') {
-        $st = db()->prepare('SELECT COUNT(*) FROM exam_questions WHERE exam_id = ?');
+        $st = db()->prepare("SELECT COUNT(*) FROM exam_questions WHERE exam_id = ? AND qtype <> 'case'");   // answerable questions
         $st->execute([$id]);
         if (!(int) $st->fetchColumn()) $errors[] = 'Add at least one question to the question bank before making the assessment active.';
     }
