@@ -69,3 +69,73 @@
     refresh();
   }
 })();
+
+/* Case study scenario editor: Bold / Italic / Bullets / Numbering buttons and a live preview.
+   The marks match what the server renders (app/exams.php exam_rich_text): **bold**, *italic*,
+   "- " bullet lines, "1. " numbered lines, blank line = new paragraph. */
+(function () {
+  'use strict';
+  const box = document.querySelector('[data-rich-editor]');
+  if (!box) return;
+  const ta = box.querySelector('[data-rich-input]');
+  const preview = box.querySelector('[data-rich-preview]');
+  const esc = (t) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const inline = (line) => esc(line)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])/g, '$1<em>$2</em>')
+    .replace(/(^|[^\w])_(?!\s)(.+?)(?<!\s)_(?!\w)/g, '$1<em>$2</em>');
+  const render = (text) => {
+    let out = '', list = null, para = [];
+    const flush = () => { if (para.length) { out += `<p>${para.map(inline).join('<br>')}</p>`; para = []; } };
+    const close = () => { if (list) { out += `</${list}>`; list = null; } };
+    text.split(/\r?\n/).forEach((line) => {
+      let m;
+      if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) { flush(); if (list !== 'ul') { close(); out += '<ul>'; list = 'ul'; } out += `<li>${inline(m[1])}</li>`; }
+      else if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { flush(); if (list !== 'ol') { close(); out += '<ol>'; list = 'ol'; } out += `<li>${inline(m[1])}</li>`; }
+      else if (!line.trim()) { flush(); close(); }
+      else { close(); para.push(line); }
+    });
+    flush(); close();
+    return out;
+  };
+  const update = () => { preview.innerHTML = render(ta.value) || '<p class="text-slate-400">The formatted scenario appears here.</p>'; };
+
+  // Wrap the selection in a mark, or prefix each selected line for lists
+  const wrap = (mark) => {
+    const [a, b] = [ta.selectionStart, ta.selectionEnd];
+    const sel = ta.value.slice(a, b) || 'text';
+    ta.setRangeText(mark + sel + mark, a, b, 'select');
+    ta.setSelectionRange(a + mark.length, a + mark.length + sel.length);
+  };
+  const prefix = (numbered) => {
+    const start = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1;
+    let end = ta.value.indexOf('\n', ta.selectionEnd);
+    if (end === -1) end = ta.value.length;
+    let n = 0;
+    const lines = ta.value.slice(start, end).split('\n').map((l) => {
+      const bare = l.replace(/^\s*([-*•]|\d+[.)])\s+/, '');
+      return numbered ? `${++n}. ${bare}` : `- ${bare}`;
+    });
+    ta.setRangeText(lines.join('\n'), start, end, 'select');
+  };
+  box.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-rich]');
+    if (!btn) return;
+    const what = btn.dataset.rich;
+    if (what === 'bold') wrap('**');
+    if (what === 'italic') wrap('*');
+    if (what === 'bullets') prefix(false);
+    if (what === 'numbers') prefix(true);
+    ta.focus();
+    update();
+  });
+  ta.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
+      e.preventDefault();
+      wrap(e.key.toLowerCase() === 'b' ? '**' : '*');
+      update();
+    }
+  });
+  ta.addEventListener('input', update);
+  update();
+})();

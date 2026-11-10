@@ -361,14 +361,17 @@ CREATE TABLE IF NOT EXISTS exam_admins (
 CREATE TABLE IF NOT EXISTS exam_questions (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   exam_id     INT UNSIGNED NOT NULL,
-  qtype       ENUM('single','multi','descriptive') NOT NULL,
+  parent_id   INT UNSIGNED NULL COMMENT 'Case study this sub-question belongs to',
+  qtype       ENUM('single','multi','descriptive','case') NOT NULL,
   question    TEXT NOT NULL,
   marks       DECIMAL(6,2) NOT NULL DEFAULT 1.00,
   sort_order  INT NOT NULL DEFAULT 0,
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_exq_exam (exam_id, sort_order),
-  CONSTRAINT fk_exq_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE
+  KEY idx_exq_parent (parent_id),
+  CONSTRAINT fk_exq_exam FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE,
+  CONSTRAINT fk_exq_parent FOREIGN KEY (parent_id) REFERENCES exam_questions (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Master question bank';
 
 CREATE TABLE IF NOT EXISTS exam_options (

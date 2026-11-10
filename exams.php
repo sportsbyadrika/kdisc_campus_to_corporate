@@ -28,7 +28,7 @@ $ids = exam_accessible_ids();
 $exams = [];
 if ($ids) {
     $st = db()->prepare('SELECT x.*, u.name AS owner_name,
-                           (SELECT COUNT(*) FROM exam_questions q WHERE q.exam_id = x.id) AS questions,
+                           (SELECT COUNT(*) FROM exam_questions q WHERE q.exam_id = x.id AND q.parent_id IS NULL) AS questions,
                            (SELECT COUNT(*) FROM exam_participants p WHERE p.exam_id = x.id) AS participants,
                            (SELECT COUNT(*) FROM exam_participants p WHERE p.exam_id = x.id AND p.finished_at IS NOT NULL) AS completed
                          FROM exams x LEFT JOIN users u ON u.id = x.created_by

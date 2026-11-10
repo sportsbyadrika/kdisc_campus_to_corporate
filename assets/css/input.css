@@ -101,3 +101,12 @@
   .site-nav-link[data-active]::after { @apply scale-x-100; }
   .site-nav-item[data-active] { @apply text-c2c-teal font-semibold bg-c2c-wash; }
 }
+
+/* Formatted text of case study scenarios (app/exams.php exam_rich_text) */
+@layer components {
+  .rich p { @apply my-2 first:mt-0 last:mb-0; }
+  .rich ul { @apply list-disc pl-6 my-2 space-y-1; }
+  .rich ol { @apply list-decimal pl-6 my-2 space-y-1; }
+  .rich strong { @apply font-semibold; }
+  .rich em { @apply italic; }
+}

@@ -8,7 +8,8 @@ require __DIR__ . '/app/bootstrap.php';
 $exam = load_exam();
 $id = (int) $exam['id'];
 $locked = exam_is_locked($id);
-$questions = exam_questions($id);
+$questions = exam_questions($id);                      // top level: a case study counts as one item
+$qtypes = EXAM_QTYPES + [EXAM_CASE => EXAM_CASE_LABEL];
 $qById = array_column($questions, null, 'id');
 
 function exam_series_save(int $examId, ?int $sid, string $name, array $qids): int
@@ -49,7 +50,7 @@ if (is_post()) {
         // Several random series at once: N questions of each type per series
         $count = max(1, min(50, (int) int_input('gen_count', 1)));
         $want = [];
-        foreach (array_keys(EXAM_QTYPES) as $t) $want[$t] = max(0, (int) int_input("gen_{$t}", 0));
+        foreach (array_keys($qtypes) as $t) $want[$t] = max(0, (int) int_input("gen_{$t}", 0));
         if (!array_sum($want)) {
             flash('error', 'Enter how many questions of each type every series should have.');
             redirect('exam-series', ['id' => $id, 'generate' => 1]);
@@ -57,7 +58,7 @@ if (is_post()) {
         foreach ($want as $t => $n) {
             $have = count(array_filter($questions, fn($q) => $q['qtype'] === $t));
             if ($n > $have) {
-                flash('error', "The bank has only {$have} " . strtolower(EXAM_QTYPES[$t]) . " question(s); {$n} requested.");
+                flash('error', "The bank has only {$have} " . strtolower($qtypes[$t]) . " question(s); {$n} requested.");
                 redirect('exam-series', ['id' => $id, 'generate' => 1]);
             }
         }
@@ -150,7 +151,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
   <p class="text-xs text-slate-500 mb-4">Creates several series at once, each with the given number of randomly chosen questions of every type.</p>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <div><label class="label">Number of series</label><input class="input" type="number" name="gen_count" min="1" max="50" value="3"></div>
-    <?php foreach (EXAM_QTYPES as $t => $lbl): $have = count(array_filter($questions, fn($q) => $q['qtype'] === $t)); ?>
+    <?php foreach ($qtypes as $t => $lbl): $have = count(array_filter($questions, fn($q) => $q['qtype'] === $t)); ?>
       <div><label class="label"><?= e($lbl) ?></label><input class="input" type="number" name="gen_<?= $t ?>" min="0" max="<?= $have ?>" value="<?= min($have, $t === 'descriptive' ? 0 : 5) ?>"><span class="hint">of <?= $have ?> in the bank</span></div>
     <?php endforeach; ?>
   </div>
@@ -169,7 +170,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
     <div><label class="label">Series name <span class="req">*</span></label><input class="input" name="name" value="<?= e($old['name'] ?? $editing['name'] ?? 'Series ' . chr(65 + count($series) % 26)) ?>" maxlength="120" required></div>
     <div class="md:col-span-2 flex flex-wrap items-end gap-2">
       <div><label class="label">Pick at random</label><input class="input input-sm w-20" type="number" min="1" id="series-random-n" value="10"></div>
-      <select class="input input-sm w-auto" id="series-random-type" aria-label="Question type"><option value="">Any type</option><?php foreach (EXAM_QTYPES as $k => $lbl): ?><option value="<?= $k ?>"><?= e($lbl) ?></option><?php endforeach; ?></select>
+      <select class="input input-sm w-auto" id="series-random-type" aria-label="Question type"><option value="">Any type</option><?php foreach ($qtypes as $k => $lbl): ?><option value="<?= $k ?>"><?= e($lbl) ?></option><?php endforeach; ?></select>
       <button type="button" class="btn-secondary btn-xs" data-series-pick="random" data-no-busy>Pick</button>
       <button type="button" class="btn-secondary btn-xs" data-series-pick="all" data-no-busy>Select all</button>
       <button type="button" class="btn-secondary btn-xs" data-series-pick="none" data-no-busy>Clear</button>
@@ -180,7 +181,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
     <?php foreach ($questions as $n => $q): ?>
       <label class="flex items-start gap-3 p-3 hover:bg-slate-50 cursor-pointer">
         <input type="checkbox" name="questions[]" value="<?= $q['id'] ?>" data-type="<?= $q['qtype'] ?>" data-marks="<?= exam_num($q['marks']) ?>" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600" <?= in_array((int) $q['id'], $picked, true) ? 'checked' : '' ?>>
-        <span class="min-w-0 text-sm"><span class="text-[11px] font-semibold text-slate-500">Q<?= $n + 1 ?> · <?= e(EXAM_QTYPES[$q['qtype']]) ?> · <?= exam_num($q['marks']) ?> marks</span><span class="block text-slate-800 truncate"><?= e(mb_strimwidth($q['question'], 0, 160, '…')) ?></span></span>
+        <span class="min-w-0 text-sm"><span class="text-[11px] font-semibold text-slate-500">Q<?= $n + 1 ?> · <?= e(exam_qtype_label($q['qtype'])) ?> · <?= exam_num($q['marks']) ?> marks<?= $q['subs'] ? ' · ' . count($q['subs']) . ' questions' : '' ?></span><span class="block text-slate-800 truncate"><?= e(mb_strimwidth(str_replace(['**', '*'], '', $q['question']), 0, 160, '…')) ?></span></span>
       </label>
     <?php endforeach; ?>
   </div>
@@ -212,7 +213,7 @@ require APP_ROOT . '/app/layout/exam_nav.php';
           </div>
         <?php endif; ?>
       </div>
-      <p class="text-[11px] text-slate-500 mt-2"><?= (int) ($types['single'] ?? 0) ?> single · <?= (int) ($types['multi'] ?? 0) ?> multiple · <?= (int) ($types['descriptive'] ?? 0) ?> descriptive</p>
+      <p class="text-[11px] text-slate-500 mt-2"><?= (int) ($types['single'] ?? 0) ?> single · <?= (int) ($types['multi'] ?? 0) ?> multiple · <?= (int) ($types['descriptive'] ?? 0) ?> descriptive<?= !empty($types[EXAM_CASE]) ? ' · ' . (int) $types[EXAM_CASE] . ' case stud' . ($types[EXAM_CASE] === 1 ? 'y' : 'ies') : '' ?></p>
       <p class="text-[11px] text-slate-400 mt-1 break-words">Questions: <?= e(implode(', ', array_map(fn($q) => 'Q' . (($qNo[$q] ?? 0) + 1), $qs))) ?></p>
     </div>
   <?php endforeach; ?>

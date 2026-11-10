@@ -8,7 +8,7 @@ declare(strict_types=1);
  * is behind SCHEMA_VERSION. Every step checks the current structure first, so it is safe
  * to run against a fresh install (where schema.sql already has the change) or to re-run.
  */
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 function ensure_schema(): void
 {
@@ -119,6 +119,15 @@ function schema_migrations(): array
             if (!(int) db()->query('SELECT COUNT(*) FROM site_stages')->fetchColumn()) {
                 $ins = db()->prepare('INSERT INTO site_stages (stage_label, heading, content, sort_order) VALUES (?,?,?,?)');
                 foreach (SITE_STAGES_SEED as $i => [$l, $h, $c]) $ins->execute([$l, $h, $c, ($i + 1) * 10]);
+            }
+        },        // v8: case study questions - a scenario with its own sub-questions (exam_questions.parent_id)
+        8 => function (): void {
+            db()->exec("ALTER TABLE exam_questions MODIFY qtype ENUM('single','multi','descriptive','case') NOT NULL");
+            if (!column_exists('exam_questions', 'parent_id')) {
+                db()->exec("ALTER TABLE exam_questions ADD COLUMN parent_id INT UNSIGNED NULL COMMENT 'Case study this sub-question belongs to' AFTER exam_id, ADD KEY idx_exq_parent (parent_id)");
+            }
+            if (!constraint_exists('exam_questions', 'fk_exq_parent')) {
+                db()->exec('ALTER TABLE exam_questions ADD CONSTRAINT fk_exq_parent FOREIGN KEY (parent_id) REFERENCES exam_questions (id) ON DELETE CASCADE');
             }
         },
     ];

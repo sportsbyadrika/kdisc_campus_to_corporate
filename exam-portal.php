@@ -127,6 +127,19 @@ if ($inProgress($p)) {
         redirect('exam-portal');
     }
     $options = exam_option_order(exam_options_for([$qid])[$qid] ?? [], $pid, $qid, (bool) $exam['shuffle_options']);
+    // A question of a case study is shown under its scenario, with its place in that case
+    $case = null;
+    if ($question['parent_id']) {
+        $st = db()->prepare('SELECT * FROM exam_questions WHERE id = ?');
+        $st->execute([$question['parent_id']]);
+        $case = $st->fetch() ?: null;
+        $st = db()->prepare('SELECT id FROM exam_questions WHERE parent_id = ?');
+        $st->execute([$question['parent_id']]);
+        $caseIds = array_flip(array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN)));
+        $inCase = array_values(array_filter($order, fn($q) => isset($caseIds[(int) $q])));
+        $casePos = array_search($qid, array_map('intval', $inCase), true) + 1;
+        $caseTotal = count($inCase);
+    }
 }
 $fmt = fn(string $d) => date('d M Y, h:i A', strtotime($d));
 $window = exam_window($exam);
@@ -206,6 +219,12 @@ require APP_ROOT . '/app/layout/public_header.php';
     </div>
     <div class="h-1.5 rounded-full bg-slate-200 mb-5 overflow-hidden"><div class="h-full bg-sky-600" style="width: <?= round($idx / max(1, $total) * 100) ?>%"></div></div>
 
+    <?php if (!empty($case)): ?>
+      <section class="card mb-4 border-indigo-200 bg-indigo-50/40" aria-label="Case study">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 mb-2"><?= EXAM_CASE_LABEL ?> · question <?= $casePos ?> of <?= $caseTotal ?> in this case</p>
+        <div class="rich text-[15px] leading-relaxed text-slate-800 max-h-[45vh] overflow-auto pr-1"><?= exam_rich_text($case['question']) ?></div>
+      </section>
+    <?php endif; ?>
     <form method="post" class="card" id="exam-answer-form" autocomplete="off" data-last="<?= $last ? '1' : '0' ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="answer"><input type="hidden" name="idx" value="<?= $idx ?>"><input type="hidden" name="qid" value="<?= (int) $question['id'] ?>">
