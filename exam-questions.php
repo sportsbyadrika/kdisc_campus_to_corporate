@@ -194,11 +194,14 @@ require APP_ROOT . '/app/layout/exam_nav.php';
     <h2 class="text-lg font-bold text-slate-900">Master question bank</h2>
     <p class="text-sm text-slate-500"><?= num($totals['count']) ?> questions · <?= exam_num($totals['marks']) ?> marks · <?= $totals['single'] ?> single selection · <?= $totals['multi'] ?> multiple selection · <?= $totals['descriptive'] ?> descriptive · <?= $totals[EXAM_CASE] ?> case stud<?= $totals[EXAM_CASE] === 1 ? 'y' : 'ies' ?></p>
   </div>
-  <?php if (!$locked && !$showForm && !$showBulk && !$showCaseForm): ?>
+  <?php if (!$showForm && !$showBulk && !$showCaseForm): ?>
     <div class="flex flex-wrap gap-2">
+      <?php if ($questions): ?><a href="<?= e(url('exam-print', ['id' => $id])) ?>" target="_blank" rel="noopener" class="btn-secondary" title="Whole bank with the answer key (print / PDF)"><?= icon('printer') ?> Print with answer key</a><?php endif; ?>
+      <?php if (!$locked): ?>
       <a href="<?= e(url('exam-questions', ['id' => $id, 'bulk' => 1])) ?>" class="btn-secondary"><?= icon('clipboard') ?> Bulk import</a>
       <a href="<?= e(url('exam-questions', ['id' => $id, 'case' => 'new'])) ?>" class="btn-secondary"><?= icon('document') ?> Add case study</a>
       <a href="<?= e(url('exam-questions', ['id' => $id, 'new' => 1])) ?>" class="btn-primary"><?= icon('plus') ?> Add question</a>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 </div>
