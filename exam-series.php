@@ -206,12 +206,13 @@ require APP_ROOT . '/app/layout/exam_nav.php';
           <h3 class="font-bold text-slate-900"><?= e($s['name']) ?></h3>
           <p class="text-xs text-slate-500"><?= count($qs) ?> questions · <?= exam_num($marks) ?> marks · <?= (int) $s['assigned'] ?> participant(s)</p>
         </div>
+        <div class="flex shrink-0">
+          <a href="<?= e(url('exam-print', ['id' => $id, 'sid' => $s['id']])) ?>" target="_blank" rel="noopener" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Question paper with answer key (print / PDF)"><?= icon('printer') ?></a>
         <?php if (!$locked): ?>
-          <div class="flex shrink-0">
             <a href="<?= e(url('exam-series', ['id' => $id, 'edit' => $s['id']])) ?>" class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100" title="Edit"><?= icon('pencil') ?></a>
             <form method="post" data-confirm="Delete <?= e($s['name']) ?>?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="sid" value="<?= $s['id'] ?>"><button class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50" title="Delete"><?= icon('trash') ?></button></form>
-          </div>
         <?php endif; ?>
+        </div>
       </div>
       <p class="text-[11px] text-slate-500 mt-2"><?= (int) ($types['single'] ?? 0) ?> single · <?= (int) ($types['multi'] ?? 0) ?> multiple · <?= (int) ($types['descriptive'] ?? 0) ?> descriptive<?= !empty($types[EXAM_CASE]) ? ' · ' . (int) $types[EXAM_CASE] . ' case stud' . ($types[EXAM_CASE] === 1 ? 'y' : 'ies') : '' ?></p>
       <p class="text-[11px] text-slate-400 mt-1 break-words">Questions: <?= e(implode(', ', array_map(fn($q) => 'Q' . (($qNo[$q] ?? 0) + 1), $qs))) ?></p>
